@@ -1,1 +1,9 @@
 /bin/
+
+*.class
+/csd_tp1/target/**
+
+.DS_Store
+.settings
+.project
+.classpath
