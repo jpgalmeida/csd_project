@@ -1,3 +1,4 @@
+package foo.gettingstarted;
 import redis.clients.jedis.*;
 
 public class RedisJava { 
