@@ -9,12 +9,12 @@ docker run --name some-redis -d redis
 Command to get info about the Redis Server:
 docker inspect #id
 
-
 Command to run bft-SMaRt server:
 java -cp bin/BFT-SMaRt.jar:lib/*:dist/foo.jar foo.gettingstarted.server.TreeMapServer 0
 
 Command to run bft-SMaRt client:
 java -cp bin/BFT-SMaRt.jar:lib/*:dist/foo.jar foo.gettingstarted.client.ConsoleClient 1001
+
 
 
 TODO:   key PutSet (String key, Entry set)

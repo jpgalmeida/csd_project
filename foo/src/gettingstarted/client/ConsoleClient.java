@@ -19,12 +19,9 @@ public class ConsoleClient {
         while (true) {
             System.out.println("Select an option:");
             System.out.println("1. ADD A KEY AND VALUE TO THE MAP");
-            System.out.println("2. READ A VALUE FROM THE MAP");
-            System.out.println("3. REMOVE AND ENTRY FROM THE MAP");
-            System.out.println("4. GET THE SIZE OF THE MAP");
 
             String cmd = sc.nextLine();
-
+            
             switch (cmd) {
                 case "1":
                     System.out.println("Putting value in the map");
@@ -53,41 +50,67 @@ public class ConsoleClient {
                 
                 case "ps": 
                     System.out.println("> put set");
+                    key = "";
+                    Object set = null;
+                    
                     break;
                 
                 case "gs":
                     System.out.println("> get set");
+                    key = "";
+                    
                     break;
                     
                 case "adde":
                     System.out.println("> add element");
+                    key = "";
+                    
                     break;
                 
                 case "rs":
                     System.out.println("> remove set");
+                    key = "";
+                    
                     break;
                     
                 case "we":
                     System.out.println("> write element");
+                    key = "";
+                    Object new_element = null;
+                    int pos = 0;
+                    
                     break;
                     
                 case "re":
                     System.out.println("> read element");
+                    key = "";
+                    pos = 0;
+                    
                     break;
                 
                 case "ie":
                     System.out.println("> is element");
+                    key = "";
+                    String element = "";
+                    
                     break;
                     
                 case "sum":
                     System.out.println("> Sum");
+                    pos = 0;
+                    String key1 = "";
+                    String key2 = "";
+                    
                     break;
                     
                 case "mult":
                     System.out.println("> Mult");
+                    pos = 0;
+                    key1 = "";
+                    key2 = "";
+                    
                     break;
             
-                    
             }
         }
     }
