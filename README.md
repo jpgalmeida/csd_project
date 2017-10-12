@@ -15,3 +15,23 @@ java -cp bin/BFT-SMaRt.jar:lib/*:dist/foo.jar foo.gettingstarted.server.TreeMapS
 
 Command to run bft-SMaRt client:
 java -cp bin/BFT-SMaRt.jar:lib/*:dist/foo.jar foo.gettingstarted.client.ConsoleClient 1001
+
+
+TODO:   key PutSet (String key, Entry set)
+        Entry = GetSet(String key)
+        Status AddElement(String key)
+        Status RemoveSet(String key)
+        Status WriteElem(String key, type element, int Pos)
+        Elem ReadElem(String key, int Pos)
+        Boolean isElement(String key, String element)
+        int Sum(int Pos, String key, String key)
+        int Mult(int Pos, String key, String key)
+        
+# Compile on maven in c9
+mvn package
+
+# Code to run client in c9
+java -cp foo/bin/BFT-SMaRt.jar:foo/lib/*:target/CSD-TP1-0.0.1-SNAPSHOT.jar foo.gettingstarted.client.ConsoleClient 1001  
+
+# Command to run server in c9
+java -cp foo/bin/BFT-SMaRt.jar:foo/lib/*:target/CSD-TP1-0.0.1-SNAPSHOT.jar foo.gettingstarted.server.TreeMapServer 2

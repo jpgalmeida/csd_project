@@ -1,4 +1,4 @@
-ckage foo.gettingstarted.client;
+package foo.gettingstarted.client;
 
 import java.io.Console;
 import java.util.Scanner;
@@ -23,33 +23,71 @@ public class ConsoleClient {
             System.out.println("3. REMOVE AND ENTRY FROM THE MAP");
             System.out.println("4. GET THE SIZE OF THE MAP");
 
-            int cmd = sc.nextInt();
+            String cmd = sc.nextLine();
 
             switch (cmd) {
-                case 1:
+                case "1":
                     System.out.println("Putting value in the map");
                     String key = console.readLine("Enter the key:");
                     String value = console.readLine("Enter the value:");
                     String result = client.put(key, value);
                     System.out.println("Previous value: " + result);
                     break;
-                case 2:
+                case "2":
                     System.out.println("Reading value from the map");
                     key = console.readLine("Enter the key:");
                     result = client.get(key);
                     System.out.println("Value read: " + result);
                     break;
-                case 3:
+                case "3":
                     System.out.println("Removing value in the map");
                     key = console.readLine("Enter the key:");
                     result = client.remove(key);
                     System.out.println("Value removed: " + result);
                     break;
-                case 4:
+                case "4":
                     System.out.println("Getting the map size");
                     int size = client.size();
                     System.out.println("Map size: " + size);
                     break;
+                
+                case "ps": 
+                    System.out.println("> put set");
+                    break;
+                
+                case "gs":
+                    System.out.println("> get set");
+                    break;
+                    
+                case "adde":
+                    System.out.println("> add element");
+                    break;
+                
+                case "rs":
+                    System.out.println("> remove set");
+                    break;
+                    
+                case "we":
+                    System.out.println("> write element");
+                    break;
+                    
+                case "re":
+                    System.out.println("> read element");
+                    break;
+                
+                case "ie":
+                    System.out.println("> is element");
+                    break;
+                    
+                case "sum":
+                    System.out.println("> Sum");
+                    break;
+                    
+                case "mult":
+                    System.out.println("> Mult");
+                    break;
+            
+                    
             }
         }
     }

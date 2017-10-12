@@ -1,4 +1,4 @@
-ckage foo.gettingstarted.client;
+package foo.gettingstarted.client;
 
 // This is the class which sends requests to replicas
 import bftsmart.tom.ServiceProxy;
@@ -18,9 +18,10 @@ import java.util.Set;
 public class MapClient implements Map<String, String> {
 
     ServiceProxy clientProxy = null;
+    private static String configHome = "/home/ubuntu/workspace/csd_tp1/foo/config/";
 
     public MapClient(int clientId) {
-        clientProxy = new ServiceProxy(clientId);
+        clientProxy = new ServiceProxy(clientId, configHome);
     }
 
     @Override
