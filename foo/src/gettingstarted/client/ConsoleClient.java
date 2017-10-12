@@ -27,6 +27,10 @@ public class ConsoleClient {
                     System.out.println("Putting value in the map");
                     String key = console.readLine("Enter the key:");
                     String value = console.readLine("Enter the value:");
+                    
+                    //String[] valuesSplitted = value.split(",");
+                    //Set<Integer> set = new HashSet<Integer>();
+                    
                     String result = client.put(key, value);
                     System.out.println("Previous value: " + result);
                     break;
@@ -34,7 +38,10 @@ public class ConsoleClient {
                     System.out.println("Reading value from the map");
                     key = console.readLine("Enter the key:");
                     result = client.get(key);
-                    System.out.println("Value read: " + result);
+                    if(result!=null)
+                        System.out.println("Value read: " + result);
+                    else 
+                        System.out.println("Value not found!");
                     break;
                 case "3":
                     System.out.println("Removing value in the map");

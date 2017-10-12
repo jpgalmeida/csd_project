@@ -92,6 +92,11 @@ public class MapClient implements Map<String, String> {
             dos.writeInt(RequestType.GET);
             dos.writeUTF(String.valueOf(key));
             byte[] reply = clientProxy.invokeUnordered(out.toByteArray());
+            
+            if(reply == null)
+                return null;
+            
+                
             String value = new String(reply);
             return value;
         } catch (IOException ioe) {

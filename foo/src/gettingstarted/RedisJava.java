@@ -4,7 +4,8 @@ import redis.clients.jedis.*;
 public class RedisJava { 
 	   public static void main(String[] args) { 
 	      //Connecting to Redis server on localhost 
-		  Jedis jedis=new Jedis("172.17.0.2", 6379); 
+		  //Jedis jedis=new Jedis("172.17.0.2", 6379); 
+		  Jedis jedis=new Jedis("localhost"); 
 		  //Jedis j = new Jedis(host, port, ssl)
 
 		  
