@@ -5,7 +5,7 @@
 	<artifactId>CSD-TP1</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<build>
-		<sourceDirectory>foo/src</sourceDirectory>
+		<sourceDirectory>src</sourceDirectory>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -35,10 +35,95 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>com.spotify</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>0.4.13</version>
+				<executions>
+					<execution>
+						<id>build-baseimage</id>
+						<phase>package</phase>
+						<goals>
+							<goal>build</goal>
+						</goals>
+						<configuration>
+							<imageName>csd-work-base</imageName>
+							<baseImage>openjdk:8</baseImage>
+							<resources>
+								<resource>
+									<targetPath>/home/csd</targetPath>
+									<directory>${basedir}</directory>
+									<include>config/</include>
+								</resource>
+								<resource>
+									<targetPath>/home/csd</targetPath>
+									<directory>${project.build.directory}/lib</directory>
+									<include>*.jar</include>
+								</resource>
+								<resource>
+									<targetPath>/home/csd/</targetPath>
+									<directory>lib/</directory>
+									<include>*.jar</include>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>build-image</id>
+						<phase>install</phase>
+						<goals>
+							<goal>build</goal>
+						</goals>
+						<configuration>
+							<imageName>csd-work</imageName>
+							<baseImage>csd-work-base</baseImage>
+							<resources>
+								<resource>
+									<targetPath>/home/csd</targetPath>
+									<directory>${project.build.directory}</directory>
+									<include>${project.build.finalName}.jar</include>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+
+				</executions>
+			</plugin>
+
+			
+
 		</plugins>
 	</build>
 
 	<dependencies>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jersey.core</groupId>
+			<artifactId>jersey-client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jersey.core</groupId>
+			<artifactId>jersey-common</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jersey.core</groupId>
+			<artifactId>jersey-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jersey.media</groupId>
+			<artifactId>jersey-media-jaxb</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jersey.containers</groupId>
+			<artifactId>jersey-container-jdk-http</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jersey.media</groupId>
+			<artifactId>jersey-media-json-jackson</artifactId>
+		</dependency>
 		<dependency>
 		    <groupId>redis.clients</groupId>
 			<artifactId>jedis</artifactId>
@@ -50,14 +135,56 @@
 			<groupId>bftsmart</groupId>
 			<artifactId>BFT-SMaRt</artifactId>
 			<version>1.1</version>
-			<systemPath>${basedir}/foo/bin/BFT-SMaRt.jar</systemPath>
+			<systemPath>${basedir}/bin/BFT-SMaRt.jar</systemPath>
 			<scope>system</scope>
 			<type>jar</type>
 		</dependency>
+
 	</dependencies>
 
 	<dependencyManagement>
 		<dependencies>
+			<dependency>
+				<groupId>org.glassfish.jersey.core</groupId>
+				<artifactId>jersey-client</artifactId>
+				<version>2.25.1</version>
+			</dependency>
+			<dependency>
+				<groupId>org.glassfish.jersey.core</groupId>
+				<artifactId>jersey-server</artifactId>
+				<version>2.25.1</version>
+			</dependency>
+			<dependency>
+				<groupId>org.glassfish.jersey.media</groupId>
+				<artifactId>jersey-media-jaxb</artifactId>
+				<version>2.25.1</version>
+			</dependency>
+			<dependency>
+				<groupId>org.glassfish.jersey.containers</groupId>
+				<artifactId>jersey-container-jdk-http</artifactId>
+				<version>2.25.1</version>
+			</dependency>
+			<dependency>
+				<groupId>org.glassfish.jersey.core</groupId>
+				<artifactId>jersey-common</artifactId>
+				<version>2.25.1</version>
+			</dependency>
+			<dependency>
+				<groupId>org.glassfish.jersey.media</groupId>
+				<artifactId>jersey-media-json-jackson</artifactId>
+				<version>2.25.1</version>
+			</dependency>
+			<dependency>
+				<groupId>com.spotify</groupId>
+				<artifactId>docker-client</artifactId>
+				<version>8.1.2</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>21.0</version>
+			</dependency>
+
 		</dependencies>
 	</dependencyManagement>
 

@@ -1,20 +1,37 @@
 # My project's README
 
-Command to run the application on Docker:
-docker run -t -i csd-work java -cp /home/csd/* RedisJava
+#Command to run the application on Docker:
+docker run -t -i csd-work java -cp /home/csd/* foo.gettingstarted.RedisJava
 
-Command to run redis on Docker:
+#Command to run redis on Docker:
 docker run --name some-redis -d redis
 
-Command to get info about the Redis Server:
+#Command to get info about the Redis Server:
 docker inspect #id
 
-Command to run bft-SMaRt server:
+#Command to run bft-SMaRt server:
 java -cp bin/BFT-SMaRt.jar:lib/*:dist/foo.jar foo.gettingstarted.server.TreeMapServer 0
 
-Command to run bft-SMaRt client:
+#Command to run bft-SMaRt client:
 java -cp bin/BFT-SMaRt.jar:lib/*:dist/foo.jar foo.gettingstarted.client.ConsoleClient 1001
+        
+# Compile on maven in c9
+mvn package
 
+# Code to run client in c9
+java -cp foo/bin/BFT-SMaRt.jar:foo/lib/*:target/CSD-TP1-0.0.1-SNAPSHOT.jar foo.gettingstarted.client.ConsoleClient 1001  
+
+# Command to run server in c9
+java -cp foo/bin/BFT-SMaRt.jar:foo/lib/*:target/CSD-TP1-0.0.1-SNAPSHOT.jar foo.gettingstarted.server.TreeMapServer 2
+
+# Command to Start Docker on Linux
+service docker start
+
+# Docker stop and remove all containers
+docker stop $(docker ps -a -q)
+docker rm $(docker ps -a -q)
+
+docker run -t -i csd-work java -cp /home/csd/* server.TreeMapServer 0
 
 
 TODO:   key PutSet (String key, Entry set)
@@ -26,12 +43,6 @@ TODO:   key PutSet (String key, Entry set)
         Boolean isElement(String key, String element)
         int Sum(int Pos, String key, String key)
         int Mult(int Pos, String key, String key)
-        
-# Compile on maven in c9
-mvn package
 
-# Code to run client in c9
-java -cp foo/bin/BFT-SMaRt.jar:foo/lib/*:target/CSD-TP1-0.0.1-SNAPSHOT.jar foo.gettingstarted.client.ConsoleClient 1001  
 
-# Command to run server in c9
-java -cp foo/bin/BFT-SMaRt.jar:foo/lib/*:target/CSD-TP1-0.0.1-SNAPSHOT.jar foo.gettingstarted.server.TreeMapServer 2
+

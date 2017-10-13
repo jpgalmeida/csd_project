@@ -1,10 +1,10 @@
-package foo.gettingstarted.server;
+package server;
 
 // These are the classes which receive requests from clients
 import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
-import foo.gettingstarted.RequestType;
+import aux.RequestType;
 
 // Classes that need to be declared to implement this
 // replicated Map
@@ -18,15 +18,20 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.TreeMap;
 import java.util.Map;
+import java.net.*;
+
 
 public class TreeMapServer extends DefaultRecoverable {
 
     Map<String, String> table;
-    private static String configHome = "/home/ubuntu/workspace/csd_tp1/foo/config/";
+    //private static String configHome = "/home/ubuntu/workspace/csd_tp1/foo/config/";
+    private static String configHome = "/home/csd/config/";
 
-    public TreeMapServer(int id) {
+    public TreeMapServer(int id){
         table = new TreeMap<>();
         new ServiceReplica(id, configHome, this, this, null, null);
+
+        
     }
 
     public static void main(String[] args) {
@@ -36,6 +41,16 @@ public class TreeMapServer extends DefaultRecoverable {
         }
         
         new TreeMapServer(Integer.parseInt(args[0]));
+ 
+       /* System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        try{
+            System.out.println("REST Indexer Server ready @ " + InetAddress.getLocalHost().getHostAddress());
+        }
+        catch(Exception e){
+            System.out.println("Erro");
+        }*/
+
+
     }
 
     @Override

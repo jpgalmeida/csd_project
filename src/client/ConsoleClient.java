@@ -1,7 +1,9 @@
-package foo.gettingstarted.client;
+package client;
 
 import java.io.Console;
 import java.util.Scanner;
+import redis.clients.jedis.*;
+
 
 public class ConsoleClient {
 
@@ -13,6 +15,9 @@ public class ConsoleClient {
 
         MapClient client = new MapClient(Integer.parseInt(args[0]));
         Console console = System.console();
+
+        Jedis jedis = new Jedis("172.17.0.2", 6379);
+        System.out.println("Server is running: "+jedis.ping()); 
 
         Scanner sc = new Scanner(System.in);
 
@@ -32,7 +37,11 @@ public class ConsoleClient {
                     //Set<Integer> set = new HashSet<Integer>();
                     
                     String result = client.put(key, value);
-                    System.out.println("Previous value: " + result);
+                    jedis.set(key, value);
+
+                    //System.out.println("Previous value: " + result);
+                    System.out.println("Value for: "+key+": "+jedis.get(key));
+
                     break;
                 case "2":
                     System.out.println("Reading value from the map");

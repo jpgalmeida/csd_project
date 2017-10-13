@@ -1,4 +1,4 @@
-package foo.gettingstarted;
+package aux;
 
 public class RequestType {
     public static final int PUT = 1;
