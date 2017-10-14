@@ -32,7 +32,7 @@ docker stop $(docker ps -a -q)
 docker rm $(docker ps -a -q)
 
 docker run -t -i csd-work java -cp /home/csd/* server.TreeMapServer 0
-
+docker run -t -i csd-work java -cp /home/csd/* client.ConsoleClient 1001
 
 TODO:   key PutSet (String key, Entry set)
         Entry = GetSet(String key)
