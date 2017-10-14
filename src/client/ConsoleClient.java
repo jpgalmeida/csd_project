@@ -2,8 +2,11 @@ package client;
 
 import java.io.Console;
 import java.util.Scanner;
-import redis.clients.jedis.*;
+import java.util.Set;
 
+import redis.clients.jedis.*;
+import java.util.Collections; 
+import java.util.HashMap;
 
 public class ConsoleClient {
 
@@ -16,16 +19,15 @@ public class ConsoleClient {
         MapClient client = new MapClient(Integer.parseInt(args[0]));
         Console console = System.console();
 
-        Jedis jedis = new Jedis("172.17.0.2", 6379);
-        System.out.println("Server is running: "+jedis.ping()); 
-
         Scanner sc = new Scanner(System.in);
+
+        HashMap<String, HashMap> newmap = new HashMap<String,HashMap>();
 
         while (true) {
             System.out.println("Select an option:");
             System.out.println("1. ADD A KEY AND VALUE TO THE MAP");
 
-            String cmd = sc.nextLine();
+            String cmd = sc.next();
             
             switch (cmd) {
                 case "1":
@@ -37,10 +39,8 @@ public class ConsoleClient {
                     //Set<Integer> set = new HashSet<Integer>();
                     
                     String result = client.put(key, value);
-                    jedis.set(key, value);
 
                     //System.out.println("Previous value: " + result);
-                    System.out.println("Value for: "+key+": "+jedis.get(key));
 
                     break;
                 case "2":
@@ -65,16 +65,18 @@ public class ConsoleClient {
                     break;
                 
                 case "ps": 
-                    System.out.println("> put set");
-                    key = "";
-                    Object set = null;
+                    key = sc.next();
+                    value = sc.nextLine();
+                    newmap.put(key, parseValuesToMap(value));
                     
+                    System.out.println("> Success");
                     break;
                 
                 case "gs":
-                    System.out.println("> get set");
-                    key = "";
-                    
+                    key = sc.nextLine();
+
+                    Set set = newmap.entrySet();//newmap.get(key).entrySet();
+                    System.out.println("> Set values: "+set);
                     break;
                     
                 case "adde":
@@ -129,5 +131,18 @@ public class ConsoleClient {
             
             }
         }
+    }
+    
+    private static HashMap parseValuesToMap(String values) {
+    	HashMap hm = new HashMap();
+    	String [] parts = values.split(" ");
+    	System.out.println(values);
+    	System.out.println(parts);
+    	
+    	for( int i = 1 ; i < parts.length-1 ; i = i+2)
+    		hm.put(parts[i], parts[i+1]);
+    	
+    	System.out.println(hm.entrySet());
+    	return hm;
     }
 }

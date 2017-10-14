@@ -1,4 +1,4 @@
-package resources;
+
 
 public class RequestType {
     public static final int PUT = 1;

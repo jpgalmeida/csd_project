@@ -2,7 +2,7 @@ package client;
 
 // This is the class which sends requests to replicas
 import bftsmart.tom.ServiceProxy;
-import aux.RequestType;
+import resources.RequestType;
 
 // Classes that need to be declared to implement this
 // replicated Map

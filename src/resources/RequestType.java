@@ -1,3 +1,5 @@
+package resources;
+
 public class RequestType {
     public static final int PUT = 1;
     public static final int GET = 2;

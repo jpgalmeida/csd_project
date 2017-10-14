@@ -1,4 +1,4 @@
-package resources;
+
 import redis.clients.jedis.*;
 
 public class RedisJava { 

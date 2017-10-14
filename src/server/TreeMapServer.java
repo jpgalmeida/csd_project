@@ -4,7 +4,8 @@ package server;
 import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
-import aux.RequestType;
+import redis.clients.jedis.Jedis;
+import resources.RequestType;
 
 // Classes that need to be declared to implement this
 // replicated Map
@@ -26,6 +27,8 @@ public class TreeMapServer extends DefaultRecoverable {
     Map<String, String> table;
     //private static String configHome = "/home/ubuntu/workspace/csd_tp1/foo/config/";
     private static String configHome = "/home/csd/config/";
+    
+
 
     public TreeMapServer(int id){
         table = new TreeMap<>();
@@ -36,9 +39,12 @@ public class TreeMapServer extends DefaultRecoverable {
 
     public static void main(String[] args) {
         if (args.length < 1) {
-            System.out.println("Usage: HashMapServer <server id>");
+            System.out.println("Usage: HashMapServer <server id> <redis addr>");
             System.exit(0);
         }
+        
+        Jedis jedis = new Jedis(args[1], 6379);
+        System.out.println("Server is running: "+jedis.ping()); 
         
         new TreeMapServer(Integer.parseInt(args[0]));
  
