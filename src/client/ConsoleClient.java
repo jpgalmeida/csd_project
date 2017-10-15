@@ -24,8 +24,8 @@ public class ConsoleClient {
         HashMap<String, HashMap> newmap = new HashMap<String,HashMap>();
 
         while (true) {
-            System.out.println("Select an option:");
-            System.out.println("1. ADD A KEY AND VALUE TO THE MAP");
+//            System.out.println("Select an option:");
+//            System.out.println("1. ADD A KEY AND VALUE TO THE MAP");
 
             String cmd = sc.next();
             
@@ -73,10 +73,22 @@ public class ConsoleClient {
                     break;
                 
                 case "gs":
-                    key = sc.nextLine();
+                    key = sc.next();
 
-                    Set set = newmap.entrySet();//newmap.get(key).entrySet();
-                    System.out.println("> Set values: "+set);
+                    HashMap auxMap = newmap.get(key);
+                    
+                    System.out.print("> Set values: ");
+                    if(auxMap!=null){
+	                    for (Object name: auxMap.keySet()){
+	                        String keyAux =name.toString();
+	                        String valueAux = auxMap.get(name).toString(); 
+	                        
+	                        System.out.print(keyAux + " " + valueAux+" ");  
+	                    }
+                    }
+                    else
+                    	System.out.println("No key associated!");
+                    System.out.println();
                     break;
                     
                 case "adde":
@@ -86,8 +98,15 @@ public class ConsoleClient {
                     break;
                 
                 case "rs":
-                    System.out.println("> remove set");
-                    key = "";
+                	key = sc.next();
+                	
+                	Object response = newmap.remove(key);
+                	
+                	if(response==null)
+                		System.out.println("> Remove failed!");
+                	else
+                		System.out.println("> Sucessfully removed object: "+ key);
+                    
                     
                     break;
                     
@@ -136,13 +155,14 @@ public class ConsoleClient {
     private static HashMap parseValuesToMap(String values) {
     	HashMap hm = new HashMap();
     	String [] parts = values.split(" ");
-    	System.out.println(values);
-    	System.out.println(parts);
+//    	System.out.println(values);
+//    	System.out.println(parts);
     	
     	for( int i = 1 ; i < parts.length-1 ; i = i+2)
     		hm.put(parts[i], parts[i+1]);
     	
-    	System.out.println(hm.entrySet());
+//    	System.out.println("Print from parseValuesToMap");
+//    	System.out.println(hm.entrySet());
     	return hm;
     }
 }

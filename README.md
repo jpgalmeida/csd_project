@@ -35,5 +35,5 @@ docker run -t -i csd-work java -cp /home/csd/* client.ConsoleClient 1001
 2) docker run --name redis2 -d redis
 3) docker run -t -i csd-work java -cp /home/csd/* server.TreeMapServer 0 172.17.0.2
 4) docker run -t -i csd-work java -cp /home/csd/* server.TreeMapServer 1 172.17.0.3
-5) 
+5) docker run -t -i csd-work java -cp /home/csd/* client.ConsoleClient 1001
 
