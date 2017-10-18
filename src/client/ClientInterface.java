@@ -81,9 +81,16 @@ public class ClientInterface {
 				break;
 
 			case "adde":
-				System.out.println("> add element");
-				key = "";
-
+				key = sc.next();
+				
+				result = addElement(serverURI,  myURI, key);
+				
+				if(result == 204)
+					System.out.println("> Success");
+				else
+					System.out.println("> Failed!");
+								
+				
 				break;
 
 			case "rs":
@@ -147,7 +154,7 @@ public class ClientInterface {
 		Entry entry = new Entry(key, values);
 
 		//POST Request
-		Response response = target.path("/entries/"+key)
+		Response response = target.path("/entries/ps/"+key)
 				.request()
 				.post( Entity.entity(entry, MediaType.APPLICATION_JSON));
 
@@ -156,6 +163,23 @@ public class ClientInterface {
 
 	}
 
+	public static int addElement(String serverURL, URI myURI, String element){
+
+		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
+				.build();
+		URI serverURI = UriBuilder.fromUri(serverURL).build();
+		WebTarget target = client.target( serverURI );
+
+		//POST Request
+		Response response = target.path("/entries/adde/"+element)
+				.request()
+				.post( Entity.entity(element, MediaType.APPLICATION_JSON));
+
+
+		return response.getStatus();
+
+	}
+	
 	public static List<String> getEntry(String serverURL, URI myURI, String key){
 
 		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())

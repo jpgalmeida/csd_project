@@ -1,5 +1,6 @@
 package server;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -24,6 +25,8 @@ public class ServerInterfaceResources {
 
 	public String serverUri;
 	private Jedis jedis;
+	List<String> fields;
+	
 	
 	public ServerInterfaceResources(String serverUri, String redisUri){
 		this.serverUri = serverUri;
@@ -34,7 +37,9 @@ public class ServerInterfaceResources {
 		//check whether server is running or not 
 		System.out.println("Redis server is running: "+jedis.ping()); 
 
-
+		fields=new ArrayList<String>();
+		fields.add("nome");
+		fields.add("idade");
 	}
 
 	@GET
@@ -43,19 +48,30 @@ public class ServerInterfaceResources {
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<String> Entries(@PathParam("id") String id){
 		System.out.println("Received GET Request!");
-				
-		//tera de se ver como e com os outros campos
-		return jedis.hmget(id, "nome", "idade");
+
+		String[] arr = fields.toArray(new String[fields.size()]);
+		return jedis.hmget(id, arr);
 	}
 
 	@POST
-	@Path("/{id}")
+	@Path("/ps/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void register( @PathParam("id") String id, Entry entry) {
 		System.out.println("Received POST Request!");
 	
 		System.out.println(jedis.hmset(id, entry.getAttributes()));
 	}
+	
+	@POST
+	@Path("/adde/{id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public void addElement( @PathParam("id") String id, String element) {
+		System.out.println("Received adde Request!");
+		
+		fields.add(id);
+	}
+	
+	
 
 	@PUT
 	@Path("/{id}")
