@@ -128,7 +128,6 @@ public class ConsoleClient {
                     key2 = "";
                     
                     break;
-            
             }
         }
     }
@@ -136,8 +135,6 @@ public class ConsoleClient {
     private static HashMap parseValuesToMap(String values) {
     	HashMap hm = new HashMap();
     	String [] parts = values.split(" ");
-    	System.out.println(values);
-    	System.out.println(parts);
     	
     	for( int i = 1 ; i < parts.length-1 ; i = i+2)
     		hm.put(parts[i], parts[i+1]);
