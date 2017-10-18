@@ -20,13 +20,11 @@ public class ServerInterface {
 		URI baseUri = UriBuilder.fromUri("https://"+InetAddress.getLocalHost().getHostAddress()+"/").port(port).build();
 
 		ResourceConfig config = new ResourceConfig();
-		resources = new ServerInterfaceResources(baseUri.toString()); 
+		resources = new ServerInterfaceResources(args[0], baseUri.toString()); 
 		config.register( resources );
 
 		JdkHttpServerFactory.createHttpServer(baseUri, config,SSLContext.getDefault());
 		System.err.println("REST RendezVous Server ready @ " + baseUri);
-
-		
 
 	}
 

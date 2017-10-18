@@ -1,5 +1,8 @@
 package server;
 
+import java.util.HashMap;
+import java.util.List;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -19,46 +22,45 @@ import redis.clients.jedis.Jedis;
 @Path("/entries")
 public class ServerInterfaceResources {
 
-	public String rendezVousUri;
+	public String serverUri;
 	private Jedis jedis;
 	
-	public ServerInterfaceResources(String rendezVousUri){
-		this.rendezVousUri = rendezVousUri;
+	public ServerInterfaceResources(String serverUri, String redisUri){
+		this.serverUri = serverUri;
 
 		//Connecting to Redis server on localhost 
-		jedis=new Jedis("172.18.0.2", 6379);
-
+		jedis=new Jedis(serverUri, 6379);
+		
 		//check whether server is running or not 
 		System.out.println("Redis server is running: "+jedis.ping()); 
-
-//		jedis.set("foo", "bar");
-//		System.out.println("Value for foo: "+jedis.get("foo"));
 
 
 	}
 
 	@GET
+	@Path("/{id}")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String Entrys(){
-		System.out.println("hello");
-		return "hello";
-
+	public List<String> Entries(@PathParam("id") String id){
+		System.out.println("Received GET Request!");
+				
+		//tera de se ver como e com os outros campos
+		return jedis.hmget(id, "nome", "idade");
 	}
 
 	@POST
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public void register( @PathParam("id") String id, @QueryParam("secret") String secret, Entry Entry) {
-
-		System.out.println("Received new Entry!");
-
-
+	public void register( @PathParam("id") String id, Entry entry) {
+		System.out.println("Received POST Request!");
+	
+		System.out.println(jedis.hmset(id, entry.getAttributes()));
 	}
 
 	@PUT
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public void update(@PathParam("id") String id, Entry Entry) {
+	public void update(@PathParam("id") String id, Entry entry) {
 
 
 	}

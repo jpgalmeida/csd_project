@@ -1,10 +1,6 @@
 package server;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Map;
-
-import javax.xml.bind.DatatypeConverter;
 
 /**
  * Informação sobre servidor.
@@ -17,12 +13,12 @@ public class Entry {
 	/**
 	 * Dicionario com informação sobre o servidor.
 	 */
-	private Map<String, Object> attributes;
+	private Map<String, String> attributes;
 
 	public Entry() {
 	}
 
-	public Entry(String key, Map<String, Object> attributes) {
+	public Entry(String key, Map<String, String> attributes) {
 		this.key = key;
 		this.attributes = attributes;
 	}
@@ -31,7 +27,7 @@ public class Entry {
 		this.key = key;
 	}
 
-	public void setAttributes(Map<String, Object> attributes) {
+	public void setAttributes(Map<String, String> attributes) {
 		this.attributes = attributes;
 	}
 
@@ -39,7 +35,7 @@ public class Entry {
 		return key;
 	}
 
-	public Map<String, Object> getAttributes() {
+	public Map<String, String> getAttributes() {
 		return attributes;
 	}
 
@@ -47,16 +43,4 @@ public class Entry {
 		return String.format("%s : %s", key, attributes);
 	}
 
-//	/**
-//	 * Devolve identificador gerado deterministicamente a partir do key.
-//	 */
-//	public String generateId() {
-//		try {
-//			byte[] hash = MessageDigest.getInstance("MD5").digest(key.getBytes());
-//			return DatatypeConverter.printHexBinary(hash);
-//		} catch (NoSuchAlgorithmException e) {
-//			return "" + (key.hashCode() >>> 1);
-//		}
-//
-//	}
 }
