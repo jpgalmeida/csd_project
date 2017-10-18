@@ -1,83 +1,68 @@
 package client;
 
 import java.io.Console;
-import java.util.Scanner;
-import java.util.Set;
-
-import redis.clients.jedis.*;
-import java.util.Collections; 
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.UnknownHostException;
+import java.rmi.registry.Registry;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 
-public class ConsoleClient {
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriBuilderException;
 
-    public static void main(String[] args) {
-        if (args.length < 1) {
-            System.out.println("Usage: ConsoleClient <client id>");
-            System.exit(0);
-        }
+import server.Entry;
 
-        MapClient client = new MapClient(Integer.parseInt(args[0]));
-        
-        Console console = System.console();
+public class ClientInterface {
+	
+	public static void main(String[] args) {
+		int port = 8080;
+		URI myURI=null;
+		String serverURI=args[0];
+		try {
+			myURI = UriBuilder.fromUri("https://"+InetAddress.getLocalHost().getHostAddress()+"/").port(port).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+		
+		//registerEntry(serverURI,  myURI);
+		
+		Console console = System.console();
 
         Scanner sc = new Scanner(System.in);
 
         HashMap<String, HashMap> newmap = new HashMap<String,HashMap>();
-
+        
+        String key, value;
+        
         while (true) {
-//            System.out.println("Select an option:");
-//            System.out.println("1. ADD A KEY AND VALUE TO THE MAP");
 
             String cmd = sc.next();
             
             switch (cmd) {
-                case "1":
-                    System.out.println("Putting value in the map");
-                    String key = console.readLine("Enter the key:");
-                    String value = console.readLine("Enter the value:");
-                    
-                    String result = client.put(key, value);
-
-                    break;
-                case "2":
-                    System.out.println("Reading value from the map");
-                    key = console.readLine("Enter the key:");
-                    result = client.get(key);
-                    if(result!=null)
-                        System.out.println("Value read: " + result);
-                    else 
-                        System.out.println("Value not found!");
-                    break;
-                case "3":
-                    System.out.println("Removing value in the map");
-                    key = console.readLine("Enter the key:");
-                    result = client.remove(key);
-                    System.out.println("Value removed: " + result);
-                    break;
-                case "4":
-                    System.out.println("Getting the map size");
-                    int size = client.size();
-                    System.out.println("Map size: " + size);
-                    break;
-                
+                                
                 case "ps": 
                     key = sc.next();
                     value = sc.nextLine();
-                    //newmap.put(key, parseValuesToMap(value));
                     
-                    System.out.println("> Success");
+                    HashMap valuesParsed = parseValuesToMap(value);
+                    int result = registerEntry(serverURI,  myURI, key, valuesParsed);
                     
-                    String[] valuesParsed = parseValuesToArray(value);
-                    //String hmToString = newmap.toString();
-                    //result = client.puthm(key, valuesParsed, 2);
-                    result="Error!";
+                    if(result == 204)
+                    		System.out.println("> Success");
+                    else
+                    	System.out.println("> Failed!");
                     
-                    for(int i =0;i<4;i+=2) {
-                    	System.out.println("values ot send "+valuesParsed[i]+" "+valuesParsed[i+1]);
-                    	result = client.put(valuesParsed[i], valuesParsed[i+1]);
-                    }
                     
-                    System.out.println("RESULT FROM SV: "+result);
                     break;
                 
                 case "gs":
@@ -158,9 +143,47 @@ public class ConsoleClient {
             
             }
         }
-    }
-    
-    private static HashMap parseValuesToMap(String values) {
+        
+	}
+	
+	
+	public static int registerEntry(String rendezvousURL, URI myURI, String key, HashMap values){
+		
+		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
+				.build();
+		URI rendezvousURI = UriBuilder.fromUri(rendezvousURL).build();
+		WebTarget target = client.target( rendezvousURI );
+
+//		Map<String, Object> map = new HashMap<String, Object>();
+//		map.put("Nome", "Joao");
+		
+		//String key = "123";
+		
+		
+		Entry Entry = new Entry(key, values);
+
+		//GET Request
+//		Response response = target.path("/entries/")
+//				.request().get();
+		
+		//POST Request
+		Response response = target.path("/entries/"+key)
+				.request()
+				.post( Entity.entity(Entry, MediaType.APPLICATION_JSON));
+		
+				
+		return response.getStatus();
+
+	}
+	
+	static public class InsecureHostnameVerifier implements HostnameVerifier {
+		@Override
+		public boolean verify(String hostname, SSLSession session) {
+			return true;
+		}
+	}
+	
+	private static HashMap parseValuesToMap(String values) {
     	HashMap hm = new HashMap();
     	String [] parts = values.split(" ");
     	
@@ -185,6 +208,4 @@ public class ConsoleClient {
     	
     	return buf;
     }
-    
-    
 }
