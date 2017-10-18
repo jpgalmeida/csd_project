@@ -65,6 +65,13 @@
 									<directory>lib/</directory>
 									<include>*.jar</include>
 								</resource>
+								<resource>
+									<targetPath>/home/csd/</targetPath>
+									<directory>${basedir}</directory>
+									<include>server.jks</include>
+									<include>client.jks</include>
+									<include>server.cert</include>
+								</resource>
 							</resources>
 						</configuration>
 					</execution>

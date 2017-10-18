@@ -17,6 +17,7 @@ public class ConsoleClient {
         }
 
         MapClient client = new MapClient(Integer.parseInt(args[0]));
+        
         Console console = System.console();
 
         Scanner sc = new Scanner(System.in);
@@ -24,8 +25,8 @@ public class ConsoleClient {
         HashMap<String, HashMap> newmap = new HashMap<String,HashMap>();
 
         while (true) {
-            System.out.println("Select an option:");
-            System.out.println("1. ADD A KEY AND VALUE TO THE MAP");
+//            System.out.println("Select an option:");
+//            System.out.println("1. ADD A KEY AND VALUE TO THE MAP");
 
             String cmd = sc.next();
             
@@ -35,12 +36,7 @@ public class ConsoleClient {
                     String key = console.readLine("Enter the key:");
                     String value = console.readLine("Enter the value:");
                     
-                    //String[] valuesSplitted = value.split(",");
-                    //Set<Integer> set = new HashSet<Integer>();
-                    
                     String result = client.put(key, value);
-
-                    //System.out.println("Previous value: " + result);
 
                     break;
                 case "2":
@@ -67,16 +63,40 @@ public class ConsoleClient {
                 case "ps": 
                     key = sc.next();
                     value = sc.nextLine();
-                    newmap.put(key, parseValuesToMap(value));
+                    //newmap.put(key, parseValuesToMap(value));
                     
                     System.out.println("> Success");
+                    
+                    String[] valuesParsed = parseValuesToArray(value);
+                    //String hmToString = newmap.toString();
+                    //result = client.puthm(key, valuesParsed, 2);
+                    result="Error!";
+                    
+                    for(int i =0;i<4;i+=2) {
+                    	System.out.println("values ot send "+valuesParsed[i]+" "+valuesParsed[i+1]);
+                    	result = client.put(valuesParsed[i], valuesParsed[i+1]);
+                    }
+                    
+                    System.out.println("RESULT FROM SV: "+result);
                     break;
                 
                 case "gs":
-                    key = sc.nextLine();
+                    key = sc.next();
 
-                    Set set = newmap.entrySet();//newmap.get(key).entrySet();
-                    System.out.println("> Set values: "+set);
+                    HashMap auxMap = newmap.get(key);
+                    
+                    System.out.print("> Set values: ");
+                    if(auxMap!=null){
+	                    for (Object name: auxMap.keySet()){
+	                        String keyAux =name.toString();
+	                        String valueAux = auxMap.get(name).toString(); 
+	                        
+	                        System.out.print(keyAux + " " + valueAux+" ");  
+	                    }
+                    }
+                    else
+                    	System.out.println("No key associated!");
+                    System.out.println();
                     break;
                     
                 case "adde":
@@ -86,8 +106,15 @@ public class ConsoleClient {
                     break;
                 
                 case "rs":
-                    System.out.println("> remove set");
-                    key = "";
+                	key = sc.next();
+                	
+                	Object response = newmap.remove(key);
+                	
+                	if(response==null)
+                		System.out.println("> Remove failed!");
+                	else
+                		System.out.println("> Sucessfully removed object: "+ key);
+                    
                     
                     break;
                     
@@ -139,7 +166,24 @@ public class ConsoleClient {
     	for( int i = 1 ; i < parts.length-1 ; i = i+2)
     		hm.put(parts[i], parts[i+1]);
     	
-    	System.out.println(hm.entrySet());
     	return hm;
     }
+    
+    private static String[] parseValuesToArray(String values) {
+    	
+    	String [] parts = values.split(" ");
+    	String[] buf = new String[parts.length-1];
+    	
+    	System.out.println("parts len "+parts.length);
+    	
+    	for( int i = 1 ; i < parts.length ; i++)
+    		buf[i-1] = parts[i];
+    	
+//    	for(int i = 0;i<buf.length;i++)
+//    		System.out.println(buf[i]);
+    	
+    	return buf;
+    }
+    
+    
 }

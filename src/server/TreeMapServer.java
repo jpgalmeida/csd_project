@@ -25,7 +25,6 @@ import java.net.*;
 public class TreeMapServer extends DefaultRecoverable {
 
     Map<String, String> table;
-    //private static String configHome = "/home/ubuntu/workspace/csd_tp1/foo/config/";
     private static String configHome = "/home/csd/config/";
     
 
@@ -174,4 +173,3 @@ public class TreeMapServer extends DefaultRecoverable {
         }
     }
 }
-

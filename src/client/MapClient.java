@@ -18,7 +18,6 @@ import java.util.Set;
 public class MapClient implements Map<String, String> {
 
     ServiceProxy clientProxy = null;
-    //private static String configHome = "/home/ubuntu/workspace/csd_tp1/foo/config/";
     private static String configHome = "/home/csd/config/";
 
     
@@ -143,4 +142,3 @@ public class MapClient implements Map<String, String> {
         }
     }
 }
-
