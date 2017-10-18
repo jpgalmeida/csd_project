@@ -155,7 +155,6 @@ public class ConsoleClient {
                     key2 = "";
                     
                     break;
-            
             }
         }
     }
