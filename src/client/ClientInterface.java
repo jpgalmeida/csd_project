@@ -151,7 +151,7 @@ public class ClientInterface {
 				String key1 = sc.next();
 				String key2 = sc.next();
 				
-				
+				int sum_res = Sum(serverURI, key1, key2, pos);
 
 				break;
 
@@ -161,13 +161,79 @@ public class ClientInterface {
 				key1 = sc.next();
 				key2 = sc.next();
 
+				int mult_res = Mult(serverURI, key1, key2, pos);
+				
+				break;
+				
+			case "sumall":
+				System.out.println("> SumAll");
+				pos = sc.nextInt();
+				
+				int sum_all = SumAll(serverURI, pos);
+				break;
+				
+			case "multall":
+				System.out.println("> MultAll");
+				pos = sc.nextInt();
+				
+				int mult_all = MultAll(serverURI, pos);
+				
 				break;
 
 			}
+				
 		}
 
 	}
+	
+	
+	
+	
+	/* --------------------------------------------------------------
+	 * ---------------------- NOT IN USE YET ------------------------ */
+	private static int MultAll(String serverURL, int pos) {
+		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
+				.build();
+		URI serverURI = UriBuilder.fromUri(serverURL).build();
+		WebTarget target = client.target( serverURI );
+		
+		return 0;
+	}
+	
+	private static int SumAll(String serverURL, int pos) {
+		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
+				.build();
+		URI serverURI = UriBuilder.fromUri(serverURL).build();
+		WebTarget target = client.target( serverURI );
+		
+		return 0;
+	}
+	
+	private static int Mult(String serverURL, String key1, String key2, int pos) {
+		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
+				.build();
+		URI serverURI = UriBuilder.fromUri(serverURL).build();
+		WebTarget target = client.target( serverURI );
+		
+		return 0;
+	}
+	
+	
+	private static int Sum(String serverURL, String key1, String key2, int pos) {
+		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
+				.build();
+		URI serverURI = UriBuilder.fromUri(serverURL).build();
+		WebTarget target = client.target( serverURI );
+		
+		return 0;
+	}
+	
+	/* ------------------------------------------------------------ 
+	 * ------------------------------------------------------------ */
 
+	
+	
+	
 	private static Object isElement(String serverURL, String key, String element) {
 		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
 				.build();

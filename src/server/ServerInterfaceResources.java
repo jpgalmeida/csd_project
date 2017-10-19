@@ -74,10 +74,12 @@ public class ServerInterfaceResources {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String readElement(@PathParam("id") String id, @PathParam("pos") int pos) {
-		System.out.println("Received GET Request!");
+		System.out.println("Received Read Element Request!");
 		String field = fields.get(pos);
+		String result = jedis.hget(id, field);
 		
-		return jedis.hget(id, field);
+		System.out.println(result);
+		return result;
 	}
 	
 	@GET
@@ -85,27 +87,20 @@ public class ServerInterfaceResources {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public boolean isElement(@PathParam("id") String id, @PathParam("element") String element) {
-		System.out.println("Received GET Request!");
-		
-		boolean result = false;
-		String value;
+		System.out.println("Received GET IsElement Request!");
 		
 		for (String current_field : fields) {
 			
-			while( result == false ) {
-				
-				value = jedis.hget(id, current_field);
-				
-				if(value != null) {
-					result = true;
-				}
-				
-			}
+			Object result = jedis.hget(id, current_field);
 			
+			if(result.toString().equalsIgnoreCase(element)) {
+				System.out.println(true);
+				return true;
+			}
 		}
 		
-		System.out.println(result);
-		return result;
+		System.out.println(false);
+		return false;
 	}
 
 	@PUT
@@ -114,7 +109,6 @@ public class ServerInterfaceResources {
 	public void writeElement(@PathParam("id") String id, @PathParam("pos") int pos, String new_element) {
 		String field = fields.get(pos);
 		System.out.println(jedis.hset(id, field, new_element));
-		
 	}
 
 	@DELETE
