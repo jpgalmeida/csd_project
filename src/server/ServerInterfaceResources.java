@@ -76,16 +76,20 @@ public class ServerInterfaceResources {
 	public String readElement(@PathParam("id") String id, @PathParam("pos") int pos) {
 		System.out.println("Received Read Element Request!");
 		String field = fields.get(pos);
-		String result = jedis.hget(id, field);
 		
+		//TODO client crasha quando hget retorna nil
+		String result = "";
+		result = jedis.hget(id, field);
 		System.out.println(result);
+//		if(result == null)
+//			return "";
+		
 		return result;
 	}
 	
 	@GET
 	@Path("/ie/{id}/{element}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public boolean isElement(@PathParam("id") String id, @PathParam("element") String element) {
 		System.out.println("Received GET IsElement Request!");
 		

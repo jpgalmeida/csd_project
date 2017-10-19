@@ -26,15 +26,28 @@ import server.Entry;
 
 public class ClientInterface {
 
+	private static Client client;
+	private static URI serverURI;
+	private static WebTarget target;
+	
 	public static void main(String[] args) {
 		int port = 8080;
 		URI myURI = null;
-		String serverURI=args[0];
+		String serverURL=args[0];
+		
 		try {
 			myURI = UriBuilder.fromUri("https://"+InetAddress.getLocalHost().getHostAddress()+"/").port(port).build();
 		} catch (Exception e) {
 			e.printStackTrace();
 		} 
+		
+		//Server connection
+		client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
+				.build();
+		serverURI = UriBuilder.fromUri(serverURL).build();
+		target = client.target( serverURI );
+		
+		
 		
 		System.out.println("Client ready!");
 
@@ -56,7 +69,7 @@ public class ClientInterface {
 				value = sc.nextLine();
 
 				HashMap<String, String> valuesParsed = parseValuesToMap(value);
-				result = registerEntry(serverURI, key, valuesParsed);
+				result = registerEntry(key, valuesParsed);
 
 				if(result == 204)
 					System.out.println("> Success");
@@ -69,7 +82,7 @@ public class ClientInterface {
 			case "gs":
 				key = sc.next();
 
-				List<String> fields = getEntry(serverURI,  myURI, key);
+				List<String> fields = getEntry( key);
 				
 				
 				if(fields != null)
@@ -83,7 +96,7 @@ public class ClientInterface {
 			case "adde":
 				key = sc.next();
 				
-				result = addElement(serverURI, key);
+				result = addElement(key);
 				
 				if(result == 204)
 					System.out.println("> Success");
@@ -96,7 +109,7 @@ public class ClientInterface {
 			case "rs":
 				key = sc.next();
 				
-				result = removeSet(serverURI, key);
+				result = removeSet(key);
 				
 				if(result != 200 && result != 204 )
 					System.out.println("> Failed");
@@ -111,7 +124,7 @@ public class ClientInterface {
 				String new_element = sc.next();
 				int pos = sc.nextInt();
 				
-				result = writeElement(serverURI, key, new_element, pos);
+				result = writeElement(key, new_element, pos);
 				
 				if(result == 204 || result == 200 )
 					System.out.println("> Success");
@@ -121,27 +134,29 @@ public class ClientInterface {
 				break;
 
 			case "re":
-				System.out.println("> read element");
+				//System.out.println("> read element");
 				key = sc.next();
 				pos = sc.nextInt();
 				
-				result = readElement(serverURI, key, pos);
+				String elementRead = readElement(key, pos);
 				
-				if(result == 200)
-					System.out.println("> Success");
+				if(!elementRead.equals(""))
+					System.out.println("> Read:" +elementRead);
 				else
 					System.out.println("> Failed");
 				
 				break;
 
 			case "ie":
-				System.out.println("> is element");
+				//System.out.println("> is element");
 				key = sc.next();
 				String element = sc.next();
 
-				Object res = isElement(serverURI, key, element);
-				
-				System.out.println(res);
+				boolean res = isElement(key, element);
+				if(res)
+					System.out.println("> " +element+" is element");
+				else
+					System.out.println("> " +element+" isn't element");
 				
 				break;
 
@@ -151,7 +166,7 @@ public class ClientInterface {
 				String key1 = sc.next();
 				String key2 = sc.next();
 				
-				int sum_res = Sum(serverURI, key1, key2, pos);
+				int sum_res = Sum(key1, key2, pos);
 
 				break;
 
@@ -161,7 +176,7 @@ public class ClientInterface {
 				key1 = sc.next();
 				key2 = sc.next();
 
-				int mult_res = Mult(serverURI, key1, key2, pos);
+				int mult_res = Mult( key1, key2, pos);
 				
 				break;
 				
@@ -169,14 +184,14 @@ public class ClientInterface {
 				System.out.println("> SumAll");
 				pos = sc.nextInt();
 				
-				int sum_all = SumAll(serverURI, pos);
+				int sum_all = SumAll( pos);
 				break;
 				
 			case "multall":
 				System.out.println("> MultAll");
 				pos = sc.nextInt();
 				
-				int mult_all = MultAll(serverURI, pos);
+				int mult_all = MultAll( pos);
 				
 				break;
 
@@ -191,39 +206,27 @@ public class ClientInterface {
 	
 	/* --------------------------------------------------------------
 	 * ---------------------- NOT IN USE YET ------------------------ */
-	private static int MultAll(String serverURL, int pos) {
-		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
-				.build();
-		URI serverURI = UriBuilder.fromUri(serverURL).build();
-		WebTarget target = client.target( serverURI );
+	private static int MultAll(int pos) {
+		
 		
 		return 0;
 	}
 	
-	private static int SumAll(String serverURL, int pos) {
-		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
-				.build();
-		URI serverURI = UriBuilder.fromUri(serverURL).build();
-		WebTarget target = client.target( serverURI );
+	private static int SumAll(int pos) {
+		
 		
 		return 0;
 	}
 	
-	private static int Mult(String serverURL, String key1, String key2, int pos) {
-		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
-				.build();
-		URI serverURI = UriBuilder.fromUri(serverURL).build();
-		WebTarget target = client.target( serverURI );
+	private static int Mult(String key1, String key2, int pos) {
+		
 		
 		return 0;
 	}
 	
 	
-	private static int Sum(String serverURL, String key1, String key2, int pos) {
-		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
-				.build();
-		URI serverURI = UriBuilder.fromUri(serverURL).build();
-		WebTarget target = client.target( serverURI );
+	private static int Sum(String key1, String key2, int pos) {
+		
 		
 		return 0;
 	}
@@ -234,42 +237,33 @@ public class ClientInterface {
 	
 	
 	
-	private static Object isElement(String serverURL, String key, String element) {
-		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
-				.build();
-		URI serverURI = UriBuilder.fromUri(serverURL).build();
-		WebTarget target = client.target( serverURI );
+	private static boolean isElement(String key, String element) {
+		
 		
 		// GET request
-		Response response = target.path("/entries/ie/"+key+"/"+element)
+		boolean response = target.path("/entries/ie/"+key+"/"+element)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
-				.get();
+				.get(new GenericType<Boolean>(){});
 		
 		return response;
 	}
 
-	private static int readElement(String serverURL, String key, int pos) {
-		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
-				.build();
-		URI serverURI = UriBuilder.fromUri(serverURL).build();
-		WebTarget target = client.target( serverURI );
+	private static String readElement(String key, int pos) {
+		
 		
 		// GET request
-		Response response = target.path("/entries/"+key+"/"+pos)
+		String response = target.path("/entries/"+key+"/"+pos)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
-				.get();
+				.get(new GenericType<String>(){});
 		
-		return response.getStatus();
+		return response;
 	}
 
-	public static int writeElement( String serverURL, String key, String new_element, int pos) {
+	public static int writeElement(String key, String new_element, int pos) {
 		
-		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
-				.build();
-		URI serverURI = UriBuilder.fromUri(serverURL).build();
-		WebTarget target = client.target( serverURI );
+		
 		
 		// PUT request
 		Response response = target.path("/entries/"+key+"/"+pos)
@@ -279,12 +273,7 @@ public class ClientInterface {
 		return response.getStatus();
 	}
 
-	public static int registerEntry(String serverURL, String key, HashMap<String, String> values){
-
-		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
-				.build();
-		URI serverURI = UriBuilder.fromUri(serverURL).build();
-		WebTarget target = client.target( serverURI );
+	public static int registerEntry(String key, HashMap<String, String> values){
 
 		Entry entry = new Entry(key, values);
 
@@ -298,13 +287,8 @@ public class ClientInterface {
 
 	}
 	
-	public static int removeSet(String serverURL, String key) {
-		
-		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
-				.build();
-		URI serverURI = UriBuilder.fromUri(serverURL).build();
-		WebTarget target = client.target( serverURI );
-		
+	public static int removeSet(String key) {
+				
 		Response response = target.path("/entries/rs/"+key)
 				.request()
 				.delete();
@@ -313,13 +297,9 @@ public class ClientInterface {
 		
 	}
 
-	public static int addElement(String serverURL, String element){
+	public static int addElement(String element){
 
-		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
-				.build();
-		URI serverURI = UriBuilder.fromUri(serverURL).build();
-		WebTarget target = client.target( serverURI );
-
+		
 		//POST Request
 		Response response = target.path("/entries/adde/"+element)
 				.request()
@@ -330,12 +310,7 @@ public class ClientInterface {
 
 	}
 	
-	public static List<String> getEntry(String serverURL, URI myURI, String key){
-
-		Client client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
-				.build();
-		URI serverURI = UriBuilder.fromUri(serverURL).build();
-		WebTarget target = client.target( serverURI );
+	public static List<String> getEntry(String key){
 
 		//GET Request
 //		Response response = target.path("/entries/"+key)
