@@ -87,6 +87,7 @@ public class ServerInterfaceResources {
 		return result;
 	}
 	
+	
 	@GET
 	@Path("/ie/{id}/{element}")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -122,6 +123,51 @@ public class ServerInterfaceResources {
 		System.out.println("Received rs request!");
 		System.out.println(jedis.del(id));
 	}
+	
+	@GET
+	@Path("/sum/{id1}/{id2}/{pos}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public int sum(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
+		System.out.println("Received Sum Request!");
+		
+		String field = fields.get(pos);
+		
+		int val1 = Integer.valueOf(jedis.hget(id1, field));
+		int val2 = Integer.valueOf(jedis.hget(id2, field));
+		
+		return val1+val2;
+	}
+	
+	@GET
+	@Path("/mult/{id1}/{id2}/{pos}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public int mult(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
+		System.out.println("Received Sum Request!");
+		
+		String field = fields.get(pos);
+		
+		int val1 = Integer.valueOf(jedis.hget(id1, field));
+		int val2 = Integer.valueOf(jedis.hget(id2, field));
+		
+		return val1*val2;
+	}
+	
+	@GET
+	@Path("/sumAll/{pos}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public int sumAll(@PathParam("pos") int pos) {
+		System.out.println("Received Sum Request!");
+		
+		String field = fields.get(pos);
+		
+//		int val1 = Integer.valueOf(jedis.hget(id1, field));
+//		int val2 = Integer.valueOf(jedis.hget(id2, field));
+		
+		return 0;
+	}
+	
+	
+	
 	
 }
 
