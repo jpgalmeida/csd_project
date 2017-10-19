@@ -27,7 +27,6 @@ public class ServerInterfaceResources {
 	private Jedis jedis;
 	List<String> fields;
 	
-	
 	public ServerInterfaceResources(String serverUri, String redisUri){
 		this.serverUri = serverUri;
 
@@ -56,10 +55,10 @@ public class ServerInterfaceResources {
 	@POST
 	@Path("/ps/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public void register( @PathParam("id") String id, Entry entry) {
+	public void putSet( @PathParam("id") String id, Entry entry) {
 		System.out.println("Received POST Request!");
-	
 		System.out.println(jedis.hmset(id, entry.getAttributes()));
+		
 	}
 	
 	@POST
@@ -67,28 +66,64 @@ public class ServerInterfaceResources {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void addElement( @PathParam("id") String id, String element) {
 		System.out.println("Received adde Request!");
-		
 		fields.add(id);
 	}
 	
+	@GET
+	@Path("/{id}/{pos}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String readElement(@PathParam("id") String id, @PathParam("pos") int pos) {
+		System.out.println("Received GET Request!");
+		String field = fields.get(pos);
+		
+		return jedis.hget(id, field);
+	}
 	
+	@GET
+	@Path("/ie/{id}/{element}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public boolean isElement(@PathParam("id") String id, @PathParam("element") String element) {
+		System.out.println("Received GET Request!");
+		
+		boolean result = false;
+		String value;
+		
+		for (String current_field : fields) {
+			
+			while( result == false ) {
+				
+				value = jedis.hget(id, current_field);
+				
+				if(value != null) {
+					result = true;
+				}
+				
+			}
+			
+		}
+		
+		System.out.println(result);
+		return result;
+	}
 
 	@PUT
-	@Path("/{id}")
+	@Path("/{id}/{pos}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public void update(@PathParam("id") String id, Entry entry) {
-
-
+	public void writeElement(@PathParam("id") String id, @PathParam("pos") int pos, String new_element) {
+		String field = fields.get(pos);
+		System.out.println(jedis.hset(id, field, new_element));
+		
 	}
 
 	@DELETE
-	@Path("/{id}")
-	public void unregister(@PathParam("id") String id, @QueryParam("secret") String secret){
-
-
+	@Path("/rs/{id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public void removeSet(@PathParam("id") String id){
+		System.out.println("Received rs request!");
+		System.out.println(jedis.del(id));
 	}
-
-
-
+	
 }
 

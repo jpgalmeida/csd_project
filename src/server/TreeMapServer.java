@@ -46,14 +46,6 @@ public class TreeMapServer extends DefaultRecoverable {
         System.out.println("Server is running: "+jedis.ping()); 
         
         new TreeMapServer(Integer.parseInt(args[0]));
- 
-       /* System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        try{
-            System.out.println("REST Indexer Server ready @ " + InetAddress.getLocalHost().getHostAddress());
-        }
-        catch(Exception e){
-            System.out.println("Erro");
-        }*/
 
 
     }
