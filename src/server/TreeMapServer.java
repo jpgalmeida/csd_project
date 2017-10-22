@@ -17,151 +17,177 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.TreeMap;
+
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriBuilderException;
+
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.net.*;
 
 
 public class TreeMapServer extends DefaultRecoverable {
 
-    Map<String, String> table;
-    private static String configHome = "/home/csd/config/";
-    
+	Map<String, String> table;
+	private static String configHome = "/home/csd/config/";
+	private Jedis jedis;
 
 
-    public TreeMapServer(int id){
-        table = new TreeMap<>();
-        new ServiceReplica(id, configHome, this, this, null, null);
+	public TreeMapServer(int id, String serverUri){
+		table = new TreeMap<>();
+		
+		new ServiceReplica(id, configHome, this, this, null, null);
+		//Connecting to Redis server on localhost 
+		jedis=new Jedis(serverUri, 6379);
 
-        
-    }
+		//check whether server is running or not 
+		System.out.println("Redis server is running: "+jedis.ping()); 
 
-    public static void main(String[] args) {
-        if (args.length < 1) {
-            System.out.println("Usage: HashMapServer <server id> <redis addr>");
-            System.exit(0);
-        }
-        
-        Jedis jedis = new Jedis(args[1], 6379);
-        System.out.println("Server is running: "+jedis.ping()); 
-        
-        new TreeMapServer(Integer.parseInt(args[0]));
+	}
+
+	public static void main(String[] args) {
+		if (args.length < 1) {
+			System.out.println("Usage: HashMapServer <server id>");
+			System.exit(0);
+		}
+		
+		new TreeMapServer(Integer.parseInt(args[0]), args[1]);
 
 
-    }
+	}
 
-    @Override
-    public byte[][] appExecuteBatch(byte[][] command, MessageContext[] mcs) {
+	@Override
+	public byte[][] appExecuteBatch(byte[][] command, MessageContext[] mcs) {
 
-        byte[][] replies = new byte[command.length][];
-        for (int i = 0; i < command.length; i++) {
-            replies[i] = executeSingle(command[i], mcs[i]);
-        }
+		byte[][] replies = new byte[command.length][];
+		for (int i = 0; i < command.length; i++) {
+			replies[i] = executeSingle(command[i], mcs[i]);
+		}
 
-        return replies;
-    }
+		return replies;
+	}
 
-    private byte[] executeSingle(byte[] command, MessageContext msgCtx) {
-        ByteArrayInputStream in = new ByteArrayInputStream(command);
-        DataInputStream dis = new DataInputStream(in);
-        int reqType;
-        try {
-            reqType = dis.readInt();
-            if (reqType == RequestType.PUT) {
-                String key = dis.readUTF();
-                String value = dis.readUTF();
-                String oldValue = table.put(key, value);
-                byte[] resultBytes = null;
-                if (oldValue != null) {
-                    resultBytes = oldValue.getBytes();
-                }
-                return resultBytes;
-            } else if (reqType == RequestType.REMOVE) {
-                String key = dis.readUTF();
-                String removedValue = table.remove(key);
-                byte[] resultBytes = null;
-                if (removedValue != null) {
-                    resultBytes = removedValue.getBytes();
-                }
-                return resultBytes;
-            } else {
-                System.out.println("Unknown request type: " + reqType);
-                return null;
-            }
-        } catch (IOException e) {
-            System.out.println("Exception reading data in the replica: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-    }
+	private byte[] executeSingle(byte[] command, MessageContext msgCtx) {
+		ByteArrayInputStream in = new ByteArrayInputStream(command);
+		DataInputStream dis = new DataInputStream(in);
+		int reqType;
+		try {
+			reqType = dis.readInt();
+			if (reqType == RequestType.PUT) {
+				String id = dis.readUTF();
+				int size = dis.readInt();
 
-    @Override
-    public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
-        ByteArrayInputStream in = new ByteArrayInputStream(command);
-        DataInputStream dis = new DataInputStream(in);
-        int reqType;
-        try {
-            reqType = dis.readInt();
-            if (reqType == RequestType.GET) {
-                String key = dis.readUTF();
-                String readValue = table.get(key);
-                byte[] resultBytes = null;
-                if (readValue != null) {
-                    resultBytes = readValue.getBytes();
-                }
-                return resultBytes;
-            } else if (reqType == RequestType.SIZE) {
-                int size = table.size();
+				HashMap<String, String> att = new HashMap<String, String>();
+				for(int i=0;i<size;i++) {
+					String key = dis.readUTF();
+					String value = dis.readUTF();
+					att.put(key, value);
+				}
 
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                DataOutputStream dos = new DataOutputStream(out);
-                dos.writeInt(size);
-                byte[] sizeInBytes = out.toByteArray();
+				String res = jedis.hmset(id, att);
 
-                return sizeInBytes;
-            } else {
-                System.out.println("Unknown request type: " + reqType);
-                return null;
-            }
-        } catch (IOException e) {
-            System.out.println("Exception reading data in the replica: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-    }
+				return res.getBytes();
 
-    @Override
-    public void installSnapshot(byte[] state) {
-        ByteArrayInputStream bis = new ByteArrayInputStream(state);
-        try {
-            ObjectInput in = new ObjectInputStream(bis);
-            table = (Map<String, String>) in.readObject();
-            in.close();
-            bis.close();
-        } catch (ClassNotFoundException e) {
-            System.out.print("Coudn't find Map: " + e.getMessage());
-            e.printStackTrace();
-        } catch (IOException e) {
-            System.out.print("Exception installing the application state: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
 
-    @Override
-    public byte[] getSnapshot() {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream out = new ObjectOutputStream(bos);
-            out.writeObject(table);
-            out.flush();
-            out.close();
-            bos.close();
-            return bos.toByteArray();
-        } catch (IOException e) {
-            System.out.println("Exception when trying to take a + "
-                    + "snapshot of the application state" + e.getMessage());
-            e.printStackTrace();
-            return new byte[0];
-        }
-    }
+			} else if (reqType == RequestType.REMOVE) {
+				String key = dis.readUTF();
+				String removedValue = table.remove(key);
+				byte[] resultBytes = null;
+				if (removedValue != null) {
+					resultBytes = removedValue.getBytes();
+				}
+				return resultBytes;
+			} else {
+				System.out.println("Unknown request type: " + reqType);
+				return null;
+			}
+		} catch (IOException e) {
+			System.out.println("Exception reading data in the replica: " + e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	@Override
+	public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
+		ByteArrayInputStream in = new ByteArrayInputStream(command);
+		DataInputStream dis = new DataInputStream(in);
+		int reqType;
+		try {
+			reqType = dis.readInt();
+			if (reqType == RequestType.GET) {
+				String key = dis.readUTF();
+				//String readValue = table.get(key);
+
+				Map<String, String> att = jedis.hgetAll(key);
+				byte[] resultBytes = null;
+				
+				for (Map.Entry<String, String> e : att.entrySet()){
+					resultBytes = e.getKey().getBytes(StandardCharsets.UTF_8);
+					resultBytes = e.getValue().getBytes(StandardCharsets.UTF_8);
+//					dis.writeUTF(e.getKey());
+//					dis.writeUTF(e.getValue());
+				}
+
+				return resultBytes;
+				
+			} else if (reqType == RequestType.SIZE) {
+				int size = table.size();
+
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				DataOutputStream dos = new DataOutputStream(out);
+				dos.writeInt(size);
+				byte[] sizeInBytes = out.toByteArray();
+
+				return sizeInBytes;
+			} else {
+				System.out.println("Unknown request type: " + reqType);
+				return null;
+			}
+		} catch (IOException e) {
+			System.out.println("Exception reading data in the replica: " + e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	@Override
+	public void installSnapshot(byte[] state) {
+		ByteArrayInputStream bis = new ByteArrayInputStream(state);
+		try {
+			ObjectInput in = new ObjectInputStream(bis);
+			table = (Map<String, String>) in.readObject();
+			in.close();
+			bis.close();
+		} catch (ClassNotFoundException e) {
+			System.out.print("Coudn't find Map: " + e.getMessage());
+			e.printStackTrace();
+		} catch (IOException e) {
+			System.out.print("Exception installing the application state: " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public byte[] getSnapshot() {
+		try {
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream out = new ObjectOutputStream(bos);
+			out.writeObject(table);
+			out.flush();
+			out.close();
+			bos.close();
+			return bos.toByteArray();
+		} catch (IOException e) {
+			System.out.println("Exception when trying to take a + "
+					+ "snapshot of the application state" + e.getMessage());
+			e.printStackTrace();
+			return new byte[0];
+		}
+	}
 }

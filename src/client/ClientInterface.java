@@ -3,11 +3,8 @@ package client;
 import java.io.Console;
 import java.net.InetAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
-import java.rmi.registry.Registry;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 import javax.net.ssl.HostnameVerifier;
@@ -20,16 +17,16 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriBuilderException;
-
 import server.Entry;
+import bftsmart.tom.ServiceProxy;
+
 
 public class ClientInterface {
 
 	private static Client client;
 	private static URI serverURI;
 	private static WebTarget target;
-
+	
 	public static void main(String[] args) {
 		int port = 8080;
 		URI myURI = null;
@@ -44,10 +41,9 @@ public class ClientInterface {
 		//Server connection
 		client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
 				.build();
-		serverURI = UriBuilder.fromUri(serverURL).build();
+		
+		serverURI = UriBuilder.fromUri(serverURL).port(11100).build();
 		target = client.target( serverURI );
-
-
 
 		System.out.println("Client ready!");
 
@@ -352,6 +348,17 @@ public class ClientInterface {
 			hm.put(parts[i], parts[i+1]);
 
 		return hm;
+	}
+	
+	private static byte[][] parseValuesToByteArray(String values) {
+		
+		String [] parts = values.split(" ");
+		byte[][] aux = new byte[parts.length -1][];
+		
+		for( int i = 1 ; i < parts.length-1 ; i++)
+			aux[i-1] = parts[i].getBytes();
+
+		return aux;
 	}
 
 }

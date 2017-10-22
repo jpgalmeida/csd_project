@@ -25,45 +25,7 @@ public class MapClient implements Map<String, String> {
         clientProxy = new ServiceProxy(clientId, configHome);
     }
 
-    @Override
-    public boolean isEmpty() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
-    @Override
-    public boolean containsKey(Object key) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public boolean containsValue(Object value) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public void putAll(Map<? extends String, ? extends String> m) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public void clear() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public Set<String> keySet() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public Collection<String> values() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public Set<Entry<String, String>> entrySet() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     @Override
     public String put(String key, String value) {
@@ -140,5 +102,45 @@ public class MapClient implements Map<String, String> {
             System.out.println("Exception getting the size the hashmap: " + ioe.getMessage());
             return -1;
         }
+    }
+    
+    @Override
+    public boolean isEmpty() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void putAll(Map<? extends String, ? extends String> m) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public Set<String> keySet() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public Collection<String> values() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public Set<Entry<String, String>> entrySet() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }
