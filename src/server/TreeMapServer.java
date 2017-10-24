@@ -87,6 +87,7 @@ public class TreeMapServer extends DefaultRecoverable {
 					String key = dis.readUTF();
 					String value = dis.readUTF();
 					att.put(key, value);
+					System.out.println("added "+key+": "+value);
 				}
 
 				String res = jedis.hmset(id, att);
@@ -127,14 +128,16 @@ public class TreeMapServer extends DefaultRecoverable {
 				Map<String, String> att = jedis.hgetAll(key);
 				byte[] resultBytes = null;
 				
+				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+				
 				for (Map.Entry<String, String> e : att.entrySet()){
-					resultBytes = e.getKey().getBytes(StandardCharsets.UTF_8);
-					resultBytes = e.getValue().getBytes(StandardCharsets.UTF_8);
-//					dis.writeUTF(e.getKey());
-//					dis.writeUTF(e.getValue());
+					outputStream.write(e.getKey().getBytes(StandardCharsets.UTF_8));
+					outputStream.write(",".getBytes());
+					outputStream.write(e.getValue().getBytes(StandardCharsets.UTF_8));
+					outputStream.write(",".getBytes());
 				}
 
-				return resultBytes;
+				return outputStream.toByteArray();
 				
 			} else if (reqType == RequestType.SIZE) {
 				int size = table.size();

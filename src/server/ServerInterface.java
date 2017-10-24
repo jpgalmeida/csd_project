@@ -17,8 +17,8 @@ public class ServerInterface {
 	public static void main(String[] args) throws Exception {
 		//int port = 8080;
 		int port =11100;
-		URI baseUri = UriBuilder.fromUri("172.17.0.10").port(port).build();
-		//URI baseUri = UriBuilder.fromUri("https://"+InetAddress.getLocalHost().getHostAddress()+"/").port(port).build();
+		//URI baseUri = UriBuilder.fromUri("https://172.17.0.10").port(port).build();
+		URI baseUri = UriBuilder.fromUri("https://"+InetAddress.getLocalHost().getHostAddress()+"/").port(port).build();
 		
 		ResourceConfig config = new ResourceConfig();
 		

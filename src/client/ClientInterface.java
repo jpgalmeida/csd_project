@@ -65,6 +65,7 @@ public class ClientInterface {
 				value = sc.nextLine();
 
 				HashMap<String, String> valuesParsed = parseValuesToMap(value);
+				System.out.println("adding "+valuesParsed.toString());
 				result = registerEntry(key, valuesParsed);
 
 				if(result == 204)
@@ -78,8 +79,8 @@ public class ClientInterface {
 			case "gs":
 				key = sc.next();
 
-				List<String> fields = getEntry( key);
-
+				byte[] fields = getEntry( key);
+				
 
 				if(fields != null)
 					System.out.println(fields.toString());
@@ -282,9 +283,9 @@ public class ClientInterface {
 	}
 
 	public static int registerEntry(String key, HashMap<String, String> values){
-
+		
 		Entry entry = new Entry(key, values);
-
+		System.out.println("Register entry "+entry.getkey());
 		//POST Request
 		Response response = target.path("/entries/ps/"+key)
 				.request()
@@ -318,17 +319,13 @@ public class ClientInterface {
 
 	}
 
-	public static List<String> getEntry(String key){
+	public static byte[] getEntry(String key){
 
-		//GET Request
-		//		Response response = target.path("/entries/"+key)
-		//				.request().get();
-
-		List<String> response = target.path("/entries/"+key)
+		byte[] response = target.path("/entries/"+key)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
-				.get(new GenericType<List<String>>() {});
-
+				.get(new GenericType<byte[]>() {});
+		
 		return response;
 	}
 
