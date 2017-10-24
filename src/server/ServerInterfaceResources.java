@@ -1,16 +1,9 @@
 package server;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.Consumes;
@@ -34,17 +27,12 @@ import resources.RequestType;
 public class ServerInterfaceResources {
 
 	public String serverUri;
-	List<String> fields;
 	ServiceProxy clientProxy = null;
     private static String configHome = "/home/csd/config/";
 	
 	
 	public ServerInterfaceResources(String serverUri, int clientId) {
 		this.serverUri = serverUri;
-
-		fields=new ArrayList<String>();
-		fields.add("nome");
-		fields.add("idade");
 		
 		clientProxy = new ServiceProxy(clientId, configHome);
 		
@@ -57,8 +45,6 @@ public class ServerInterfaceResources {
 	public byte[] Entries(@PathParam("id") String id){
 		System.out.println("Received GET Request!");
 		
-		String[] arr = fields.toArray(new String[fields.size()]);
-		//return jedis.hmget(id, arr);
 		byte[] res = get(id);
 		String a = new String(res, StandardCharsets.UTF_8);
 		System.out.println(a);
@@ -80,8 +66,8 @@ public class ServerInterfaceResources {
 	@Path("/adde/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void addElement( @PathParam("id") String id, String element) {
+		
 		System.out.println("Received adde Request!");
-		fields.add(id);
 	}
 	
 	@GET
@@ -90,13 +76,10 @@ public class ServerInterfaceResources {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String readElement(@PathParam("id") String id, @PathParam("pos") int pos) {
 		System.out.println("Received Read Element Request!");
-		String field = fields.get(pos);
-		
-		//TODO client crasha quando hget retorna nil
+
 		//result = jedis.hget(id, field);
-		byte[] res = getElement(id,field);
+		byte[] res = getElement(id,pos);
 		String a = new String(res, StandardCharsets.UTF_8);
-		System.out.println(a);
 		return a;
 	}
 	
@@ -108,25 +91,13 @@ public class ServerInterfaceResources {
 		System.out.println("Received GET IsElement Request!");
 		
 		return checkElement(id,element);
-//		for (String current_field : fields) {
-//			
-//			Object result = jedis.hget(id, current_field);
-//			
-//			if(result.toString().equalsIgnoreCase(element)) {
-//				System.out.println(true);
-//				return true;
-//			}
-		
-		//}
 	}
 
 	@PUT
 	@Path("/{id}/{pos}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void writeElement(@PathParam("id") String id, @PathParam("pos") int pos, String new_element) {
-		String field = fields.get(pos);
-		putElement(id, field, new_element);
-		//System.out.println(jedis.hset(id, field, new_element));
+		putElement(id, pos, new_element);
 	}
 
 	@DELETE
@@ -135,7 +106,6 @@ public class ServerInterfaceResources {
 	public void removeSet(@PathParam("id") String id){
 		System.out.println("Received rs request!");
 		remove(id);
-		//System.out.println(jedis.del(id));
 	}
 	
 	@GET
@@ -144,12 +114,12 @@ public class ServerInterfaceResources {
 	public int sum(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
 		System.out.println("Received Sum Request!");
 		
-		String field = fields.get(pos);
+//		String field = fields.get(pos);
 		
 //		int val1 = Integer.valueOf(jedis.hget(id1, field));
 //		int val2 = Integer.valueOf(jedis.hget(id2, field));
-		return sumOperation(id1, id2, pos);
-		
+		//return sumOperation(id1, id2, pos);
+		return 0;
 //		return val1+val2;
 
 	}
@@ -160,7 +130,7 @@ public class ServerInterfaceResources {
 	public int mult(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
 		System.out.println("Received Sum Request!");
 		
-		String field = fields.get(pos);
+//		String field = fields.get(pos);
 		
 //		int val1 = Integer.valueOf(jedis.hget(id1, field));
 //		int val2 = Integer.valueOf(jedis.hget(id2, field));
@@ -183,34 +153,40 @@ public class ServerInterfaceResources {
 //		return 0;
 //	}
 
-	public int sumOperation(Object key1, Object key2, Object pos) {
-		try {
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			DataOutputStream dos = new DataOutputStream(out);
-			dos.writeInt(0);
-			return 0;
-		}
-		catch(IOException e) {
-			return 0;
-		}
-	}
+	//Not completed
+//	public int sumOperation(Object key1, Object key2, Object pos) {
+//		try {
+//			ByteArrayOutputStream out = new ByteArrayOutputStream();
+//			DataOutputStream dos = new DataOutputStream(out);
+//			dos.writeInt(0);
+//			return 0;
+//		}
+//		catch(IOException e) {
+//			return 0;
+//		}
+//	}
 	
-	public String putElement(Object key, Object pos, Object element) {
+	public int putElement(String key, int pos, String element) {
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			DataOutputStream dos = new DataOutputStream(out);
 			dos.writeInt(RequestType.WRITEELEMENT);
-			dos.writeUTF(String.valueOf(pos));
-			dos.writeUTF(String.valueOf(element));
+			dos.writeUTF(key);
+			dos.writeInt(pos);
+			dos.writeUTF(element);
 			byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
-			if(reply != null)
-				return new String(reply);
+			
+			System.out.println(new String(reply));
+			String res = new String(reply);
+			
+			if(res.equals("true"))
+				return 200;
 				
-			return null;
+			return 404;
 		}
 		catch(IOException e ) {
 			System.out.println("Exception writing element to the hashmap: "+e.getMessage());
-			return null;
+			return 404;
 		}
 	}
 	
@@ -223,10 +199,10 @@ public class ServerInterfaceResources {
 			dos.writeUTF(String.valueOf(element));
 			
 			byte[] reply = clientProxy.invokeUnordered(out.toByteArray());
-			if(reply == null)
-				return false;
 			
-			return Boolean.valueOf(String.valueOf(reply));
+			boolean res = new String(reply).equals("true");
+			
+			return res;
 		}
 		catch (IOException e) {
 			System.out.println("Exception checking existance of element in the hashmap: "+e.getMessage());
@@ -253,13 +229,13 @@ public class ServerInterfaceResources {
 		}
 	}
 	
-	public byte[] getElement(Object key, String pos) {
+	public byte[] getElement(Object key, int pos) {
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			DataOutputStream dos = new DataOutputStream(out);
 			dos.writeInt(RequestType.READELEMENT);
 			dos.writeUTF(String.valueOf(key));
-			dos.writeUTF(pos);
+			dos.writeInt(pos);
 			byte[] reply = clientProxy.invokeUnordered(out.toByteArray());
 			
 			return reply;
@@ -274,10 +250,9 @@ public class ServerInterfaceResources {
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             DataOutputStream dos = new DataOutputStream(out);
-            dos.writeInt(RequestType.GET);
+            dos.writeInt(RequestType.GETSET);
             dos.writeUTF(String.valueOf(key));
             byte[] reply = clientProxy.invokeUnordered(out.toByteArray());
-            
             
             if(reply == null)
                 return null;
@@ -294,7 +269,7 @@ public class ServerInterfaceResources {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(out);
         try {
-            dos.writeInt(RequestType.PUT);
+            dos.writeInt(RequestType.PUTSET);
             dos.writeUTF(id);
             dos.writeInt(attributes.entrySet().size());
             

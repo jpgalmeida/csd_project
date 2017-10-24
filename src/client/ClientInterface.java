@@ -4,7 +4,6 @@ import java.io.Console;
 import java.net.InetAddress;
 import java.net.URI;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Scanner;
 
 import javax.net.ssl.HostnameVerifier;
@@ -18,7 +17,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import server.Entry;
-import bftsmart.tom.ServiceProxy;
 
 
 public class ClientInterface {
@@ -105,9 +103,9 @@ public class ClientInterface {
 			case "rs":
 				key = sc.next();
 
-				result = removeSet(key);
+				String out = removeSet(key);
 
-				if(result != 200 && result != 204 )
+				if(out.equals("true"))
 					System.out.println("> Failed");
 				else 
 					System.out.println("> Success");
@@ -115,7 +113,6 @@ public class ClientInterface {
 				break;
 
 			case "we":
-				System.out.println("> write element");
 				key = sc.next();
 				String new_element = sc.next();
 				int pos = sc.nextInt();
@@ -149,6 +146,7 @@ public class ClientInterface {
 				String element = sc.next();
 
 				boolean res = isElement(key, element);
+
 				if(res)
 					System.out.println("> " +element+" is element");
 				else
@@ -271,13 +269,12 @@ public class ClientInterface {
 
 	public static int writeElement(String key, String new_element, int pos) {
 
-
-
 		// PUT request
 		Response response = target.path("/entries/"+key+"/"+pos)
 				.request()
 				.put(Entity.entity(new_element, MediaType.APPLICATION_JSON));
 
+		//falta alterar isto
 		return response.getStatus();
 	}
 
@@ -295,13 +292,13 @@ public class ClientInterface {
 
 	}
 
-	public static int removeSet(String key) {
+	public static String removeSet(String key) {
 
-		Response response = target.path("/entries/rs/"+key)
+		String response = target.path("/entries/rs/"+key)
 				.request()
-				.delete();
+				.delete(new GenericType<String>() {});
 
-		return response.getStatus();
+		return response;
 
 	}
 

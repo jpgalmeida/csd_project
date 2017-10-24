@@ -12,19 +12,12 @@ import resources.RequestType;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.TreeMap;
-
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriBuilderException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -81,7 +74,7 @@ public class TreeMapServer extends DefaultRecoverable {
 		int reqType;
 		try {
 			reqType = dis.readInt();
-			if (reqType == RequestType.PUT) {
+			if (reqType == RequestType.PUTSET) {
 				String id = dis.readUTF();
 				int size = dis.readInt();
 
@@ -107,15 +100,27 @@ public class TreeMapServer extends DefaultRecoverable {
 				return res.getBytes();
 
 
-			} else if (reqType == RequestType.REMOVE) {
+			} else if (reqType == RequestType.REMOVESET) {
 				String key = dis.readUTF();
-				String removedValue = table.remove(key);
-				byte[] resultBytes = null;
-				if (removedValue != null) {
-					resultBytes = removedValue.getBytes();
-				}
-				return resultBytes;
-			} else {
+				
+				jedis.del(key.getBytes());
+				
+				
+				return key.getBytes();
+			}else if (reqType == RequestType.WRITEELEMENT) {
+				String key = dis.readUTF();
+				int pos = dis.readInt();
+				String new_element = dis.readUTF();
+				
+				if(pos < 0 || pos >= fields.size())
+					return "false".getBytes();
+				
+				String field = fields.get(pos);
+				
+				System.out.println(jedis.hset(key, field, new_element));
+				
+				return "true".getBytes();
+			}else {
 				System.out.println("Unknown request type: " + reqType);
 				return null;
 			}
@@ -133,12 +138,11 @@ public class TreeMapServer extends DefaultRecoverable {
 		int reqType;
 		try {
 			reqType = dis.readInt();
-			if (reqType == RequestType.GET) {
+			if (reqType == RequestType.GETSET) {
 				String key = dis.readUTF();
 				//String readValue = table.get(key);
 
 				Map<String, String> att = jedis.hgetAll(key);
-				byte[] resultBytes = null;
 				
 				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
 				
@@ -151,15 +155,33 @@ public class TreeMapServer extends DefaultRecoverable {
 
 				return outputStream.toByteArray();
 				
-			} else if (reqType == RequestType.SIZE) {
-				int size = table.size();
-
-				ByteArrayOutputStream out = new ByteArrayOutputStream();
-				DataOutputStream dos = new DataOutputStream(out);
-				dos.writeInt(size);
-				byte[] sizeInBytes = out.toByteArray();
-
-				return sizeInBytes;
+			} else if (reqType == RequestType.READELEMENT) {
+				String key = dis.readUTF();
+				int pos = dis.readInt();
+				
+				String field = fields.get(pos);
+				
+				String result = "";
+				result = jedis.hget(key, field);
+				System.out.println(result);
+				
+				return result.getBytes();
+			} else if (reqType == RequestType.ISELEMENT) {
+				String key = dis.readUTF();
+				String element = dis.readUTF();
+				
+				for (String current_field : fields) {
+				
+					Object result = jedis.hget(key, current_field);
+					
+					if(result.toString().equalsIgnoreCase(element)) {
+						System.out.println(true);
+						return "true".getBytes();
+					}
+			
+				}
+				System.out.println(false);
+				return "false".getBytes();
 			} else {
 				System.out.println("Unknown request type: " + reqType);
 				return null;
