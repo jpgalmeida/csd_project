@@ -34,7 +34,6 @@ import resources.RequestType;
 public class ServerInterfaceResources {
 
 	public String serverUri;
-	//private Jedis jedis;
 	List<String> fields;
 	ServiceProxy clientProxy = null;
     private static String configHome = "/home/csd/config/";
@@ -42,12 +41,6 @@ public class ServerInterfaceResources {
 	
 	public ServerInterfaceResources(String serverUri, int clientId) {
 		this.serverUri = serverUri;
-
-		//Connecting to Redis server on localhost 
-		//jedis=new Jedis(serverUri, 6379);
-		
-		//check whether server is running or not 
-		//System.out.println("Redis server is running: "+jedis.ping()); 
 
 		fields=new ArrayList<String>();
 		fields.add("nome");
@@ -71,28 +64,6 @@ public class ServerInterfaceResources {
 		System.out.println(a);
 		return res;
 	}
-	
-	
-    public byte[] get(Object key) {
-        try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            DataOutputStream dos = new DataOutputStream(out);
-            dos.writeInt(RequestType.GET);
-            dos.writeUTF(String.valueOf(key));
-            byte[] reply = clientProxy.invokeUnordered(out.toByteArray());
-            
-            
-            if(reply == null)
-                return null;
-            
-            return reply;
-        } catch (IOException ioe) {
-            System.out.println("Exception getting value from the hashmap: " + ioe.getMessage());
-            return null;
-        }
-    }
-    
-    
 
 	@POST
 	@Path("/ps/{id}")
@@ -104,33 +75,6 @@ public class ServerInterfaceResources {
 		put(id, entry.getAttributes());
 		
 	}
-	
-    public String put(String id, Map<String, String> attributes) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        DataOutputStream dos = new DataOutputStream(out);
-        try {
-            dos.writeInt(RequestType.PUT);
-            dos.writeUTF(id);
-            dos.writeInt(attributes.entrySet().size());
-            
-            for (Map.Entry<String, String> e : attributes.entrySet()){
-    		    System.out.println(e.getKey() + "/" + e.getValue());
-    		    dos.writeUTF(e.getKey());
-                dos.writeUTF(e.getValue());
-    		}
-            
-            byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
-            if (reply != null) {
-                String previousValue = new String(reply);
-                return previousValue;
-            }
-            return null;
-        } catch (IOException ioe) {
-            System.out.println("Exception putting value into hashmap: " + ioe.getMessage());
-            return null;
-        }
-    }
-    
 	
 	@POST
 	@Path("/adde/{id}")
@@ -149,11 +93,11 @@ public class ServerInterfaceResources {
 		String field = fields.get(pos);
 		
 		//TODO client crasha quando hget retorna nil
-		String result = "";
 		//result = jedis.hget(id, field);
-		System.out.println(result);
-
-		return result;
+		byte[] res = getElement(id,field);
+		String a = new String(res, StandardCharsets.UTF_8);
+		System.out.println(a);
+		return a;
 	}
 	
 	
@@ -163,6 +107,7 @@ public class ServerInterfaceResources {
 	public boolean isElement(@PathParam("id") String id, @PathParam("element") String element) {
 		System.out.println("Received GET IsElement Request!");
 		
+		return checkElement(id,element);
 //		for (String current_field : fields) {
 //			
 //			Object result = jedis.hget(id, current_field);
@@ -173,8 +118,6 @@ public class ServerInterfaceResources {
 //			}
 		
 		//}
-		
-		return false;
 	}
 
 	@PUT
@@ -182,6 +125,7 @@ public class ServerInterfaceResources {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void writeElement(@PathParam("id") String id, @PathParam("pos") int pos, String new_element) {
 		String field = fields.get(pos);
+		putElement(id, field, new_element);
 		//System.out.println(jedis.hset(id, field, new_element));
 	}
 
@@ -190,6 +134,7 @@ public class ServerInterfaceResources {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void removeSet(@PathParam("id") String id){
 		System.out.println("Received rs request!");
+		remove(id);
 		//System.out.println(jedis.del(id));
 	}
 	
@@ -203,9 +148,10 @@ public class ServerInterfaceResources {
 		
 //		int val1 = Integer.valueOf(jedis.hget(id1, field));
 //		int val2 = Integer.valueOf(jedis.hget(id2, field));
+		return sumOperation(id1, id2, pos);
 		
 //		return val1+val2;
-		return 0;
+
 	}
 	
 	@GET
@@ -237,7 +183,139 @@ public class ServerInterfaceResources {
 //		return 0;
 //	}
 
+	public int sumOperation(Object key1, Object key2, Object pos) {
+		try {
+			//ByteArrayOutputStream out = new ByteArrayOutputStream();
+			//DataOutputStream dos = new DataOutputStream(out);
+			//dos.writeIn;
+			return 0;
+		}
+		catch(IOException e) {
+			return 0;
+		}
+	}
 	
+	public String putElement(Object key, Object pos, Object element) {
+		try {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			DataOutputStream dos = new DataOutputStream(out);
+			dos.writeInt(RequestType.WRITEELEMENT);
+			dos.writeUTF(String.valueOf(pos));
+			dos.writeUTF(String.valueOf(element));
+			byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
+			if(reply != null)
+				return new String(reply);
+				
+			return null;
+		}
+		catch(IOException e ) {
+			System.out.println("Exception writing element to the hashmap: "+e.getMessage());
+			return null;
+		}
+	}
+	
+	public boolean checkElement(Object key, Object element) {
+		try {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			DataOutputStream dos = new DataOutputStream(out);
+			dos.writeInt(RequestType.ISELEMENT);
+			dos.writeUTF(String.valueOf(key));
+			dos.writeUTF(String.valueOf(element));
+			
+			byte[] reply = clientProxy.invokeUnordered(out.toByteArray());
+			if(reply == null)
+				return false;
+			
+			return Boolean.valueOf(String.valueOf(reply));
+		}
+		catch (IOException e) {
+			System.out.println("Exception checking existance of element in the hashmap: "+e.getMessage());
+			return false;
+		}
+	}
+	
+	public String remove(Object key) {
+		try {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			DataOutputStream dos = new DataOutputStream(out);
+			dos.writeInt(RequestType.REMOVESET);
+			dos.writeUTF(String.valueOf(key));
+			
+			byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
+			if(reply == null)
+				return null;
+			
+			return new String(reply);
+		}
+		catch (IOException e) {
+			System.out.println("Exception removing entry from the hashmap: "+e.getMessage());
+			return null;
+		}
+	}
+	
+	public byte[] getElement(Object key, String pos) {
+		try {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			DataOutputStream dos = new DataOutputStream(out);
+			dos.writeInt(RequestType.READELEMENT);
+			dos.writeUTF(String.valueOf(key));
+			dos.writeUTF(pos);
+			byte[] reply = clientProxy.invokeUnordered(out.toByteArray());
+			
+			return reply;
+		}
+		catch(IOException ioe) {
+			System.out.println("Exception getting element from the hashmap: "+ioe.getMessage());
+			return null;
+		}
+	}
+	
+    public byte[] get(Object key) {
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            DataOutputStream dos = new DataOutputStream(out);
+            dos.writeInt(RequestType.GET);
+            dos.writeUTF(String.valueOf(key));
+            byte[] reply = clientProxy.invokeUnordered(out.toByteArray());
+            
+            
+            if(reply == null)
+                return null;
+            
+            return reply;
+        } catch (IOException ioe) {
+            System.out.println("Exception getting value from the hashmap: " + ioe.getMessage());
+            return null;
+        }
+    }
+	
+	
+    public String put(String id, Map<String, String> attributes) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(out);
+        try {
+            dos.writeInt(RequestType.PUT);
+            dos.writeUTF(id);
+            dos.writeInt(attributes.entrySet().size());
+            
+            for (Map.Entry<String, String> e : attributes.entrySet()){
+    		    System.out.println(e.getKey() + "/" + e.getValue());
+    		    dos.writeUTF(e.getKey());
+                dos.writeUTF(e.getValue());
+    		}
+            
+            byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
+            
+            if (reply != null) {
+                String previousValue = new String(reply);
+                return previousValue;
+            }
+            return null;
+        } catch (IOException ioe) {
+            System.out.println("Exception putting value into hashmap: " + ioe.getMessage());
+            return null;
+        }
+    }
 	
 	
 	
