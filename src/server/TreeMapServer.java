@@ -26,6 +26,7 @@ import java.util.TreeMap;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriBuilderException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,7 @@ public class TreeMapServer extends DefaultRecoverable {
 	Map<String, String> table;
 	private static String configHome = "/home/csd/config/";
 	private Jedis jedis;
-
+	List<String> fields;
 
 	public TreeMapServer(int id, String serverUri){
 		table = new TreeMap<>();
@@ -44,10 +45,12 @@ public class TreeMapServer extends DefaultRecoverable {
 		new ServiceReplica(id, configHome, this, this, null, null);
 		//Connecting to Redis server on localhost 
 		jedis=new Jedis(serverUri, 6379);
-
+		
 		//check whether server is running or not 
 		System.out.println("Redis server is running: "+jedis.ping()); 
-
+		fields=new ArrayList<String>();
+		fields.add("nome");
+		fields.add("idade");
 	}
 
 	public static void main(String[] args) {
@@ -83,11 +86,20 @@ public class TreeMapServer extends DefaultRecoverable {
 				int size = dis.readInt();
 
 				HashMap<String, String> att = new HashMap<String, String>();
-				for(int i=0;i<size;i++) {
-					String key = dis.readUTF();
-					String value = dis.readUTF();
-					att.put(key, value);
-					System.out.println("added "+key+": "+value);
+				try {
+					
+				
+					for(int i=0;i<size;i++) {
+						String key = dis.readUTF();
+						if(!fields.contains(key)) {
+							throw new Exception();
+						}
+						String value = dis.readUTF();
+						att.put(key, value);
+						System.out.println("added "+key+": "+value);
+					}
+				}catch(Exception e) {
+					System.out.println("Please add element first!");
 				}
 
 				String res = jedis.hmset(id, att);
