@@ -81,9 +81,8 @@ public class ClientInterface {
 
 				byte[] fields = getEntry( key);
 				
-
 				if(fields != null)
-					System.out.println(fields.toString());
+					System.out.println(new String(fields));
 				else
 					System.out.println("> Failed!");
 
