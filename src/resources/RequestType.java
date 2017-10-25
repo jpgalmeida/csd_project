@@ -12,4 +12,5 @@ public class RequestType {
     public static final int MULT = 9;
     public static final int SUMALL = 10;
     public static final int MULTALL = 11;
+    public static final int ADDE = 11;
 }

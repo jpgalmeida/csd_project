@@ -18,15 +18,15 @@ import javax.ws.rs.core.UriBuilder;
 import resources.Entry;
 
 
-public class ClientInterface {
+public class Benchmark {
 
 	private static Client client;
 	private static URI serverURI;
 	private static WebTarget target;
-	
+
 	public static void main(String[] args) {
 		String serverURL=args[0];
-		
+
 		//Server connection
 		serverURI = UriBuilder.fromUri(serverURL).port(11100).build();
 		client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
@@ -34,152 +34,63 @@ public class ClientInterface {
 		target = client.target( serverURI );
 
 		System.out.println("Client ready!");
-		Scanner sc = new Scanner(System.in);
+
+		if(args.length < 2)
+			System.out.println("Specify Benchmark to use!");
 
 		String key, value;
-		int result;
 
-		while (true) {
+		long timeInit = System.currentTimeMillis();
+		//Benchmark1: 100 PutSet
+		if(args[1].equals("1")) {
+			value = " nome dummy idade 100";
 
-			String cmd = sc.next();
+			HashMap<String, String> valuesParsed = parseValuesToMap(value);
+			for(int i = 0;i<100;i++) {
+				key = Integer.toString(i);
 
-			switch (cmd) {
+				//System.out.println("adding "+valuesParsed.toString());
+				registerEntry(key, valuesParsed);
+			}
+		} 
+		//Benchmark2: 100 GetSet
+		else if(args[1].equals("2")) {
+			for(int i = 0;i<100;i++) {
+				key = Integer.toString(i);
 
-			case "ps": 
-				key = sc.next();
-				value = sc.nextLine();
-
-				HashMap<String, String> valuesParsed = parseValuesToMap(value);
-				System.out.println("adding "+valuesParsed.toString());
-				result = registerEntry(key, valuesParsed);
-		
-				
-				if(result == 204)
-					System.out.println("> Success");
-				else
-					System.out.println("> Failed!");
-
-				break;
-
-			case "gs":
-				key = sc.next();
-
-				byte[] fields = getEntry( key);
-				
-				if(fields != null)
-					System.out.println(new String(fields));
-				else
-					System.out.println("> Failed!");
-
-				break;
-
-			case "adde":
-				key = sc.next();
-
-				result = addElement(key);
-
-				if(result == 204)
-					System.out.println("> Success");
-				else
-					System.out.println("> Failed!");
-
-
-				break;
-
-			case "rs":
-				key = sc.next();
-
-				result = removeSet(key);
-
-				if(result == 204)
-					System.out.println("> Success");
-				else
-					System.out.println("> Failed!");
-
-				break;
-
-			case "we":
-				key = sc.next();
-				String new_element = sc.next();
-				int pos = sc.nextInt();
-
-				result = writeElement(key, new_element, pos);
-
-				if(result == 204 || result == 200 )
-					System.out.println("> Success");
-				else 
-					System.out.println("> Failed!");
-
-				break;
-
-			case "re":
-				key = sc.next();
-				pos = sc.nextInt();
-
-				String elementRead = readElement(key, pos);
-
-				if(!elementRead.equals(""))
-					System.out.println("> Read:" +elementRead);
-				else
-					System.out.println("> Failed");
-
-				break;
-
-			case "ie":
-				key = sc.next();
-				String element = sc.next();
-
-				boolean res = isElement(key, element);
-
-				if(res)
-					System.out.println("> " +element+" is element");
-				else
-					System.out.println("> " +element+" isn't element");
-
-				break;
-
-			case "sum":
-				//System.out.println("> Sum");
-				pos = sc.nextInt();
-				String key1 = sc.next();
-				String key2 = sc.next();
-
-				int sum_res = Sum(key1, key2, pos);
-
-				System.out.println("> Sum is: "+sum_res);
-				break;
-
-			case "mult":
-				//System.out.println("> Mult");
-				pos = sc.nextInt();
-				key1 = sc.next();
-				key2 = sc.next();
-
-				int mult_res = Mult( key1, key2, pos);
-				
-				System.out.println("> Mult is: "+mult_res);
-				
-				break;
-
-			case "sumall":
-				System.out.println("> SumAll");
-				pos = sc.nextInt();
-
-				int sum_all = SumAll( pos);
-				break;
-
-			case "multall":
-				System.out.println("> MultAll");
-				pos = sc.nextInt();
-
-				int mult_all = MultAll( pos);
-
-				break;
+				getEntry( key);
 
 			}
 
 		}
+		//Benchmark3: 50 PutSet, 50 GetSet alternated
+		else if(args[1].equals("3")) {
+			value = " nome dummy idade 100";
+			HashMap<String, String> valuesParsed = parseValuesToMap(value);
+			for(int i = 0;i<50;i++) {
+				key = Integer.toString(i);
+				
+				registerEntry(key, valuesParsed);
+				getEntry( key);
+			}
+		}
+		//Benchmark4: All operations: alternated, distribution discussed (without sums or multiplications)
+		else if(args[1].equals("4")) {
+			value = " nome dummy idade 100";
+			HashMap<String, String> valuesParsed = parseValuesToMap(value);
+			for(int i = 0;i<100;i++) {
+				key = Integer.toString(i);
 
+				registerEntry(key, valuesParsed);
+				getEntry( key);
+				
+				//continuar
+			}
+		}
+
+		long totalTime = (System.currentTimeMillis() - timeInit);
+
+		System.out.println("Time: "+totalTime+" ms");
 	}
 
 
@@ -253,31 +164,31 @@ public class ClientInterface {
 	}
 
 	public static int registerEntry(String key, HashMap<String, String> values){
-		
+
 		Entry entry = new Entry(key, values);
-		System.out.println("Register entry "+entry.getkey());
-		
+		//System.out.println("Register entry "+entry.getkey());
 		//POST Request
 		Response response = target.path("/entries/ps/"+key)
 				.request()
 				.post( Entity.entity(entry, MediaType.APPLICATION_JSON));
 
-	
+
 		return response.getStatus();
 
 	}
 
-	public static int removeSet(String key) {
+	public static String removeSet(String key) {
 
-		Response response = target.path("/entries/rs/"+key)
+		String response = target.path("/entries/rs/"+key)
 				.request()
-				.delete(new GenericType<Response>() {});
+				.delete(new GenericType<String>() {});
 
-		return response.getStatus();
+		return response;
 
 	}
 
 	public static int addElement(String element){
+
 
 		//POST Request
 		Response response = target.path("/entries/adde/"+element)
@@ -295,7 +206,7 @@ public class ClientInterface {
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<byte[]>() {});
-		
+
 		return response;
 	}
 
