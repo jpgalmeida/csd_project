@@ -44,9 +44,6 @@ public class ClientInterface {
 		target = client.target( serverURI );
 
 		System.out.println("Client ready!");
-
-		Console console = System.console();
-
 		Scanner sc = new Scanner(System.in);
 
 		String key, value;
@@ -70,7 +67,6 @@ public class ClientInterface {
 					System.out.println("> Success");
 				else
 					System.out.println("> Failed!");
-
 
 				break;
 
@@ -244,8 +240,6 @@ public class ClientInterface {
 
 
 	private static boolean isElement(String key, String element) {
-
-
 		// GET request
 		boolean response = target.path("/entries/ie/"+key+"/"+element)
 				.request()

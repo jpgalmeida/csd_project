@@ -5,6 +5,9 @@ import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.ScanParams;
+import redis.clients.jedis.ScanResult;
+import redis.clients.jedis.exceptions.JedisDataException;
 import resources.RequestType;
 
 // Classes that need to be declared to implement this
@@ -21,8 +24,11 @@ import java.util.TreeMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 public class TreeMapServer extends DefaultRecoverable {
@@ -33,17 +39,20 @@ public class TreeMapServer extends DefaultRecoverable {
 	List<String> fields;
 
 	public TreeMapServer(int id, String serverUri){
+
 		table = new TreeMap<>();
+		jedis=new Jedis(serverUri, 6379);
 		
 		new ServiceReplica(id, configHome, this, this, null, null);
 		//Connecting to Redis server on localhost 
-		jedis=new Jedis(serverUri, 6379);
+
 		
 		//check whether server is running or not 
 		System.out.println("Redis server is running: "+jedis.ping()); 
 		fields=new ArrayList<String>();
 		fields.add("nome");
 		fields.add("idade");
+		
 	}
 
 	public static void main(String[] args) {
@@ -194,11 +203,26 @@ public class TreeMapServer extends DefaultRecoverable {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void installSnapshot(byte[] state) {
 		ByteArrayInputStream bis = new ByteArrayInputStream(state);
 		try {
 			ObjectInput in = new ObjectInputStream(bis);
-			table = (Map<String, String>) in.readObject();
+			
+			Map<String,Map<String,String>> map = (Map<String,Map<String,String>>) in.readObject();
+			Set<String> l = jedis.keys("*");
+			
+			// delete previous map
+			for( String key : l )
+				jedis.del(key);
+			
+			// write new map
+			for(String key: map.keySet()) {
+				System.out.println(map.get(key));
+				jedis.append(key, "");
+				jedis.hmset(key, map.get(key));
+			}
+			
 			in.close();
 			bis.close();
 		} catch (ClassNotFoundException e) {
@@ -215,7 +239,17 @@ public class TreeMapServer extends DefaultRecoverable {
 		try {
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream out = new ObjectOutputStream(bos);
-			out.writeObject(table);
+			
+			Set<String> l = jedis.keys("*");
+			Map<String, Map<String,String>> map = new HashMap<String, Map<String,String>>(); 
+
+			for( String key : l) {
+				Map<String,String> val = jedis.hgetAll(key);
+				System.out.println(val);
+				map.put(key,val);
+			}
+			
+			out.writeObject(map);
 			out.flush();
 			out.close();
 			bos.close();
