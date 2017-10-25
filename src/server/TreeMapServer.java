@@ -5,9 +5,6 @@ import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.ScanParams;
-import redis.clients.jedis.ScanResult;
-import redis.clients.jedis.exceptions.JedisDataException;
 import resources.RequestType;
 
 // Classes that need to be declared to implement this
@@ -24,8 +21,6 @@ import java.util.TreeMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -89,8 +84,6 @@ public class TreeMapServer extends DefaultRecoverable {
 
 				HashMap<String, String> att = new HashMap<String, String>();
 				try {
-					
-				
 					for(int i=0;i<size;i++) {
 						String key = dis.readUTF();
 						if(!fields.contains(key)) {
@@ -175,7 +168,43 @@ public class TreeMapServer extends DefaultRecoverable {
 				System.out.println(result);
 				
 				return result.getBytes();
-			} else if (reqType == RequestType.ISELEMENT) {
+			}else if (reqType == RequestType.SUM) {
+				String key1 = dis.readUTF();
+				String key2 = dis.readUTF();
+				int pos = dis.readInt();
+				
+
+				String field = fields.get(pos);
+
+				String val1 = jedis.hget(key1, field);
+				String val2 = jedis.hget(key2, field);
+				
+				int sum = Integer.valueOf(val1) + Integer.valueOf(val2);
+				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+				outputStream.write(sum);
+				
+				
+				return outputStream.toByteArray();
+				
+			} else if (reqType == RequestType.MULT) {
+				String key1 = dis.readUTF();
+				String key2 = dis.readUTF();
+				int pos = dis.readInt();
+				
+
+				String field = fields.get(pos);
+
+				String val1 = jedis.hget(key1, field);
+				String val2 = jedis.hget(key2, field);
+				
+				int mult = Integer.valueOf(val1) * Integer.valueOf(val2);
+				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+				outputStream.write(mult);
+				
+				
+				return outputStream.toByteArray();
+				
+			}else if (reqType == RequestType.ISELEMENT) {
 				String key = dis.readUTF();
 				String element = dis.readUTF();
 				

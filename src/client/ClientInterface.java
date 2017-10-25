@@ -1,7 +1,5 @@
 package client;
 
-import java.io.Console;
-import java.net.InetAddress;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Scanner;
@@ -16,7 +14,8 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
-import server.Entry;
+
+import resources.Entry;
 
 
 public class ClientInterface {
@@ -26,21 +25,12 @@ public class ClientInterface {
 	private static WebTarget target;
 	
 	public static void main(String[] args) {
-		int port = 8080;
-		URI myURI = null;
 		String serverURL=args[0];
-
-		try {
-			myURI = UriBuilder.fromUri("https://"+InetAddress.getLocalHost().getHostAddress()+"/").port(port).build();
-		} catch (Exception e) {
-			e.printStackTrace();
-		} 
-
+		
 		//Server connection
+		serverURI = UriBuilder.fromUri(serverURL).port(11100).build();
 		client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
 				.build();
-		
-		serverURI = UriBuilder.fromUri(serverURL).port(11100).build();
 		target = client.target( serverURI );
 
 		System.out.println("Client ready!");
@@ -195,10 +185,6 @@ public class ClientInterface {
 	}
 
 
-
-
-	/* --------------------------------------------------------------
-	 * ---------------------- NOT IN USE YET ------------------------ */
 	private static int MultAll(int pos) {
 
 
@@ -232,10 +218,6 @@ public class ClientInterface {
 
 		return response;
 	}
-
-	/* ------------------------------------------------------------ 
-	 * ------------------------------------------------------------ */
-
 
 
 
@@ -335,17 +317,6 @@ public class ClientInterface {
 			hm.put(parts[i], parts[i+1]);
 
 		return hm;
-	}
-	
-	private static byte[][] parseValuesToByteArray(String values) {
-		
-		String [] parts = values.split(" ");
-		byte[][] aux = new byte[parts.length -1][];
-		
-		for( int i = 1 ; i < parts.length-1 ; i++)
-			aux[i-1] = parts[i].getBytes();
-
-		return aux;
 	}
 
 }

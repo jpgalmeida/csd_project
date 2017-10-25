@@ -1,6 +1,8 @@
 package server;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +19,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import bftsmart.tom.ServiceProxy;
+import resources.Entry;
 import resources.RequestType;
 
 
@@ -114,13 +117,7 @@ public class ServerInterfaceResources {
 	public int sum(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
 		System.out.println("Received Sum Request!");
 		
-//		String field = fields.get(pos);
-		
-//		int val1 = Integer.valueOf(jedis.hget(id1, field));
-//		int val2 = Integer.valueOf(jedis.hget(id2, field));
-		//return sumOperation(id1, id2, pos);
-		return 0;
-//		return val1+val2;
+		return sumOperation(id1, id2, pos);
 
 	}
 	
@@ -128,43 +125,51 @@ public class ServerInterfaceResources {
 	@Path("/mult/{id1}/{id2}/{pos}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public int mult(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
-		System.out.println("Received Sum Request!");
+		System.out.println("Received Mult Request!");
 		
-//		String field = fields.get(pos);
-		
-//		int val1 = Integer.valueOf(jedis.hget(id1, field));
-//		int val2 = Integer.valueOf(jedis.hget(id2, field));
-//		
-//		return val1*val2;
-		return 0;
+		return multOperation(id1, id2, pos);
 	}
 	
-//	@GET
-//	@Path("/sumAll/{pos}")
-//	@Produces(MediaType.APPLICATION_JSON)
-//	public int sumAll(@PathParam("pos") int pos) {
-//		System.out.println("Received Sum Request!");
-//		
-//		String field = fields.get(pos);
-//		
-////		int val1 = Integer.valueOf(jedis.hget(id1, field));
-////		int val2 = Integer.valueOf(jedis.hget(id2, field));
-//		
-//		return 0;
-//	}
-
-	//Not completed
-//	public int sumOperation(Object key1, Object key2, Object pos) {
-//		try {
-//			ByteArrayOutputStream out = new ByteArrayOutputStream();
-//			DataOutputStream dos = new DataOutputStream(out);
-//			dos.writeInt(0);
-//			return 0;
-//		}
-//		catch(IOException e) {
-//			return 0;
-//		}
-//	}
+	
+	public int sumOperation(String key1, String key2, int pos) {
+		try {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			DataOutputStream dos = new DataOutputStream(out);
+			dos.writeInt(RequestType.SUM);
+			dos.writeUTF(key1);
+			dos.writeUTF(key2);
+			dos.writeInt(pos);
+			
+			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeUnordered(out.toByteArray()));
+			DataInputStream dis = new DataInputStream(in);
+			int res = dis.read();
+			
+			return res;
+		}
+		catch(IOException e) {
+			return 0;
+		}
+	}
+	
+	public int multOperation(String key1, String key2, int pos) {
+		try {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			DataOutputStream dos = new DataOutputStream(out);
+			dos.writeInt(RequestType.MULT);
+			dos.writeUTF(key1);
+			dos.writeUTF(key2);
+			dos.writeInt(pos);
+			
+			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeUnordered(out.toByteArray()));
+			DataInputStream dis = new DataInputStream(in);
+			int res = dis.read();
+			
+			return res;
+		}
+		catch(IOException e) {
+			return 0;
+		}
+	}
 	
 	public int putElement(String key, int pos, String element) {
 		try {
