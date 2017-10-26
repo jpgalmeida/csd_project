@@ -41,6 +41,7 @@ public class Benchmark {
 		String key, value;
 
 		long timeInit = System.currentTimeMillis();
+		
 		//Benchmark1: 100 PutSet
 		if(args[1].equals("1")) {
 			value = " nome dummy idade 100";
@@ -53,6 +54,7 @@ public class Benchmark {
 				registerEntry(key, valuesParsed);
 			}
 		} 
+		
 		//Benchmark2: 100 GetSet
 		else if(args[1].equals("2")) {
 			for(int i = 0;i<100;i++) {
@@ -63,6 +65,7 @@ public class Benchmark {
 			}
 
 		}
+		
 		//Benchmark3: 50 PutSet, 50 GetSet alternated
 		else if(args[1].equals("3")) {
 			value = " nome dummy idade 100";
@@ -74,6 +77,7 @@ public class Benchmark {
 				getEntry( key);
 			}
 		}
+		
 		//Benchmark4: All operations: alternated, distribution discussed (without sums or multiplications)
 		else if(args[1].equals("4")) {
 			value = " nome dummy idade 100";

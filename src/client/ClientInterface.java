@@ -50,9 +50,7 @@ public class ClientInterface {
 				value = sc.nextLine();
 
 				HashMap<String, String> valuesParsed = parseValuesToMap(value);
-				System.out.println("adding "+valuesParsed.toString());
-				result = registerEntry(key, valuesParsed);
-		
+				result = putSet(key, valuesParsed);
 				
 				if(result == 204)
 					System.out.println("> Success");
@@ -64,7 +62,7 @@ public class ClientInterface {
 			case "gs":
 				key = sc.next();
 
-				byte[] fields = getEntry( key);
+				byte[] fields = getSet( key);
 				
 				if(fields != null)
 					System.out.println(new String(fields));
@@ -139,7 +137,6 @@ public class ClientInterface {
 				break;
 
 			case "sum":
-				//System.out.println("> Sum");
 				pos = sc.nextInt();
 				String key1 = sc.next();
 				String key2 = sc.next();
@@ -150,7 +147,6 @@ public class ClientInterface {
 				break;
 
 			case "mult":
-				//System.out.println("> Mult");
 				pos = sc.nextInt();
 				key1 = sc.next();
 				key2 = sc.next();
@@ -162,14 +158,12 @@ public class ClientInterface {
 				break;
 
 			case "sumall":
-				System.out.println("> SumAll");
 				pos = sc.nextInt();
 
 				int sum_all = SumAll( pos);
 				break;
 
 			case "multall":
-				System.out.println("> MultAll");
 				pos = sc.nextInt();
 
 				int mult_all = MultAll( pos);
@@ -196,7 +190,7 @@ public class ClientInterface {
 	}
 
 	private static int Mult(String key1, String key2, int pos) {
-		// GET request
+
 		int response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
@@ -208,7 +202,6 @@ public class ClientInterface {
 
 	private static int Sum(String key1, String key2, int pos) {
 
-		// GET request
 		int response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
@@ -220,7 +213,7 @@ public class ClientInterface {
 
 
 	private static boolean isElement(String key, String element) {
-		// GET request
+
 		boolean response = target.path("/entries/ie/"+key+"/"+element)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
@@ -231,8 +224,6 @@ public class ClientInterface {
 
 	private static String readElement(String key, int pos) {
 
-
-		// GET request
 		String response = target.path("/entries/"+key+"/"+pos)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
@@ -243,21 +234,17 @@ public class ClientInterface {
 
 	public static int writeElement(String key, String new_element, int pos) {
 
-		// PUT request
 		Response response = target.path("/entries/"+key+"/"+pos)
 				.request()
 				.put(Entity.entity(new_element, MediaType.APPLICATION_JSON));
 
-		//falta alterar isto
 		return response.getStatus();
 	}
 
-	public static int registerEntry(String key, HashMap<String, String> values){
+	public static int putSet(String key, HashMap<String, String> values){
 		
 		Entry entry = new Entry(key, values);
-		System.out.println("Register entry "+entry.getkey());
 		
-		//POST Request
 		Response response = target.path("/entries/ps/"+key)
 				.request()
 				.post( Entity.entity(entry, MediaType.APPLICATION_JSON));
@@ -279,7 +266,6 @@ public class ClientInterface {
 
 	public static int addElement(String element){
 
-		//POST Request
 		Response response = target.path("/entries/adde/"+element)
 				.request()
 				.post( Entity.entity(element, MediaType.APPLICATION_JSON));
@@ -289,7 +275,7 @@ public class ClientInterface {
 
 	}
 
-	public static byte[] getEntry(String key){
+	public static byte[] getSet(String key){
 
 		byte[] response = target.path("/entries/"+key)
 				.request()

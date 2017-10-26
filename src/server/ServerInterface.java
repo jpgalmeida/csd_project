@@ -27,7 +27,7 @@ public class ServerInterface {
 		config.register( resources );
 
 		JdkHttpServerFactory.createHttpServer(baseUri, config,SSLContext.getDefault());
-		System.err.println("REST RendezVous Server ready @ " + baseUri);
+		System.err.println("REST Server ready @ " + baseUri);
 
 	}
 
