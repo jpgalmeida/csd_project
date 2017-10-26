@@ -12,6 +12,12 @@ docker run --name redis3 -d redis
 
 docker run --name redis4 -d redis
 
+docker run --name redis5 -d redis
+
+docker run --name redis6 -d redis
+
+docker run --name redis7 -d redis
+
 docker run -t -i csd-work java -cp /home/csd/* server.TreeMapServer 0 172.17.0.2
 
 docker run -t -i csd-work java -cp /home/csd/* server.TreeMapServer 1 172.17.0.3
@@ -19,6 +25,12 @@ docker run -t -i csd-work java -cp /home/csd/* server.TreeMapServer 1 172.17.0.3
 docker run -t -i csd-work java -cp /home/csd/* server.TreeMapServer 2 172.17.0.4
 
 docker run -t -i csd-work java -cp /home/csd/* server.TreeMapServer 3 172.17.0.5
+
+docker run -t -i csd-work java -cp /home/csd/* server.TreeMapServer 4 172.17.0.6
+
+docker run -t -i csd-work java -cp /home/csd/* server.TreeMapServer 5 172.17.0.7
+
+docker run -t -i csd-work java -cp /home/csd/* server.TreeMapServer 6 172.17.0.8
 
 docker run -t -i csd-work java -cp /home/csd/* -Djavax.net.ssl.keyStore=/home/csd/server.jks -Djavax.net.ssl.keyStorePassword=123456 server.ServerInterface 1001
 

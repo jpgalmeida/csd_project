@@ -23,11 +23,18 @@ public class Benchmark {
 	private static Client client;
 	private static URI serverURI;
 	private static WebTarget target;
-
+	
+	private static final String[] names = {"dummy", "foo", "asd", "jane", "doe"};
+	private static final String[] ages = {"10", "65", "24", "40","30"};
+	private static final String[] addresses = {"Lisbon", "Porto", "Setubal", "Faro", "Braga"};
+	private static final String[] phones = {"99142409", "147812", "181482", "3053021", "5012841"};
+	
+	private static int counter = 0;
+	private static String command = "";
+ 	
 	public static void main(String[] args) {
 		String serverURL=args[0];
 
-		//Server connection
 		serverURI = UriBuilder.fromUri(serverURL).port(11100).build();
 		client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
 				.build();
@@ -35,66 +42,17 @@ public class Benchmark {
 
 		System.out.println("Client ready!");
 
-		if(args.length < 2)
-			System.out.println("Specify Benchmark to use!");
-
-		String key, value;
-
-		long timeInit = System.currentTimeMillis();
-		
-		//Benchmark1: 100 PutSet
-		if(args[1].equals("1")) {
-			value = " nome dummy idade 100";
-
-			HashMap<String, String> valuesParsed = parseValuesToMap(value);
-			for(int i = 0;i<100;i++) {
-				key = Integer.toString(i);
-
-				//System.out.println("adding "+valuesParsed.toString());
-				registerEntry(key, valuesParsed);
-			}
-		} 
-		
-		//Benchmark2: 100 GetSet
-		else if(args[1].equals("2")) {
-			for(int i = 0;i<100;i++) {
-				key = Integer.toString(i);
-
-				getEntry( key);
-
-			}
-
+		if(args.length < 3) {
+			System.out.println("Usage: <benchmark number> <number of threads>");
+			System.exit(1);
 		}
 		
-		//Benchmark3: 50 PutSet, 50 GetSet alternated
-		else if(args[1].equals("3")) {
-			value = " nome dummy idade 100";
-			HashMap<String, String> valuesParsed = parseValuesToMap(value);
-			for(int i = 0;i<50;i++) {
-				key = Integer.toString(i);
-				
-				registerEntry(key, valuesParsed);
-				getEntry( key);
-			}
-		}
-		
-		//Benchmark4: All operations: alternated, distribution discussed (without sums or multiplications)
-		else if(args[1].equals("4")) {
-			value = " nome dummy idade 100";
-			HashMap<String, String> valuesParsed = parseValuesToMap(value);
-			for(int i = 0;i<100;i++) {
-				key = Integer.toString(i);
+		command = args[1];
+		int servers = Integer.valueOf(args[2]);
+			
+		for(int i = 0; i < servers; i++)
+			(new Thread(new Tester())).start();
 
-				registerEntry(key, valuesParsed);
-				getEntry( key);
-				
-				//continuar
-			}
-		}
-
-		long totalTime = (System.currentTimeMillis() - timeInit);
-
-		System.out.println("Time: "+totalTime+" ms");
 	}
 
 
@@ -145,7 +103,6 @@ public class Benchmark {
 	}
 
 	private static String readElement(String key, int pos) {
-
 
 		// GET request
 		String response = target.path("/entries/"+key+"/"+pos)
@@ -231,5 +188,71 @@ public class Benchmark {
 
 		return hm;
 	}
+	
+	
+	static class Tester implements Runnable {
+	    
+		@Override
+		public void run() {
+			
+			long timeInit = System.currentTimeMillis();
+			String key, value;
+			long threadId = Thread.currentThread().getId();
+			
+			System.out.println("Started Thread #"+threadId);
+			
+			//Benchmark1: 100 PutSet
+			if(command.equals("1")) {
+				value = " nome dummy idade 100";
+
+				HashMap<String, String> valuesParsed = parseValuesToMap(value);
+				for(int i = 0;i<100;i++) {
+					key = Integer.toString(i);
+					registerEntry(key, valuesParsed);
+				}
+			} 
+			
+			//Benchmark2: 100 GetSet
+			else if(command.equals("2")) {
+				for(int i = 0;i<100;i++) {
+					key = Integer.toString(i);
+					getEntry( key);
+				}
+
+			}
+			
+			//Benchmark3: 50 PutSet, 50 GetSet alternated
+			else if(command.equals("3")) {
+				value = " nome dummy idade 100";
+				HashMap<String, String> valuesParsed = parseValuesToMap(value);
+				for(int i = 0;i<50;i++) {
+					key = Integer.toString(i);
+					registerEntry(key, valuesParsed);
+					getEntry( key);
+				}
+			}
+			
+			//Benchmark4: All operations: alternated, distribution discussed (without sums or multiplications)
+			else if(command.equals("4")) {
+				value = " nome dummy idade 100";
+				HashMap<String, String> valuesParsed = parseValuesToMap(value);
+				for(int i = 0;i<100;i++) {
+					key = Integer.toString(i);
+					registerEntry(key, valuesParsed);
+					getEntry(key);
+					
+					//continuar
+				}
+			}
+
+			long totalTime = (System.currentTimeMillis() - timeInit);
+
+			System.out.println("Thread #"+threadId+" Time: "+totalTime+" ms");
+			
+		}
+		
+	}
 
 }
+
+
