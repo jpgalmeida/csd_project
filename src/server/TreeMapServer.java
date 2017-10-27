@@ -81,10 +81,8 @@ public class TreeMapServer extends DefaultRecoverable {
 	private byte[] executeSingle(byte[] command, MessageContext msgCtx) {
 		ByteArrayInputStream in = new ByteArrayInputStream(command);
 		DataInputStream dis = new DataInputStream(in);
-
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		DataOutputStream dos = new DataOutputStream(out);
-
 
 		int reqType;
 		try {
