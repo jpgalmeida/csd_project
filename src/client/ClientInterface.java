@@ -169,13 +169,13 @@ public class ClientInterface {
 				int mult_all = MultAll( pos);
 
 				break;
-
+				
 			}
-
+			
 		}
 
 	}
-
+	
 
 	private static int MultAll(int pos) {
 

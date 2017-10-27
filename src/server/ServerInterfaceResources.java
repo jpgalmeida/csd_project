@@ -112,6 +112,21 @@ public class ServerInterfaceResources {
 		return sumImplementation(id1, id2, pos);
 
 	}
+	
+	@POST
+	@Path("/benchmark")
+	public void benchmark() {
+		try {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			DataOutputStream dos = new DataOutputStream(out);
+			dos.writeInt(RequestType.BENCHMARK_INIT);
+			clientProxy.invokeOrdered(out.toByteArray());
+			
+		} catch(IOException e) {
+			
+		}
+		
+	}
 
 	@GET
 	@Path("/mult/{id1}/{id2}/{pos}")

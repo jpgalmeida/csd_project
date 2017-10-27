@@ -35,6 +35,13 @@ public class TreeMapServer extends DefaultRecoverable {
 	private static String configHome = "/home/csd/config/";
 	private Jedis jedis;
 	List<String> fields;
+	
+	// Useful to setup benchmarking state
+	private static final String[] names = {"dummy", "foo", "asd", "jane", "doe"};
+	private static final String[] ages = {"10", "65", "24", "40","30"};
+	private static final String[] addresses = {"Lisbon", "Porto", "Setubal", "Faro", "Braga"};
+	private static final String[] phones = {"99142409", "147812", "181482", "3053021", "5012841"};
+	private static int counter = 0;
 
 	public TreeMapServer(int id, String serverUri){
 
@@ -53,6 +60,8 @@ public class TreeMapServer extends DefaultRecoverable {
 		fields=new ArrayList<String>();
 		fields.add("nome");
 		fields.add("idade");
+		fields.add("morada");
+		fields.add("telefone");
 
 	}
 
@@ -63,8 +72,6 @@ public class TreeMapServer extends DefaultRecoverable {
 		}
 
 		new TreeMapServer(Integer.parseInt(args[0]), args[1]);
-
-
 	}
 
 	@Override
@@ -115,9 +122,7 @@ public class TreeMapServer extends DefaultRecoverable {
 						toWrite="false";
 						break;
 					}
-
 				}
-
 				dos.writeUTF(toWrite);
 				return out.toByteArray();
 				
@@ -135,7 +140,7 @@ public class TreeMapServer extends DefaultRecoverable {
 				
 
 				return out.toByteArray();
-			}else if (reqType == RequestType.WRITEELEMENT) {
+			} else if (reqType == RequestType.WRITEELEMENT) {
 				String key = dis.readUTF();
 				int pos = dis.readInt();
 				String new_element = dis.readUTF();
@@ -150,7 +155,7 @@ public class TreeMapServer extends DefaultRecoverable {
 
 				dos.writeUTF("true");
 				return out.toByteArray();
-			}else if (reqType == RequestType.ADDE) {
+			} else if (reqType == RequestType.ADDE) {
 				String key = dis.readUTF();
 				
 				if(fields.contains(key))
@@ -160,7 +165,24 @@ public class TreeMapServer extends DefaultRecoverable {
 					dos.writeUTF("true");
 				}
 				return out.toByteArray();
-			}else {
+			} else if (reqType == RequestType.BENCHMARK_INIT) {
+				
+				System.out.println("======== STARTED BENCHMARK STATE =======");
+				
+				Set<String> l = jedis.keys("*");
+				
+				for( String key : l )
+					jedis.del(key);
+				
+				for(int i = 50000; i < 51000 ; i++) {	// 1000 entries
+					jedis.hmset(String.valueOf(i), this.getRandomEntry());
+				}
+
+				System.out.println("======== BENCHMARK STATE IS READY =======");
+				
+				return null;
+			
+			} else {
 				System.out.println("Unknown request type: " + reqType);
 				return null;
 			}
@@ -288,8 +310,6 @@ public class TreeMapServer extends DefaultRecoverable {
 				System.out.println("=======I HAVE THINGS TO WRITE=======");
 			
 			for(String key: map.keySet()) {
-				//System.out.println(map.get(key));
-				//jedis.append(key, "");
 				jedis.hmset(key, map.get(key));
 				System.out.println("=======ELEMENT ADDED=======");
 			}
@@ -332,5 +352,16 @@ public class TreeMapServer extends DefaultRecoverable {
 			e.printStackTrace();
 			return new byte[0];
 		}
+	}
+	
+	private Map<String,String> getRandomEntry(){
+		Map<String,String> entry = new HashMap<String,String>();
+		
+		entry.put("nome", names[counter++%4]);
+		entry.put("idade", ages[counter++%4]);
+		entry.put("morada", addresses[counter++%4]);
+		entry.put("telefone", phones[counter++%4]);
+		
+		return entry;
 	}
 }

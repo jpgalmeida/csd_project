@@ -24,12 +24,6 @@ public class Benchmark {
 	private static URI serverURI;
 	private static WebTarget target;
 	
-	private static final String[] names = {"dummy", "foo", "asd", "jane", "doe"};
-	private static final String[] ages = {"10", "65", "24", "40","30"};
-	private static final String[] addresses = {"Lisbon", "Porto", "Setubal", "Faro", "Braga"};
-	private static final String[] phones = {"99142409", "147812", "181482", "3053021", "5012841"};
-	
-	private static int counter = 0;
 	private static String command = "";
  	
 	public static void main(String[] args) {
@@ -50,26 +44,28 @@ public class Benchmark {
 		command = args[1];
 		int servers = Integer.valueOf(args[2]);
 			
+		BenchmarkInitRequest();			// sets up jedis collection
+		
 		for(int i = 0; i < servers; i++)
 			(new Thread(new Tester())).start();
 
 	}
 
+	private static void BenchmarkInitRequest() {
+		target.path("/benchmark")
+		.request()
+		.post(null);
+	}
 
 	private static int MultAll(int pos) {
-
-
 		return 0;
 	}
 
 	private static int SumAll(int pos) {
-
-
 		return 0;
 	}
 
 	private static int Mult(String key1, String key2, int pos) {
-		// GET request
 		int response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
@@ -80,8 +76,6 @@ public class Benchmark {
 
 
 	private static int Sum(String key1, String key2, int pos) {
-
-		// GET request
 		int response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
@@ -93,7 +87,6 @@ public class Benchmark {
 
 
 	private static boolean isElement(String key, String element) {
-		// GET request
 		boolean response = target.path("/entries/ie/"+key+"/"+element)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
@@ -103,8 +96,6 @@ public class Benchmark {
 	}
 
 	private static String readElement(String key, int pos) {
-
-		// GET request
 		String response = target.path("/entries/"+key+"/"+pos)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
@@ -114,8 +105,6 @@ public class Benchmark {
 	}
 
 	public static int writeElement(String key, String new_element, int pos) {
-
-		// PUT request
 		Response response = target.path("/entries/"+key+"/"+pos)
 				.request()
 				.put(Entity.entity(new_element, MediaType.APPLICATION_JSON));
@@ -125,40 +114,32 @@ public class Benchmark {
 	}
 
 	public static int registerEntry(String key, HashMap<String, String> values){
-
 		Entry entry = new Entry(key, values);
-		//System.out.println("Register entry "+entry.getkey());
-		//POST Request
+		
 		Response response = target.path("/entries/ps/"+key)
 				.request()
 				.post( Entity.entity(entry, MediaType.APPLICATION_JSON));
-
-
+		
 		return response.getStatus();
 
 	}
 
 	public static String removeSet(String key) {
-
 		String response = target.path("/entries/rs/"+key)
 				.request()
 				.delete(new GenericType<String>() {});
 
 		return response;
-
 	}
 
 	public static int addElement(String element){
 
-
-		//POST Request
 		Response response = target.path("/entries/adde/"+element)
 				.request()
 				.post( Entity.entity(element, MediaType.APPLICATION_JSON));
 
 
 		return response.getStatus();
-
 	}
 
 	public static byte[] getEntry(String key){
@@ -203,7 +184,7 @@ public class Benchmark {
 			
 			//Benchmark1: 100 PutSet
 			if(command.equals("1")) {
-				value = " nome dummy idade 100";
+				value = " nome dummy idade 100 morada RandomStreet telefone 9158128912";
 
 				HashMap<String, String> valuesParsed = parseValuesToMap(value);
 				for(int i = 0;i<100;i++) {
@@ -223,7 +204,7 @@ public class Benchmark {
 			
 			//Benchmark3: 50 PutSet, 50 GetSet alternated
 			else if(command.equals("3")) {
-				value = " nome dummy idade 100";
+				value = " nome dummy idade 100 morada RandomStreet telefone 9158128912";
 				HashMap<String, String> valuesParsed = parseValuesToMap(value);
 				for(int i = 0;i<50;i++) {
 					key = Integer.toString(i);
@@ -234,7 +215,7 @@ public class Benchmark {
 			
 			//Benchmark4: All operations: alternated, distribution discussed (without sums or multiplications)
 			else if(command.equals("4")) {
-				value = " nome dummy idade 100";
+				value = " nome dummy idade 100 morada RandomStreet telefone 9158128912";
 				HashMap<String, String> valuesParsed = parseValuesToMap(value);
 				for(int i = 0;i<100;i++) {
 					key = Integer.toString(i);

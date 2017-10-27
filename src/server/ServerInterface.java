@@ -15,14 +15,11 @@ public class ServerInterface {
 	private static ServerInterfaceResources resources;
 
 	public static void main(String[] args) throws Exception {
-		//int port = 8080;
 		int port =11100;
-		//URI baseUri = UriBuilder.fromUri("https://172.17.0.10").port(port).build();
 		URI baseUri = UriBuilder.fromUri("https://"+InetAddress.getLocalHost().getHostAddress()+"/").port(port).build();
 		
 		ResourceConfig config = new ResourceConfig();
 		
-	
 		resources = new ServerInterfaceResources(baseUri.toString(), Integer.valueOf(args[0])); 
 		config.register( resources );
 
@@ -30,7 +27,5 @@ public class ServerInterface {
 		System.err.println("REST Server ready @ " + baseUri);
 
 	}
-
-
 
 }
