@@ -34,7 +34,7 @@ docker run -t -i csd-work java -cp /home/csd/* server.TreeMapServer 6 172.17.0.8
 
 docker run -t -i csd-work java -cp /home/csd/* -Djavax.net.ssl.keyStore=/home/csd/server.jks -Djavax.net.ssl.keyStorePassword=123456 server.ServerInterface 1001
 
-docker run -t -i csd-work java -cp /home/csd/* -Djavax.net.ssl.trustStore=/home/csd/client.jks -Djavax.net.ssl.trusttorePassword=123456 client.ClientInterface https://172.17.0.10:11100/
+docker run -t -i csd-work java -cp /home/csd/* -Djavax.net.ssl.trustStore=/home/csd/client.jks -Djavax.net.ssl.trusttorePassword=123456 client.ClientInterface https://172.17.0.16:11100/
 
 ```
 
@@ -56,3 +56,8 @@ docker stop $(docker ps -a -q)
 ``` 
 docker rm $(docker ps -a -q)
 ```
+## Example benchmark command
+``` 
+docker run -t -i csd-work java -cp /home/csd/* -Djavax.net.ssl.trustStore=/home/csd/client.jks -Djavax.net.ssl.trustStorePassword=123456 client.Benchmark https://172.17.0.16:11100/ 1 3
+
+``` 

@@ -174,7 +174,7 @@ public class TreeMapServer extends DefaultRecoverable {
 				for( String key : l )
 					jedis.del(key);
 				
-				for(int i = 50000; i < 51000 ; i++) {	// 1000 entries
+				for(int i = 0; i < 1000 ; i++) {	// 1000 entries
 					jedis.hmset(String.valueOf(i), this.getRandomEntry());
 				}
 
@@ -337,7 +337,6 @@ public class TreeMapServer extends DefaultRecoverable {
 			for( String key : l) {
 				System.out.println("=======GETTING VALUE=======");
 				Map<String,String> val = jedis.hgetAll(key);
-				//System.out.println(val);
 				map.put(key,val);
 			}
 

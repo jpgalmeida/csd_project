@@ -2,6 +2,7 @@ package client;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.Scanner;
 
 import javax.net.ssl.HostnameVerifier;
@@ -215,14 +216,49 @@ public class Benchmark {
 			
 			//Benchmark4: All operations: alternated, distribution discussed (without sums or multiplications)
 			else if(command.equals("4")) {
-				value = " nome dummy idade 100 morada RandomStreet telefone 9158128912";
-				HashMap<String, String> valuesParsed = parseValuesToMap(value);
-				for(int i = 0;i<100;i++) {
-					key = Integer.toString(i);
-					registerEntry(key, valuesParsed);
-					getEntry(key);
+				value = "newElement";
+				
+				for(int i = 0;i<50;i++) {
+					value = "newElement"+Integer.toString(i);
+					addElement(value);
+					readElement(String.valueOf(i), 4+i);
 					
-					//continuar
+				}
+			}
+			
+			//Benchmark5: 
+			else if(command.equals("5")) {
+
+				//putset getset addelement removeset writeelement readelement isElement
+				Random randomGenerator = new Random();
+				String element = "newElement";
+				
+				for(int i = 0; i < 100 ; i++) {
+					int r = randomGenerator.nextInt(6);
+					switch (r) {
+						case 0: 
+							value = " nome dummy idade 100 morada RandomStreet telefone 9158128912";
+							registerEntry(String.valueOf(i), parseValuesToMap(value));
+						break;
+						case 1:
+							getEntry(String.valueOf(i));
+						break;
+						case 2: 
+							addElement(element+String.valueOf(i));
+						break;
+						case 3: 
+							removeSet(String.valueOf(i));
+						break;
+						case 4: 
+							writeElement(String.valueOf(i), element+String.valueOf(i), 4);
+						break;
+						case 5: 
+							readElement(String.valueOf(i), 4);
+						break;
+						case 6: 
+							isElement(String.valueOf(i), "RandomStreet");
+						break;
+					}
 				}
 			}
 
