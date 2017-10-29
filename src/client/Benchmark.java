@@ -45,13 +45,7 @@ public class Benchmark {
 		command = args[1];
 		int servers = Integer.valueOf(args[2]);
 			
-		BenchmarkInitRequest();			// sets up jedis collection
-		
-		try {
-			Thread.sleep(3000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		BenchmarkInitRequest();	
 		
 		for(int i = 0; i < servers; i++)
 			(new Thread(new Tester())).start();
@@ -59,9 +53,10 @@ public class Benchmark {
 	}
 
 	private static void BenchmarkInitRequest() {
-		target.path("/benchmark")
-		.request()
-		.post(null);
+		String value = " nome dummy idade 100 morada RandomStreet telefone 9158128912";
+		for( int i = 0; i < 100 ; i++)
+			registerEntry(String.valueOf(i), parseValuesToMap(value));
+		
 	}
 
 	private static int MultAll(int pos) {
@@ -132,11 +127,11 @@ public class Benchmark {
 	}
 
 	public static String removeSet(String key) {
-		String response = target.path("/entries/rs/"+key)
+		Response response = target.path("/entries/rs/"+key)
 				.request()
-				.delete(new GenericType<String>() {});
+				.delete(new GenericType<Response>() {});
 
-		return response;
+		return String.valueOf(response.getStatus());
 	}
 
 	public static int addElement(String element){
@@ -150,12 +145,11 @@ public class Benchmark {
 	}
 
 	public static byte[] getEntry(String key){
-
 		byte[] response = target.path("/entries/"+key)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<byte[]>() {});
-
+		
 		return response;
 	}
 
@@ -245,13 +239,18 @@ public class Benchmark {
 							registerEntry(String.valueOf(i), parseValuesToMap(value));
 						break;
 						case 1:
-							getEntry(String.valueOf(i));
+							try {
+								getEntry(String.valueOf(i));
+							} catch (Exception e) {
+								System.out.println("Get Entry: doesn't exist. | "+String.valueOf(i));
+							}
+							
 						break;
 						case 2: 
 							addElement(element+String.valueOf(i));
 						break;
 						case 3: 
-							removeSet(String.valueOf(i));
+								removeSet(String.valueOf(i));
 						break;
 						case 4: 
 							writeElement(String.valueOf(i), element+String.valueOf(i), 3);

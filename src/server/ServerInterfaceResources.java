@@ -47,15 +47,15 @@ public class ServerInterfaceResources {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public byte[] getSet(@PathParam("id") String id){
-		byte[] res = getSetImplementation(id);
-
-		return res;
+		System.out.println("Received Get Set Request");
+		return getSetImplementation(id);
 	}
 
 	@POST
 	@Path("/ps/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void putSet( @PathParam("id") String id, Entry entry) {
+		System.out.println("Received Put Set Request");
 		putSetImplementation(id, entry.getAttributes());
 
 	}
@@ -73,7 +73,7 @@ public class ServerInterfaceResources {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String readElement(@PathParam("id") String id, @PathParam("pos") int pos) {
-		System.out.println("Received Read Element Request!");
+		System.out.println("Received Read Element Request");
 
 		byte[] res = readElementImplementation(id,pos);
 		String a = new String(res, StandardCharsets.UTF_8);
@@ -85,7 +85,7 @@ public class ServerInterfaceResources {
 	@Path("/ie/{id}/{element}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public boolean isElement(@PathParam("id") String id, @PathParam("element") String element) {
-
+		System.out.println("Received Is Element Request");
 		return isElementImplementation(id,element);
 	}
 
@@ -93,6 +93,7 @@ public class ServerInterfaceResources {
 	@Path("/{id}/{pos}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response writeElement(@PathParam("id") String id, @PathParam("pos") int pos, String new_element) {
+		System.out.println("Received Write Element Request");
 		return writeElementImplementation(id, pos, new_element);
 	}
 
@@ -100,7 +101,7 @@ public class ServerInterfaceResources {
 	@Path("/rs/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response removeSet(@PathParam("id") String id){
-		
+		System.out.println("Received Remove Set Request");
 		return removeSetImplementation(id);
 	}
 
@@ -111,21 +112,6 @@ public class ServerInterfaceResources {
 
 		return sumImplementation(id1, id2, pos);
 
-	}
-	
-	@POST
-	@Path("/benchmark")
-	public void benchmark() {
-		try {
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			DataOutputStream dos = new DataOutputStream(out);
-			dos.writeInt(RequestType.BENCHMARK_INIT);
-			clientProxy.invokeOrdered(out.toByteArray());
-			
-		} catch(IOException e) {
-			
-		}
-		
 	}
 
 	@GET
