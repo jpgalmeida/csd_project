@@ -64,7 +64,7 @@ public class ServerInterfaceResources {
 	@Path("/adde/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response addElement( @PathParam("id") String id) {
-
+		System.out.println("Received Add Element Request");
 		return addElementImplementation(id);
 	}
 

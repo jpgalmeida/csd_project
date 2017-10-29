@@ -85,7 +85,7 @@ public class TreeMapServer extends DefaultRecoverable {
 		return replies;
 	}
 
-	private byte[] executeSingle(byte[] command, MessageContext msgCtx) {
+	private synchronized byte[] executeSingle(byte[] command, MessageContext msgCtx) {
 		ByteArrayInputStream in = new ByteArrayInputStream(command);
 		DataInputStream dis = new DataInputStream(in);
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -165,7 +165,36 @@ public class TreeMapServer extends DefaultRecoverable {
 					dos.writeUTF("true");
 				}
 				return out.toByteArray();
-			} else if (reqType == RequestType.BENCHMARK_INIT) {
+			} else if (reqType == RequestType.GETSET) {
+				String key = dis.readUTF();
+				Map<String, String> att = jedis.hgetAll(key);
+
+				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+
+				for (Map.Entry<String, String> e : att.entrySet()){
+					outputStream.write(e.getKey().getBytes(StandardCharsets.UTF_8));
+					outputStream.write(",".getBytes());
+					outputStream.write(e.getValue().getBytes(StandardCharsets.UTF_8));
+					outputStream.write(",".getBytes());
+				}
+
+				return outputStream.toByteArray();
+
+			} else if (reqType == RequestType.READELEMENT) {
+				String key = dis.readUTF();
+				int pos = dis.readInt();
+
+				String field = fields.get(pos);
+
+				String result = "";
+				result = jedis.hget(key, field);
+				System.out.println(result);
+				
+				if( result == null )
+					return "".getBytes();
+				
+				return result.getBytes();
+			}else if (reqType == RequestType.BENCHMARK_INIT) {
 				
 				System.out.println("======== STARTED BENCHMARK STATE =======");
 				
@@ -183,7 +212,7 @@ public class TreeMapServer extends DefaultRecoverable {
 				return null;
 			
 			} else {
-				System.out.println("Unknown request type: " + reqType);
+				System.out.println("Unknown request type:" + reqType + " | Ordered");
 				return null;
 			}
 		} catch (IOException e) {
@@ -194,7 +223,7 @@ public class TreeMapServer extends DefaultRecoverable {
 	}
 
 	@Override
-	public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
+	public synchronized byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
 		ByteArrayInputStream in = new ByteArrayInputStream(command);
 		DataInputStream dis = new DataInputStream(in);
 		int reqType;
@@ -226,7 +255,10 @@ public class TreeMapServer extends DefaultRecoverable {
 				String result = "";
 				result = jedis.hget(key, field);
 				System.out.println(result);
-
+				
+				if( result == null )
+					return "".getBytes();
+				
 				return result.getBytes();
 			}else if (reqType == RequestType.SUM) {
 				String key1 = dis.readUTF();
@@ -271,7 +303,9 @@ public class TreeMapServer extends DefaultRecoverable {
 				for (String current_field : fields) {
 
 					Object result = jedis.hget(key, current_field);
-
+					if(result == null)
+						return "false".getBytes();
+					
 					if(result.toString().equalsIgnoreCase(element)) {
 						System.out.println(true);
 						return "true".getBytes();
@@ -281,7 +315,7 @@ public class TreeMapServer extends DefaultRecoverable {
 				System.out.println(false);
 				return "false".getBytes();
 			} else {
-				System.out.println("Unknown request type: " + reqType);
+				System.out.println("Unknown request type:" + reqType +" | Unordered");
 				return null;
 			}
 		} catch (IOException e) {

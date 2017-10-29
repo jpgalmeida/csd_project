@@ -47,6 +47,12 @@ public class Benchmark {
 			
 		BenchmarkInitRequest();			// sets up jedis collection
 		
+		try {
+			Thread.sleep(3000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
 		for(int i = 0; i < servers; i++)
 			(new Thread(new Tester())).start();
 
@@ -222,19 +228,17 @@ public class Benchmark {
 					value = "newElement"+Integer.toString(i);
 					addElement(value);
 					readElement(String.valueOf(i), 4+i);
-					
 				}
 			}
 			
 			//Benchmark5: 
 			else if(command.equals("5")) {
 
-				//putset getset addelement removeset writeelement readelement isElement
 				Random randomGenerator = new Random();
 				String element = "newElement";
 				
 				for(int i = 0; i < 100 ; i++) {
-					int r = randomGenerator.nextInt(6);
+					int r = randomGenerator.nextInt(7);
 					switch (r) {
 						case 0: 
 							value = " nome dummy idade 100 morada RandomStreet telefone 9158128912";
@@ -250,10 +254,10 @@ public class Benchmark {
 							removeSet(String.valueOf(i));
 						break;
 						case 4: 
-							writeElement(String.valueOf(i), element+String.valueOf(i), 4);
+							writeElement(String.valueOf(i), element+String.valueOf(i), 3);
 						break;
 						case 5: 
-							readElement(String.valueOf(i), 4);
+							readElement(String.valueOf(i), 3);
 						break;
 						case 6: 
 							isElement(String.valueOf(i), "RandomStreet");
@@ -263,7 +267,6 @@ public class Benchmark {
 			}
 
 			long totalTime = (System.currentTimeMillis() - timeInit);
-
 			System.out.println("Thread #"+threadId+" Time: "+totalTime+" ms");
 			
 		}
