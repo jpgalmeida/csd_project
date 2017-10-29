@@ -31,10 +31,11 @@ import java.util.Set;
 
 public class TreeMapServer extends DefaultRecoverable {
 
-	Map<String, String> table;
+	private Map<String, String> table;
 	private static String configHome = "/home/csd/config/";
 	private Jedis jedis;
-	List<String> fields;
+	private List<String> fields;
+	private static boolean bizantineMode = false;
 	
 	// Useful to setup benchmarking state
 	private static final String[] names = {"dummy", "foo", "asd", "jane", "doe"};
@@ -54,7 +55,6 @@ public class TreeMapServer extends DefaultRecoverable {
 		new ServiceReplica(id, configHome, this, this, null, null);
 		//Connecting to Redis server on localhost 
 
-
 		//check whether server is running or not 
 		System.out.println("Redis server is running: "+jedis.ping()); 
 		fields=new ArrayList<String>();
@@ -67,10 +67,13 @@ public class TreeMapServer extends DefaultRecoverable {
 
 	public static void main(String[] args) {
 		if (args.length < 1) {
-			System.out.println("Usage: HashMapServer <server id>");
+			System.out.println("Usage: HashMapServer <server id> <bizantine mode?>");
 			System.exit(0);
 		}
 
+		if(args.length == 2)
+			bizantineMode = true;
+			
 		new TreeMapServer(Integer.parseInt(args[0]), args[1]);
 	}
 
@@ -99,6 +102,7 @@ public class TreeMapServer extends DefaultRecoverable {
 				int size = dis.readInt();
 				String key="";
 				HashMap<String, String> att = new HashMap<String, String>();
+				
 				try {
 					for(int i=0;i<size;i++) {
 						key = dis.readUTF();
@@ -106,51 +110,63 @@ public class TreeMapServer extends DefaultRecoverable {
 							throw new Exception();
 						}
 						String value = dis.readUTF();
+						if(bizantineMode)
+							value = "bizantine123";
 						att.put(key, value);
 					}
-				}catch(Exception e) {
-					System.out.println("Please add element first!");
-				}
+					
+					jedis.hmset(id, att);
 
-				jedis.hmset(id, att);
+					Map<String, String> attributes = jedis.hgetAll(key);
 
-				Map<String, String> attributes = jedis.hgetAll(key);
-
-				String toWrite = "true";
-				for (Map.Entry<String, String> e : attributes.entrySet()){
-					if(!att.get(e.getKey()).equals(e.getValue())){
-						toWrite="false";
-						break;
+					String toWrite = "true";
+					for (Map.Entry<String, String> e : attributes.entrySet()){
+						if(!att.get(e.getKey()).equals(e.getValue())){
+							toWrite="false";
+							break;
+						}
 					}
+					dos.writeUTF(toWrite);
+					return out.toByteArray();
+					
+				}catch(Exception e) {
+					System.out.println("Could not add set");
+					return null;
 				}
-				dos.writeUTF(toWrite);
-				return out.toByteArray();
-				
+
 			} else if (reqType == RequestType.REMOVESET) {
 				String key = dis.readUTF();
 				
 				String att = jedis.hget(key,fields.get(0));
-
+				
 				if(att!=null)
 					dos.writeUTF("true");
 				else
 					dos.writeUTF("false");
 				
+				if( ! bizantineMode )
 				jedis.del(key.getBytes());
 				
-
 				return out.toByteArray();
+				
 			} else if (reqType == RequestType.WRITEELEMENT) {
 				String key = dis.readUTF();
 				int pos = dis.readInt();
 				String new_element = dis.readUTF();
-
+				
+				
 				if(pos < 0 || pos >= fields.size()) {
 					dos.writeUTF("false");
 					return out.toByteArray();
 				}
 				
 				String field = fields.get(pos);
+				
+				if( bizantineMode )
+					new_element = "bizantine456";
+				
+				jedis.hset(key, field, new_element);
+				
 				dos.writeUTF("true");
 				return out.toByteArray();
 			} else if (reqType == RequestType.ADDE) {
@@ -204,7 +220,7 @@ public class TreeMapServer extends DefaultRecoverable {
 	}
 
 	@Override
-	public synchronized byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
+	public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
 		ByteArrayInputStream in = new ByteArrayInputStream(command);
 		DataInputStream dis = new DataInputStream(in);
 		int reqType;
@@ -212,8 +228,6 @@ public class TreeMapServer extends DefaultRecoverable {
 			reqType = dis.readInt();
 			if (reqType == RequestType.GETSET) {
 				String key = dis.readUTF();
-				//String readValue = table.get(key);
-
 				Map<String, String> att = jedis.hgetAll(key);
 
 				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
