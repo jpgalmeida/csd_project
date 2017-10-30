@@ -31,19 +31,11 @@ import java.util.Set;
 
 public class TreeMapServer extends DefaultRecoverable {
 
-	private Map<String, String> table;
 	private static String configHome = "/home/csd/config/";
 	private Jedis jedis;
 	private List<String> fields;
 	private static boolean bizantineMode = false;
 	
-	// Useful to setup benchmarking state
-	private static final String[] names = {"dummy", "foo", "asd", "jane", "doe"};
-	private static final String[] ages = {"10", "65", "24", "40","30"};
-	private static final String[] addresses = {"Lisbon", "Porto", "Setubal", "Faro", "Braga"};
-	private static final String[] phones = {"99142409", "147812", "181482", "3053021", "5012841"};
-	private static int counter = 0;
-
 	public TreeMapServer(int id, String serverUri){
 
 		table = new TreeMap<>();
@@ -53,10 +45,8 @@ public class TreeMapServer extends DefaultRecoverable {
 		jedis=pool.getResource();
 
 		new ServiceReplica(id, configHome, this, this, null, null);
-		//Connecting to Redis server on localhost 
-
-		//check whether server is running or not 
-		System.out.println("Redis server is running: "+jedis.ping()); 
+		System.out.println("Redis server is running: "+jedis.ping());
+		
 		fields=new ArrayList<String>();
 		fields.add("nome");
 		fields.add("idade");
@@ -111,7 +101,7 @@ public class TreeMapServer extends DefaultRecoverable {
 						}
 						String value = dis.readUTF();
 						if(bizantineMode)
-							value = "bizantine123";
+							value = "bizantinefail";
 						att.put(key, value);
 					}
 					
@@ -163,7 +153,7 @@ public class TreeMapServer extends DefaultRecoverable {
 				String field = fields.get(pos);
 				
 				if( bizantineMode )
-					new_element = "bizantine456";
+					new_element = "bizantinefail";
 				
 				jedis.hset(key, field, new_element);
 				
@@ -287,7 +277,6 @@ public class TreeMapServer extends DefaultRecoverable {
 				int mult = Integer.valueOf(val1) * Integer.valueOf(val2);
 				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
 				outputStream.write(mult);
-
 
 				return outputStream.toByteArray();
 
