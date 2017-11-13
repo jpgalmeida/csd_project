@@ -7,6 +7,8 @@ import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.Response;
 import resources.RequestType;
 
 // Classes that need to be declared to implement this
@@ -22,6 +24,8 @@ import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.TreeMap;
 
+import org.apache.commons.pool2.impl.GenericObjectPool;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,18 +39,28 @@ public class TreeMapServer extends DefaultRecoverable {
 	private Jedis jedis;
 	private List<String> fields;
 	private static boolean bizantineMode = false;
-	
+	private int numServer;
+	private JedisPool pool;
+	private Pipeline pipeline;
+
+
 	public TreeMapServer(int id, String serverUri){
 
-		table = new TreeMap<>();
+		JedisPoolConfig config = new JedisPoolConfig();
+        config.setTestOnBorrow(true);
+        
 		//		JedisPool pool = new JedisPool(new JedisPoolConfig(), serverUri);
-		JedisPool pool = new JedisPool(new JedisPoolConfig(), serverUri, 6379, 10000);
+		pool = new JedisPool(config, serverUri, 6379, 10000);
+
 		//jedis=new Jedis(serverUri, 6379);
 		jedis=pool.getResource();
+		pipeline = jedis.pipelined();
+
+		numServer = id;
 
 		new ServiceReplica(id, configHome, this, this, null, null);
 		System.out.println("Redis server is running: "+jedis.ping());
-		
+
 		fields=new ArrayList<String>();
 		fields.add("nome");
 		fields.add("idade");
@@ -61,9 +75,9 @@ public class TreeMapServer extends DefaultRecoverable {
 			System.exit(0);
 		}
 
-		if(args.length == 2)
+		if(args.length == 3)
 			bizantineMode = true;
-			
+
 		new TreeMapServer(Integer.parseInt(args[0]), args[1]);
 	}
 
@@ -85,6 +99,14 @@ public class TreeMapServer extends DefaultRecoverable {
 		DataOutputStream dos = new DataOutputStream(out);
 
 		int reqType;
+
+
+		try {
+			pipeline.close();
+		} catch (IOException e1) {
+			System.out.println("FAILED CLOSING PIPELINE");
+		}
+		jedis.pipelined();
 		try {
 			reqType = dis.readInt();
 			if (reqType == RequestType.PUTSET) {
@@ -92,7 +114,7 @@ public class TreeMapServer extends DefaultRecoverable {
 				int size = dis.readInt();
 				String key="";
 				HashMap<String, String> att = new HashMap<String, String>();
-				
+
 				try {
 					for(int i=0;i<size;i++) {
 						key = dis.readUTF();
@@ -100,11 +122,11 @@ public class TreeMapServer extends DefaultRecoverable {
 							throw new Exception();
 						}
 						String value = dis.readUTF();
-						if(bizantineMode)
+						if(bizantineMode && (numServer==0 || numServer==1))
 							value = "bizantinefail";
 						att.put(key, value);
 					}
-					
+
 					jedis.hmset(id, att);
 
 					Map<String, String> attributes = jedis.hgetAll(key);
@@ -118,7 +140,7 @@ public class TreeMapServer extends DefaultRecoverable {
 					}
 					dos.writeUTF(toWrite);
 					return out.toByteArray();
-					
+
 				}catch(Exception e) {
 					System.out.println("Could not add set");
 					return null;
@@ -126,42 +148,42 @@ public class TreeMapServer extends DefaultRecoverable {
 
 			} else if (reqType == RequestType.REMOVESET) {
 				String key = dis.readUTF();
-				
+
 				String att = jedis.hget(key,fields.get(0));
-				
+
 				if(att!=null)
 					dos.writeUTF("true");
 				else
 					dos.writeUTF("false");
-				
+
 				if( ! bizantineMode )
-				jedis.del(key.getBytes());
-				
+					jedis.del(key.getBytes());
+
 				return out.toByteArray();
-				
+
 			} else if (reqType == RequestType.WRITEELEMENT) {
 				String key = dis.readUTF();
 				int pos = dis.readInt();
 				String new_element = dis.readUTF();
-				
-				
+
+
 				if(pos < 0 || pos >= fields.size()) {
 					dos.writeUTF("false");
 					return out.toByteArray();
 				}
-				
+
 				String field = fields.get(pos);
-				
-				if( bizantineMode )
+
+				if(bizantineMode && (numServer==0 || numServer==1))
 					new_element = "bizantinefail";
-				
+
 				jedis.hset(key, field, new_element);
-				
+
 				dos.writeUTF("true");
 				return out.toByteArray();
 			} else if (reqType == RequestType.ADDE) {
 				String key = dis.readUTF();
-				
+
 				if(fields.contains(key))
 					dos.writeUTF("false");
 				else {
@@ -171,15 +193,25 @@ public class TreeMapServer extends DefaultRecoverable {
 				return out.toByteArray();
 			} else if (reqType == RequestType.GETSET) {
 				String key = dis.readUTF();
-				Map<String, String> att = jedis.hgetAll(key);
-
 				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
 
-				for (Map.Entry<String, String> e : att.entrySet()){
-					outputStream.write(e.getKey().getBytes(StandardCharsets.UTF_8));
-					outputStream.write(",".getBytes());
-					outputStream.write(e.getValue().getBytes(StandardCharsets.UTF_8));
-					outputStream.write(",".getBytes());
+				
+				
+				Response<Map<String, String>> resp = pipeline.hgetAll(key);
+				
+				pipeline.sync();
+				Map<String, String> att = resp.get();
+
+				if(att.size()!= 0)
+					for (Map.Entry<String, String> e : att.entrySet()){
+						outputStream.write(e.getKey().getBytes(StandardCharsets.UTF_8));
+						outputStream.write(",".getBytes());
+						outputStream.write(e.getValue().getBytes(StandardCharsets.UTF_8));
+						outputStream.write(",".getBytes());
+					}
+				else {
+					System.out.println("EMPTY!!!!!");
+					outputStream.write("".getBytes());
 				}
 
 				return outputStream.toByteArray();
@@ -193,10 +225,10 @@ public class TreeMapServer extends DefaultRecoverable {
 				String result = "";
 				result = jedis.hget(key, field);
 				System.out.println(result);
-				
+
 				if( result == null )
 					return "".getBytes();
-				
+
 				return result.getBytes();
 			} else {
 				System.out.println("Unknown request type:" + reqType + " | Ordered");
@@ -207,6 +239,7 @@ public class TreeMapServer extends DefaultRecoverable {
 			e.printStackTrace();
 			return null;
 		}
+
 	}
 
 	@Override
@@ -214,20 +247,36 @@ public class TreeMapServer extends DefaultRecoverable {
 		ByteArrayInputStream in = new ByteArrayInputStream(command);
 		DataInputStream dis = new DataInputStream(in);
 		int reqType;
+
+		try {
+			pipeline.close();
+		} catch (IOException e1) {
+			System.out.println("FAILED CLOSING PIPELINE");
+		}
+		jedis.pipelined();
 		try {
 			reqType = dis.readInt();
 			if (reqType == RequestType.GETSET) {
 				String key = dis.readUTF();
-				Map<String, String> att = jedis.hgetAll(key);
-
 				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
 
-				for (Map.Entry<String, String> e : att.entrySet()){
-					outputStream.write(e.getKey().getBytes(StandardCharsets.UTF_8));
-					outputStream.write(",".getBytes());
-					outputStream.write(e.getValue().getBytes(StandardCharsets.UTF_8));
-					outputStream.write(",".getBytes());
+
+				Response<Map<String, String>> resp = pipeline.hgetAll(key);
+				pipeline.sync();
+				Map<String, String> att = resp.get();
+				
+				if(att.size()!=0)
+					for (Map.Entry<String, String> e : att.entrySet()){
+						outputStream.write(e.getKey().getBytes(StandardCharsets.UTF_8));
+						outputStream.write(",".getBytes());
+						outputStream.write(e.getValue().getBytes(StandardCharsets.UTF_8));
+						outputStream.write(",".getBytes());
+					}
+				else {
+					System.out.println("EMPTY!!!!!");
+					outputStream.write("".getBytes());
 				}
+
 
 				return outputStream.toByteArray();
 
@@ -240,10 +289,10 @@ public class TreeMapServer extends DefaultRecoverable {
 				String result = "";
 				result = jedis.hget(key, field);
 				System.out.println(result);
-				
+
 				if( result == null )
 					return "".getBytes();
-				
+
 				return result.getBytes();
 			}else if (reqType == RequestType.SUM) {
 				String key1 = dis.readUTF();
@@ -289,7 +338,7 @@ public class TreeMapServer extends DefaultRecoverable {
 					Object result = jedis.hget(key, current_field);
 					if(result == null)
 						return "false".getBytes();
-					
+
 					if(result.toString().equalsIgnoreCase(element)) {
 						System.out.println(true);
 						return "true".getBytes();
@@ -326,7 +375,7 @@ public class TreeMapServer extends DefaultRecoverable {
 			// write new map
 			if(map.size()>0)
 				System.out.println("=======I HAVE THINGS TO WRITE=======");
-			
+
 			for(String key: map.keySet()) {
 				jedis.hmset(key, map.get(key));
 				System.out.println("=======ELEMENT ADDED=======");
@@ -370,5 +419,5 @@ public class TreeMapServer extends DefaultRecoverable {
 			return new byte[0];
 		}
 	}
-	
+
 }
