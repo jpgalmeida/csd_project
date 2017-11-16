@@ -330,13 +330,15 @@ public class TreeMapServer extends DefaultRecoverable {
 					String key2 = dis.readUTF();
 					int pos = dis.readInt();
 
-
+					System.out.println("Mult "+key1+ " "+key2+" "+pos);
 					String field = fields.get(pos);
 
 					String val1 = jedis.hget(key1, field);
 					String val2 = jedis.hget(key2, field);
-
+					
+					System.out.println("LELJEDIS "+val1+ " "+val2+" "+field);
 					int mult = Integer.valueOf(val1) * Integer.valueOf(val2);
+					System.out.println("LELRES "+mult);
 					ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
 					outputStream.write(mult);
 

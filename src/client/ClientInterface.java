@@ -141,7 +141,7 @@ public class ClientInterface {
 				String key1 = sc.next();
 				String key2 = sc.next();
 
-				int sum_res = Sum(key1, key2, pos);
+				int sum_res = Sum(pos, key1, key2);
 
 				System.out.println("> Sum is: "+sum_res);
 				break;
@@ -150,8 +150,9 @@ public class ClientInterface {
 				pos = sc.nextInt();
 				key1 = sc.next();
 				key2 = sc.next();
-
-				int mult_res = Mult( key1, key2, pos);
+				
+				
+				int mult_res = Mult(pos, key1, key2);
 				
 				System.out.println("> Mult is: "+mult_res);
 				
@@ -189,7 +190,7 @@ public class ClientInterface {
 		return 0;
 	}
 
-	private static int Mult(String key1, String key2, int pos) {
+	private static int Mult( int pos, String key1, String key2) {
 
 		int response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos)
 				.request()
@@ -200,7 +201,7 @@ public class ClientInterface {
 	}
 
 
-	private static int Sum(String key1, String key2, int pos) {
+	private static int Sum(int pos, String key1, String key2) {
 
 		int response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos)
 				.request()

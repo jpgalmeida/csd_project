@@ -151,7 +151,7 @@ public class ServerInterfaceResources {
 			dos.writeUTF(key1);
 			dos.writeUTF(key2);
 			dos.writeInt(pos);
-
+			System.out.println("Mult "+key1+ " "+key2+" "+pos);
 			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeUnordered(out.toByteArray()));
 			DataInputStream dis = new DataInputStream(in);
 			int res = dis.read();

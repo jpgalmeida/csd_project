@@ -46,8 +46,8 @@ public class Benchmark {
 		command = args[1];
 		int servers = Integer.valueOf(args[2]);
 
-//		if(command.equals("2"))
-//			BenchmarkInitRequest();	
+		//		if(command.equals("2"))
+		//			BenchmarkInitRequest();	
 
 		//		for(int i = 0; i < servers; i++)
 		//			(new Thread(new Tester())).start();
@@ -73,9 +73,7 @@ public class Benchmark {
 		else if(command.equals("2")) {
 			for(int i = 0;i<100;i++) {
 				key = Integer.toString(i);
-				
 				getEntry( key);
-//				Thread.sleep(10);
 			}
 
 
@@ -89,7 +87,6 @@ public class Benchmark {
 				key = Integer.toString(i);
 
 				registerEntry(key, valuesParsed);
-//				Thread.sleep(10);
 				getEntry( key);
 
 
@@ -101,73 +98,80 @@ public class Benchmark {
 		else if(command.equals("4")) {
 			value = " nome dummy4444444 idade 100 morada RandomStreet telefone 9158128912";
 			HashMap<String, String> valuesParsed = parseValuesToMap(value);
-			
-			for(int i = 0;i<50;i++) {
+
+			for(int i = 0;i<15;i++) {
 				key = Integer.toString(i);
 
 				registerEntry(key, valuesParsed);
-//				Thread.sleep(10);
 				getEntry( key);
-//				Thread.sleep(10);
 				isElement(key, "100");
-//				Thread.sleep(10);
 				readElement(key, 0);
-//				Thread.sleep(10);
 				writeElement(key, "10000", 1);
-//				Thread.sleep(10);
 				addElement("NewElement");
-//				Thread.sleep(10);
 				removeSet(key);
-				
-				
+
 			}
 		}
 
 		//Benchmark5: 
 		else if(command.equals("5")) {
 
-			Random randomGenerator = new Random();
-			String element = "newElement";
+			value = " nome dummy5555555 idade 100 morada RandomStreet telefone 9158128912";
+			HashMap<String, String> valuesParsed = parseValuesToMap(value);
 
-			for(int i = 0; i < 100 ; i++) {
-				int r = randomGenerator.nextInt(7);
-				switch (r) {
-				case 0: 
-					value = " nome dummy idade 100 morada RandomStreet telefone 9158128912";
-					registerEntry(String.valueOf(i), parseValuesToMap(value));
-					break;
-				case 1:
-					try {
-						getEntry(String.valueOf(i));
-					} catch (Exception e) {
-						System.out.println("Get Entry: doesn't exist. | "+String.valueOf(i));
+			for(int i = 0;i<15;i++) {
+				key = Integer.toString(i);
+
+				registerEntry(key, valuesParsed);
+				getEntry( key);
+				isElement(key, "100");
+				readElement(key, 0);
+				writeElement(key, "10000", 1);
+				addElement("NewElement");
+				
+				if(i>0 && i<11) {
+					String key2 = Integer.toString(i-1);
+					Mult(1, key2, key);
+				}
+				
+			}
+			
+			for(int i = 0;i<15;i++) {
+				key = Integer.toString(i);
+				removeSet(key);
+			}
+
+		}
+		
+		//Benchmark6: 
+				else if(command.equals("6")) {
+
+					value = " nome dummy5555555 idade 100 morada RandomStreet telefone 9158128912";
+					HashMap<String, String> valuesParsed = parseValuesToMap(value);
+
+					for(int i = 0;i<15;i++) {
+						key = Integer.toString(i);
+
+						registerEntry(key, valuesParsed);
+						getEntry( key);
+						isElement(key, "100");
+						readElement(key, 0);
+						writeElement(key, "10000", 1);
+						addElement("NewElement");
+						
+						if(i>0 && i<11) {
+							String key2 = Integer.toString(i-1);
+							Sum(1, key2, key);
+						}
+						
+					}
+					
+					for(int i = 0;i<15;i++) {
+						key = Integer.toString(i);
+						removeSet(key);
 					}
 
-					break;
-				case 2: 
-					addElement(element+String.valueOf(i));
-					break;
-				case 3: 
-					removeSet(String.valueOf(i));
-					break;
-				case 4: 
-					writeElement(String.valueOf(i), element+String.valueOf(i), 3);
-					break;
-				case 5: 
-					readElement(String.valueOf(i), 3);
-					break;
-				case 6: 
-					isElement(String.valueOf(i), "RandomStreet");
-					break;
 				}
-			}
-		}
-
-		long totalTime = (System.currentTimeMillis() - timeInit);
-		System.out.println("Thread #"+threadId+" Time: "+totalTime+" ms");
-
-
-
 	}
 
 
@@ -189,7 +193,7 @@ public class Benchmark {
 		return 0;
 	}
 
-	private static int Mult(String key1, String key2, int pos) {
+	private static int Mult(int pos, String key1, String key2) {
 		int response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
@@ -199,7 +203,7 @@ public class Benchmark {
 	}
 
 
-	private static int Sum(String key1, String key2, int pos) {
+	private static int Sum(int pos, String key1, String key2) {
 		int response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
@@ -270,15 +274,15 @@ public class Benchmark {
 		byte[] response=null;
 
 		try {
-		response = target.path("/entries/"+key)
-				.request()
-				.accept(MediaType.APPLICATION_JSON)
-				.get(new GenericType<byte[]>() {});
-		System.out.println(response.toString());
+			response = target.path("/entries/"+key)
+					.request()
+					.accept(MediaType.APPLICATION_JSON)
+					.get(new GenericType<byte[]>() {});
+			System.out.println(response.toString());
 		}catch(Exception e) {
-			
+
 		}
-		
+
 		return response;
 	}
 
