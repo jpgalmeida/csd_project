@@ -1,6 +1,7 @@
 package client;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.Scanner;
@@ -24,10 +25,10 @@ public class Benchmark {
 	private static Client client;
 	private static URI serverURI;
 	private static WebTarget target;
-	
+
 	private static String command = "";
- 	
-	public static void main(String[] args) {
+
+	public static void main(String[] args) throws InterruptedException {
 		String serverURL=args[0];
 
 		serverURI = UriBuilder.fromUri(serverURL).port(11100).build();
@@ -41,22 +42,143 @@ public class Benchmark {
 			System.out.println("Usage: <benchmark number> <number of threads>");
 			System.exit(1);
 		}
-		
+
 		command = args[1];
 		int servers = Integer.valueOf(args[2]);
+
+//		if(command.equals("2"))
+//			BenchmarkInitRequest();	
+
+		//		for(int i = 0; i < servers; i++)
+		//			(new Thread(new Tester())).start();
+
+		long timeInit = System.currentTimeMillis();
+		String key, value;
+		long threadId = Thread.currentThread().getId();
+
+		System.out.println("Started Thread #"+threadId);
+
+		//Benchmark1: 100 PutSet
+		if(command.equals("1")) {
+			value = " nome dummy111111 idade 100 morada RandomStreet telefone 9158128912";
+
+			HashMap<String, String> valuesParsed = parseValuesToMap(value);
+			for(int i = 0;i<100;i++) {
+				key = Integer.toString(i);
+				registerEntry(key, valuesParsed);
+			}
+		} 
+
+		//Benchmark2: 100 GetSet
+		else if(command.equals("2")) {
+			for(int i = 0;i<100;i++) {
+				key = Integer.toString(i);
+				
+				getEntry( key);
+//				Thread.sleep(10);
+			}
+
+
+		}
+
+		//Benchmark3: 50 PutSet, 50 GetSet alternated
+		else if(command.equals("3")) {
+			value = " nome dummy33333333 idade 100 morada RandomStreet telefone 9158128912";
+			HashMap<String, String> valuesParsed = parseValuesToMap(value);
+			for(int i = 0;i<50;i++) {
+				key = Integer.toString(i);
+
+				registerEntry(key, valuesParsed);
+//				Thread.sleep(10);
+				getEntry( key);
+
+
+
+			}
+		}
+
+		//Benchmark4: All operations: alternated, distribution discussed (without sums or multiplications)
+		else if(command.equals("4")) {
+			value = " nome dummy4444444 idade 100 morada RandomStreet telefone 9158128912";
+			HashMap<String, String> valuesParsed = parseValuesToMap(value);
 			
-		BenchmarkInitRequest();	
-		
-		for(int i = 0; i < servers; i++)
-			(new Thread(new Tester())).start();
+			for(int i = 0;i<50;i++) {
+				key = Integer.toString(i);
+
+				registerEntry(key, valuesParsed);
+//				Thread.sleep(10);
+				getEntry( key);
+//				Thread.sleep(10);
+				isElement(key, "100");
+//				Thread.sleep(10);
+				readElement(key, 0);
+//				Thread.sleep(10);
+				writeElement(key, "10000", 1);
+//				Thread.sleep(10);
+				addElement("NewElement");
+//				Thread.sleep(10);
+				removeSet(key);
+				
+				
+			}
+		}
+
+		//Benchmark5: 
+		else if(command.equals("5")) {
+
+			Random randomGenerator = new Random();
+			String element = "newElement";
+
+			for(int i = 0; i < 100 ; i++) {
+				int r = randomGenerator.nextInt(7);
+				switch (r) {
+				case 0: 
+					value = " nome dummy idade 100 morada RandomStreet telefone 9158128912";
+					registerEntry(String.valueOf(i), parseValuesToMap(value));
+					break;
+				case 1:
+					try {
+						getEntry(String.valueOf(i));
+					} catch (Exception e) {
+						System.out.println("Get Entry: doesn't exist. | "+String.valueOf(i));
+					}
+
+					break;
+				case 2: 
+					addElement(element+String.valueOf(i));
+					break;
+				case 3: 
+					removeSet(String.valueOf(i));
+					break;
+				case 4: 
+					writeElement(String.valueOf(i), element+String.valueOf(i), 3);
+					break;
+				case 5: 
+					readElement(String.valueOf(i), 3);
+					break;
+				case 6: 
+					isElement(String.valueOf(i), "RandomStreet");
+					break;
+				}
+			}
+		}
+
+		long totalTime = (System.currentTimeMillis() - timeInit);
+		System.out.println("Thread #"+threadId+" Time: "+totalTime+" ms");
+
+
 
 	}
 
+
+
+
+
 	private static void BenchmarkInitRequest() {
-		String value = " nome dummy idade 100 morada RandomStreet telefone 9158128912";
+		String value = " nome dummy000000 idade 100 morada RandomStreet telefone 9158128912";
 		for( int i = 0; i < 100 ; i++)
 			registerEntry(String.valueOf(i), parseValuesToMap(value));
-		
+
 	}
 
 	private static int MultAll(int pos) {
@@ -117,11 +239,11 @@ public class Benchmark {
 
 	public static int registerEntry(String key, HashMap<String, String> values){
 		Entry entry = new Entry(key, values);
-		
+
 		Response response = target.path("/entries/ps/"+key)
 				.request()
 				.post( Entity.entity(entry, MediaType.APPLICATION_JSON));
-		
+
 		return response.getStatus();
 
 	}
@@ -145,10 +267,17 @@ public class Benchmark {
 	}
 
 	public static byte[] getEntry(String key){
-		byte[] response = target.path("/entries/"+key)
+		byte[] response=null;
+
+		try {
+		response = target.path("/entries/"+key)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<byte[]>() {});
+		System.out.println(response.toString());
+		}catch(Exception e) {
+			
+		}
 		
 		return response;
 	}
@@ -170,22 +299,22 @@ public class Benchmark {
 
 		return hm;
 	}
-	
-	
+
+
 	static class Tester implements Runnable {
-	    
+
 		@Override
 		public void run() {
-			
+
 			long timeInit = System.currentTimeMillis();
 			String key, value;
 			long threadId = Thread.currentThread().getId();
-			
+
 			System.out.println("Started Thread #"+threadId);
-			
+
 			//Benchmark1: 100 PutSet
 			if(command.equals("1")) {
-				value = " nome dummy idade 100 morada RandomStreet telefone 9158128912";
+				value = " nome dummy111111 idade 100 morada RandomStreet telefone 9158128912";
 
 				HashMap<String, String> valuesParsed = parseValuesToMap(value);
 				for(int i = 0;i<100;i++) {
@@ -193,7 +322,7 @@ public class Benchmark {
 					registerEntry(key, valuesParsed);
 				}
 			} 
-			
+
 			//Benchmark2: 100 GetSet
 			else if(command.equals("2")) {
 				for(int i = 0;i<100;i++) {
@@ -201,65 +330,72 @@ public class Benchmark {
 					getEntry( key);
 				}
 
+
 			}
-			
+
 			//Benchmark3: 50 PutSet, 50 GetSet alternated
 			else if(command.equals("3")) {
-				value = " nome dummy idade 100 morada RandomStreet telefone 9158128912";
+				value = " nome dummy33333333 idade 100 morada RandomStreet telefone 9158128912";
 				HashMap<String, String> valuesParsed = parseValuesToMap(value);
 				for(int i = 0;i<50;i++) {
 					key = Integer.toString(i);
-					registerEntry(key, valuesParsed);
-					getEntry( key);
+					synchronized(this) {
+
+						int res = registerEntry(key, valuesParsed);
+						if(res!=404)
+							getEntry( key);
+					}
+
+
 				}
 			}
-			
+
 			//Benchmark4: All operations: alternated, distribution discussed (without sums or multiplications)
 			else if(command.equals("4")) {
 				value = "newElement";
-				
+
 				for(int i = 0;i<50;i++) {
 					value = "newElement"+Integer.toString(i);
 					addElement(value);
 					readElement(String.valueOf(i), 4+i);
 				}
 			}
-			
+
 			//Benchmark5: 
 			else if(command.equals("5")) {
 
 				Random randomGenerator = new Random();
 				String element = "newElement";
-				
+
 				for(int i = 0; i < 100 ; i++) {
 					int r = randomGenerator.nextInt(7);
 					switch (r) {
-						case 0: 
-							value = " nome dummy idade 100 morada RandomStreet telefone 9158128912";
-							registerEntry(String.valueOf(i), parseValuesToMap(value));
+					case 0: 
+						value = " nome dummy idade 100 morada RandomStreet telefone 9158128912";
+						registerEntry(String.valueOf(i), parseValuesToMap(value));
 						break;
-						case 1:
-							try {
-								getEntry(String.valueOf(i));
-							} catch (Exception e) {
-								System.out.println("Get Entry: doesn't exist. | "+String.valueOf(i));
-							}
-							
+					case 1:
+						try {
+							getEntry(String.valueOf(i));
+						} catch (Exception e) {
+							System.out.println("Get Entry: doesn't exist. | "+String.valueOf(i));
+						}
+
 						break;
-						case 2: 
-							addElement(element+String.valueOf(i));
+					case 2: 
+						addElement(element+String.valueOf(i));
 						break;
-						case 3: 
-								removeSet(String.valueOf(i));
+					case 3: 
+						removeSet(String.valueOf(i));
 						break;
-						case 4: 
-							writeElement(String.valueOf(i), element+String.valueOf(i), 3);
+					case 4: 
+						writeElement(String.valueOf(i), element+String.valueOf(i), 3);
 						break;
-						case 5: 
-							readElement(String.valueOf(i), 3);
+					case 5: 
+						readElement(String.valueOf(i), 3);
 						break;
-						case 6: 
-							isElement(String.valueOf(i), "RandomStreet");
+					case 6: 
+						isElement(String.valueOf(i), "RandomStreet");
 						break;
 					}
 				}
@@ -267,9 +403,9 @@ public class Benchmark {
 
 			long totalTime = (System.currentTimeMillis() - timeInit);
 			System.out.println("Thread #"+threadId+" Time: "+totalTime+" ms");
-			
+
 		}
-		
+
 	}
 
 }

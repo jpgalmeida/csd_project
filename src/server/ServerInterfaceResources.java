@@ -274,15 +274,13 @@ public class ServerInterfaceResources {
 			DataOutputStream dos = new DataOutputStream(out);
 			dos.writeInt(RequestType.GETSET);
 			dos.writeUTF(String.valueOf(key));
-			byte[] reply = clientProxy.invokeUnordered(out.toByteArray());
-
-			if(reply == null)
-				return null;
-
+//			byte[] reply = clientProxy.invokeUnordered(out.toByteArray());
+			byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
+			System.out.println(new String(reply, StandardCharsets.UTF_8));
 			return reply;
 		} catch (IOException ioe) {
 			System.out.println("Exception getting value from the hashmap: " + ioe.getMessage());
-			return null;
+			return "".getBytes();
 		}
 	}
 

@@ -7,8 +7,6 @@ import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
-import redis.clients.jedis.Pipeline;
-import redis.clients.jedis.Response;
 import resources.RequestType;
 
 // Classes that need to be declared to implement this
@@ -22,9 +20,6 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.TreeMap;
-
-import org.apache.commons.pool2.impl.GenericObjectPool;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,47 +33,53 @@ public class TreeMapServer extends DefaultRecoverable {
 	private static String configHome = "/home/csd/config/";
 	private Jedis jedis;
 	private List<String> fields;
-	private static boolean bizantineMode = false;
-	private int numServer;
+	private String serverUri;
 	private JedisPool pool;
-	private Pipeline pipeline;
 
 
 	public TreeMapServer(int id, String serverUri){
 
-		JedisPoolConfig config = new JedisPoolConfig();
-        config.setTestOnBorrow(true);
-        
+		this.serverUri = serverUri;
 		//		JedisPool pool = new JedisPool(new JedisPoolConfig(), serverUri);
-		pool = new JedisPool(config, serverUri, 6379, 10000);
-
-		//jedis=new Jedis(serverUri, 6379);
+		JedisPoolConfig config = new JedisPoolConfig();
+		config.setMaxTotal(1024);
+		config.setMaxWaitMillis(30000);
+		config.setMaxIdle(512);
+		
+		config.setMinIdle(1);
+		config.setTestOnBorrow(true);
+		config.setTestOnReturn(true);
+		config.setTestWhileIdle(true);
+		config.setNumTestsPerEvictionRun(10);
+		config.setTimeBetweenEvictionRunsMillis(60000);
+		pool = new JedisPool(config, serverUri, 6379);
+		
 		jedis=pool.getResource();
-		pipeline = jedis.pipelined();
+		//		jedis=new Jedis(serverUri, 6379);
 
-		numServer = id;
 
 		new ServiceReplica(id, configHome, this, this, null, null);
-		System.out.println("Redis server is running: "+jedis.ping());
+		//Connecting to Redis server on localhost 
 
+
+		//check whether server is running or not 
+		System.out.println("Redis server is running: "+jedis.ping()); 
 		fields=new ArrayList<String>();
 		fields.add("nome");
 		fields.add("idade");
 		fields.add("morada");
 		fields.add("telefone");
-
 	}
 
 	public static void main(String[] args) {
 		if (args.length < 1) {
-			System.out.println("Usage: HashMapServer <server id> <bizantine mode?>");
+			System.out.println("Usage: HashMapServer <server id>");
 			System.exit(0);
 		}
 
-		if(args.length == 3)
-			bizantineMode = true;
-
 		new TreeMapServer(Integer.parseInt(args[0]), args[1]);
+
+
 	}
 
 	@Override
@@ -92,153 +93,159 @@ public class TreeMapServer extends DefaultRecoverable {
 		return replies;
 	}
 
-	private synchronized byte[] executeSingle(byte[] command, MessageContext msgCtx) {
+	private byte[] executeSingle(byte[] command, MessageContext msgCtx) {
 		ByteArrayInputStream in = new ByteArrayInputStream(command);
 		DataInputStream dis = new DataInputStream(in);
+
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		DataOutputStream dos = new DataOutputStream(out);
 
-		int reqType;
+//		try{
+		Jedis jedis2=pool.getResource();
 
 
-		try {
-			pipeline.close();
-		} catch (IOException e1) {
-			System.out.println("FAILED CLOSING PIPELINE");
-		}
-		jedis.pipelined();
-		try {
-			reqType = dis.readInt();
-			if (reqType == RequestType.PUTSET) {
-				String id = dis.readUTF();
-				int size = dis.readInt();
-				String key="";
-				HashMap<String, String> att = new HashMap<String, String>();
-
-				try {
-					for(int i=0;i<size;i++) {
-						key = dis.readUTF();
-						if(!fields.contains(key)) {
-							throw new Exception();
+			int reqType;
+			try {
+				reqType = dis.readInt();
+				if (reqType == RequestType.PUTSET) {
+					String id = dis.readUTF();
+					int size = dis.readInt();
+					String key="";
+					HashMap<String, String> att = new HashMap<String, String>();
+					try {
+						for(int i=0;i<size;i++) {
+							key = dis.readUTF();
+							if(!fields.contains(key)) {
+								throw new Exception();
+							}
+							String value = dis.readUTF();
+							att.put(key, value);
 						}
-						String value = dis.readUTF();
-						if(bizantineMode && (numServer==0 || numServer==1))
-							value = "bizantinefail";
-						att.put(key, value);
+					}catch(Exception e) {
+						System.out.println("Please add element first!");
 					}
 
-					jedis.hmset(id, att);
 
-					Map<String, String> attributes = jedis.hgetAll(key);
+
+					Map<String, String> attributes=null;
+					try{
+						jedis2.hmset(id, att);
+						attributes = jedis2.hgetAll(key);
+					}catch(Exception e) {
+						System.out.println("Cast problem");
+					}
 
 					String toWrite = "true";
-					for (Map.Entry<String, String> e : attributes.entrySet()){
-						if(!att.get(e.getKey()).equals(e.getValue())){
-							toWrite="false";
-							break;
+					if(attributes!=null) {
+						for (Map.Entry<String, String> e : attributes.entrySet()){
+							if(!att.get(e.getKey()).equals(e.getValue())){
+								toWrite="false";
+								break;
+							}
+
 						}
 					}
+
 					dos.writeUTF(toWrite);
+
+					//				if(jedis!=null)
+					//					jedis.close();
+
+
 					return out.toByteArray();
 
-				}catch(Exception e) {
-					System.out.println("Could not add set");
-					return null;
-				}
+				} else if (reqType == RequestType.REMOVESET) {
+					String key = dis.readUTF();
 
-			} else if (reqType == RequestType.REMOVESET) {
-				String key = dis.readUTF();
+					String att = jedis.hget(key,fields.get(0));
 
-				String att = jedis.hget(key,fields.get(0));
+					if(att!=null)
+						dos.writeUTF("true");
+					else
+						dos.writeUTF("false");
 
-				if(att!=null)
-					dos.writeUTF("true");
-				else
-					dos.writeUTF("false");
-
-				if( ! bizantineMode )
 					jedis.del(key.getBytes());
 
-				return out.toByteArray();
 
-			} else if (reqType == RequestType.WRITEELEMENT) {
-				String key = dis.readUTF();
-				int pos = dis.readInt();
-				String new_element = dis.readUTF();
+					return out.toByteArray();
+				}else if (reqType == RequestType.WRITEELEMENT) {
+					String key = dis.readUTF();
+					int pos = dis.readInt();
+					String new_element = dis.readUTF();
 
+					if(pos < 0 || pos >= fields.size()) {
+						dos.writeUTF("false");
+						return out.toByteArray();
+					}
 
-				if(pos < 0 || pos >= fields.size()) {
-					dos.writeUTF("false");
+					String field = fields.get(pos);
+					System.out.println(jedis.hset(key, field, new_element));
+
+					dos.writeUTF("true");
+					return out.toByteArray();
+				}else if (reqType == RequestType.ADDE) {
+					String key = dis.readUTF();
+
+					if(fields.contains(key))
+						dos.writeUTF("false");
+					else {
+						fields.add(key);
+						dos.writeUTF("true");
+					}
 					return out.toByteArray();
 				}
+				else if (reqType == RequestType.GETSET) {
+//					ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+//					outputStream.write(RequestType.GETSET);
+//					appExecuteUnordered(outputStream.toByteArray(), msgCtx);
+//					return "".getBytes();
+//				}
+					String key = dis.readUTF();
+					//String readValue = table.get(key);
 
-				String field = fields.get(pos);
-
-				if(bizantineMode && (numServer==0 || numServer==1))
-					new_element = "bizantinefail";
-
-				jedis.hset(key, field, new_element);
-
-				dos.writeUTF("true");
-				return out.toByteArray();
-			} else if (reqType == RequestType.ADDE) {
-				String key = dis.readUTF();
-
-				if(fields.contains(key))
-					dos.writeUTF("false");
-				else {
-					fields.add(key);
-					dos.writeUTF("true");
-				}
-				return out.toByteArray();
-			} else if (reqType == RequestType.GETSET) {
-				String key = dis.readUTF();
-				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
-
-				
-				
-				Response<Map<String, String>> resp = pipeline.hgetAll(key);
-				
-				pipeline.sync();
-				Map<String, String> att = resp.get();
-
-				if(att.size()!= 0)
-					for (Map.Entry<String, String> e : att.entrySet()){
-						outputStream.write(e.getKey().getBytes(StandardCharsets.UTF_8));
-						outputStream.write(",".getBytes());
-						outputStream.write(e.getValue().getBytes(StandardCharsets.UTF_8));
-						outputStream.write(",".getBytes());
+					Map<String, String> att=null;
+					try{
+						
+						att = jedis.hgetAll(key);
+						System.out.println(att.toString());
+					}catch(Exception e) {
+						e.printStackTrace();
 					}
-				else {
-					System.out.println("EMPTY!!!!!");
-					outputStream.write("".getBytes());
+					
+					ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+					if(att!=null) {	
+						for (Map.Entry<String, String> e : att.entrySet()){
+							outputStream.write(e.getKey().getBytes(StandardCharsets.UTF_8));
+							outputStream.write(",".getBytes());
+							outputStream.write(e.getValue().getBytes(StandardCharsets.UTF_8));
+							outputStream.write(",".getBytes());
+						}
+					}
+					else {
+						outputStream.write("".getBytes());
+					}
+
+					//				if(jedis!=null)
+					//					jedis.close();
+
+
+					return outputStream.toByteArray();
+
 				}
-
-				return outputStream.toByteArray();
-
-			} else if (reqType == RequestType.READELEMENT) {
-				String key = dis.readUTF();
-				int pos = dis.readInt();
-
-				String field = fields.get(pos);
-
-				String result = "";
-				result = jedis.hget(key, field);
-				System.out.println(result);
-
-				if( result == null )
+				else {
+					System.out.println("Unknown request type: " + reqType);
 					return "".getBytes();
-
-				return result.getBytes();
-			} else {
-				System.out.println("Unknown request type:" + reqType + " | Ordered");
+				}
+			} catch (IOException e) {
+				System.out.println("Exception reading data in the replica: " + e.getMessage());
+				e.printStackTrace();
+//				if(jedis!=null)
+//					jedis.close();
 				return null;
 			}
-		} catch (IOException e) {
-			System.out.println("Exception reading data in the replica: " + e.getMessage());
-			e.printStackTrace();
-			return null;
-		}
+//		}finally {
+//			jedis.close();
+//		}
 
 	}
 
@@ -248,120 +255,129 @@ public class TreeMapServer extends DefaultRecoverable {
 		DataInputStream dis = new DataInputStream(in);
 		int reqType;
 
-		try {
-			pipeline.close();
-		} catch (IOException e1) {
-			System.out.println("FAILED CLOSING PIPELINE");
-		}
-		jedis.pipelined();
-		try {
-			reqType = dis.readInt();
-			if (reqType == RequestType.GETSET) {
-				String key = dis.readUTF();
-				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+//		try{
+//			jedis=pool.getResource();
 
 
-				Response<Map<String, String>> resp = pipeline.hgetAll(key);
-				pipeline.sync();
-				Map<String, String> att = resp.get();
-				
-				if(att.size()!=0)
-					for (Map.Entry<String, String> e : att.entrySet()){
-						outputStream.write(e.getKey().getBytes(StandardCharsets.UTF_8));
-						outputStream.write(",".getBytes());
-						outputStream.write(e.getValue().getBytes(StandardCharsets.UTF_8));
-						outputStream.write(",".getBytes());
+
+			try {
+				reqType = dis.readInt();
+//				if (reqType == RequestType.GETSET) {
+//					String key = dis.readUTF();
+//					//String readValue = table.get(key);
+//
+//					Map<String, String> att=null;
+//					try{
+//						att = jedis.hgetAll(key);
+//						System.out.println(att.toString());
+//					}catch(Exception e) {
+//
+//						e.printStackTrace();
+//					}
+//
+//					
+//					ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+//					if(att!=null) {	
+//						for (Map.Entry<String, String> e : att.entrySet()){
+//							outputStream.write(e.getKey().getBytes(StandardCharsets.UTF_8));
+//							outputStream.write(",".getBytes());
+//							outputStream.write(e.getValue().getBytes(StandardCharsets.UTF_8));
+//							outputStream.write(",".getBytes());
+//						}
+//					}
+//					else {
+//						outputStream.write("".getBytes());
+//					}
+//
+//					//				if(jedis!=null)
+//					//					jedis.close();
+//
+//
+//					return outputStream.toByteArray();
+//
+//				} 
+				if (reqType == RequestType.READELEMENT) {
+					String key = dis.readUTF();
+					int pos = dis.readInt();
+
+					String field = fields.get(pos);
+
+					String result = "";
+					result = jedis.hget(key, field);
+					System.out.println(result);
+
+					return result.getBytes();
+				}else if (reqType == RequestType.SUM) {
+					String key1 = dis.readUTF();
+					String key2 = dis.readUTF();
+					int pos = dis.readInt();
+
+
+					String field = fields.get(pos);
+
+					String val1 = jedis.hget(key1, field);
+					String val2 = jedis.hget(key2, field);
+
+					int sum = Integer.valueOf(val1) + Integer.valueOf(val2);
+					ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+					outputStream.write(sum);
+
+
+					return outputStream.toByteArray();
+
+				} else if (reqType == RequestType.MULT) {
+					String key1 = dis.readUTF();
+					String key2 = dis.readUTF();
+					int pos = dis.readInt();
+
+
+					String field = fields.get(pos);
+
+					String val1 = jedis.hget(key1, field);
+					String val2 = jedis.hget(key2, field);
+
+					int mult = Integer.valueOf(val1) * Integer.valueOf(val2);
+					ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+					outputStream.write(mult);
+
+
+					return outputStream.toByteArray();
+
+				}else if (reqType == RequestType.ISELEMENT) {
+					String key = dis.readUTF();
+					String element = dis.readUTF();
+
+					for (String current_field : fields) {
+
+						Object result = jedis.hget(key, current_field);
+
+						if(result.toString().equalsIgnoreCase(element)) {
+							System.out.println(true);
+							return "true".getBytes();
+						}
+
 					}
-				else {
-					System.out.println("EMPTY!!!!!");
-					outputStream.write("".getBytes());
+					System.out.println(false);
+					return "false".getBytes();
+				} else {
+					System.out.println("Unknown request type: " + reqType);
+					return null;
 				}
-
-
-				return outputStream.toByteArray();
-
-			} else if (reqType == RequestType.READELEMENT) {
-				String key = dis.readUTF();
-				int pos = dis.readInt();
-
-				String field = fields.get(pos);
-
-				String result = "";
-				result = jedis.hget(key, field);
-				System.out.println(result);
-
-				if( result == null )
-					return "".getBytes();
-
-				return result.getBytes();
-			}else if (reqType == RequestType.SUM) {
-				String key1 = dis.readUTF();
-				String key2 = dis.readUTF();
-				int pos = dis.readInt();
-
-
-				String field = fields.get(pos);
-
-				String val1 = jedis.hget(key1, field);
-				String val2 = jedis.hget(key2, field);
-
-				int sum = Integer.valueOf(val1) + Integer.valueOf(val2);
-				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
-				outputStream.write(sum);
-
-
-				return outputStream.toByteArray();
-
-			} else if (reqType == RequestType.MULT) {
-				String key1 = dis.readUTF();
-				String key2 = dis.readUTF();
-				int pos = dis.readInt();
-
-
-				String field = fields.get(pos);
-
-				String val1 = jedis.hget(key1, field);
-				String val2 = jedis.hget(key2, field);
-
-				int mult = Integer.valueOf(val1) * Integer.valueOf(val2);
-				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
-				outputStream.write(mult);
-
-				return outputStream.toByteArray();
-
-			}else if (reqType == RequestType.ISELEMENT) {
-				String key = dis.readUTF();
-				String element = dis.readUTF();
-
-				for (String current_field : fields) {
-
-					Object result = jedis.hget(key, current_field);
-					if(result == null)
-						return "false".getBytes();
-
-					if(result.toString().equalsIgnoreCase(element)) {
-						System.out.println(true);
-						return "true".getBytes();
-					}
-
-				}
-				System.out.println(false);
-				return "false".getBytes();
-			} else {
-				System.out.println("Unknown request type:" + reqType +" | Unordered");
+			} catch (IOException e) {
+				System.out.println("Exception reading data in the replica: " + e.getMessage());
+				e.printStackTrace();
 				return null;
 			}
-		} catch (IOException e) {
-			System.out.println("Exception reading data in the replica: " + e.getMessage());
-			e.printStackTrace();
-			return null;
-		}
+//		} finally {
+//			jedis.close();
+//		}
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public void installSnapshot(byte[] state) {
 		ByteArrayInputStream bis = new ByteArrayInputStream(state);
+//		jedis=pool.getResource();
 		try {
 			ObjectInput in = new ObjectInputStream(bis);
 
@@ -377,14 +393,17 @@ public class TreeMapServer extends DefaultRecoverable {
 				System.out.println("=======I HAVE THINGS TO WRITE=======");
 
 			for(String key: map.keySet()) {
+				//System.out.println(map.get(key));
+				//jedis.append(key, "");
 				jedis.hmset(key, map.get(key));
 				System.out.println("=======ELEMENT ADDED=======");
 			}
 
 			in.close();
 			bis.close();
+//			jedis.close();
 		} catch (ClassNotFoundException e) {
-			System.out.print("Coudn't find Map: " + e.getMessage());
+			//			System.out.print("Coudn't find Map: " + e.getMessage());
 			e.printStackTrace();
 		} catch (IOException e) {
 			System.out.print("Exception installing the application state: " + e.getMessage());
@@ -397,6 +416,7 @@ public class TreeMapServer extends DefaultRecoverable {
 		try {
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream out = new ObjectOutputStream(bos);
+//			jedis=pool.getResource();
 
 			Set<String> l = jedis.keys("*");
 			Map<String, Map<String,String>> map = new HashMap<String, Map<String,String>>(); 
@@ -404,6 +424,7 @@ public class TreeMapServer extends DefaultRecoverable {
 			for( String key : l) {
 				System.out.println("=======GETTING VALUE=======");
 				Map<String,String> val = jedis.hgetAll(key);
+				//System.out.println(val);
 				map.put(key,val);
 			}
 
@@ -411,6 +432,7 @@ public class TreeMapServer extends DefaultRecoverable {
 			out.flush();
 			out.close();
 			bos.close();
+//			jedis.close();
 			return bos.toByteArray();
 		} catch (IOException e) {
 			System.out.println("Exception when trying to take a + "
@@ -419,5 +441,4 @@ public class TreeMapServer extends DefaultRecoverable {
 			return new byte[0];
 		}
 	}
-
 }
