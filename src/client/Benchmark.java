@@ -49,129 +49,10 @@ public class Benchmark {
 		//		if(command.equals("2"))
 		//			BenchmarkInitRequest();	
 
-		//		for(int i = 0; i < servers; i++)
-		//			(new Thread(new Tester())).start();
+		for(int i = 0; i < servers; i++)
+			(new Thread(new Tester())).start();
 
-		long timeInit = System.currentTimeMillis();
-		String key, value;
-		long threadId = Thread.currentThread().getId();
-
-		System.out.println("Started Thread #"+threadId);
-
-		//Benchmark1: 100 PutSet
-		if(command.equals("1")) {
-			value = " nome dummy111111 idade 100 morada RandomStreet telefone 9158128912";
-
-			HashMap<String, String> valuesParsed = parseValuesToMap(value);
-			for(int i = 0;i<100;i++) {
-				key = Integer.toString(i);
-				registerEntry(key, valuesParsed);
-			}
-		} 
-
-		//Benchmark2: 100 GetSet
-		else if(command.equals("2")) {
-			for(int i = 0;i<100;i++) {
-				key = Integer.toString(i);
-				getEntry( key);
-			}
-
-
-		}
-
-		//Benchmark3: 50 PutSet, 50 GetSet alternated
-		else if(command.equals("3")) {
-			value = " nome dummy33333333 idade 100 morada RandomStreet telefone 9158128912";
-			HashMap<String, String> valuesParsed = parseValuesToMap(value);
-			for(int i = 0;i<50;i++) {
-				key = Integer.toString(i);
-
-				registerEntry(key, valuesParsed);
-				getEntry( key);
-
-
-
-			}
-		}
-
-		//Benchmark4: All operations: alternated, distribution discussed (without sums or multiplications)
-		else if(command.equals("4")) {
-			value = " nome dummy4444444 idade 100 morada RandomStreet telefone 9158128912";
-			HashMap<String, String> valuesParsed = parseValuesToMap(value);
-
-			for(int i = 0;i<15;i++) {
-				key = Integer.toString(i);
-
-				registerEntry(key, valuesParsed);
-				getEntry( key);
-				isElement(key, "100");
-				readElement(key, 0);
-				writeElement(key, "10000", 1);
-				addElement("NewElement");
-				removeSet(key);
-
-			}
-		}
-
-		//Benchmark5: 
-		else if(command.equals("5")) {
-
-			value = " nome dummy5555555 idade 100 morada RandomStreet telefone 9158128912";
-			HashMap<String, String> valuesParsed = parseValuesToMap(value);
-
-			for(int i = 0;i<15;i++) {
-				key = Integer.toString(i);
-
-				registerEntry(key, valuesParsed);
-				getEntry( key);
-				isElement(key, "100");
-				readElement(key, 0);
-				writeElement(key, "10000", 1);
-				addElement("NewElement");
-				
-				if(i>0 && i<11) {
-					String key2 = Integer.toString(i-1);
-					Mult(1, key2, key);
-				}
-				
-			}
-			
-			for(int i = 0;i<15;i++) {
-				key = Integer.toString(i);
-				removeSet(key);
-			}
-
-		}
 		
-		//Benchmark6: 
-				else if(command.equals("6")) {
-
-					value = " nome dummy5555555 idade 100 morada RandomStreet telefone 9158128912";
-					HashMap<String, String> valuesParsed = parseValuesToMap(value);
-
-					for(int i = 0;i<15;i++) {
-						key = Integer.toString(i);
-
-						registerEntry(key, valuesParsed);
-						getEntry( key);
-						isElement(key, "100");
-						readElement(key, 0);
-						writeElement(key, "10000", 1);
-						addElement("NewElement");
-						
-						if(i>0 && i<11) {
-							String key2 = Integer.toString(i-1);
-							Sum(1, key2, key);
-						}
-						
-					}
-					
-					for(int i = 0;i<15;i++) {
-						key = Integer.toString(i);
-						removeSet(key);
-					}
-
-				}
 	}
 
 
@@ -198,7 +79,8 @@ public class Benchmark {
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<Integer>(){});
-
+		
+		System.out.println("MULT "+response);
 		return response;
 	}
 
@@ -209,6 +91,7 @@ public class Benchmark {
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<Integer>(){});
 
+		System.out.println("SUM"+response);
 		return response;
 	}
 
@@ -220,6 +103,7 @@ public class Benchmark {
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<Boolean>(){});
 
+		System.out.println("IE "+response);
 		return response;
 	}
 
@@ -229,6 +113,7 @@ public class Benchmark {
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<String>(){});
 
+		System.out.println("READEL "+response);
 		return response;
 	}
 
@@ -237,7 +122,7 @@ public class Benchmark {
 				.request()
 				.put(Entity.entity(new_element, MediaType.APPLICATION_JSON));
 
-		//falta alterar isto
+		System.out.println("WRITEEL "+response.toString());
 		return response.getStatus();
 	}
 
@@ -248,6 +133,7 @@ public class Benchmark {
 				.request()
 				.post( Entity.entity(entry, MediaType.APPLICATION_JSON));
 
+		System.out.println("REGENTRY "+response);
 		return response.getStatus();
 
 	}
@@ -257,6 +143,7 @@ public class Benchmark {
 				.request()
 				.delete(new GenericType<Response>() {});
 
+		System.out.println("WRITEEL "+response.toString());
 		return String.valueOf(response.getStatus());
 	}
 
@@ -266,7 +153,7 @@ public class Benchmark {
 				.request()
 				.post( Entity.entity(element, MediaType.APPLICATION_JSON));
 
-
+		System.out.println("WRITEEL "+response.toString());
 		return response.getStatus();
 	}
 
@@ -278,9 +165,9 @@ public class Benchmark {
 					.request()
 					.accept(MediaType.APPLICATION_JSON)
 					.get(new GenericType<byte[]>() {});
-			System.out.println(response.toString());
+			System.out.println(new String(response, StandardCharsets.UTF_8));
 		}catch(Exception e) {
-
+//			System.out.println("Excepcao");
 		}
 
 		return response;
@@ -343,67 +230,92 @@ public class Benchmark {
 				HashMap<String, String> valuesParsed = parseValuesToMap(value);
 				for(int i = 0;i<50;i++) {
 					key = Integer.toString(i);
-					synchronized(this) {
 
-						int res = registerEntry(key, valuesParsed);
-						if(res!=404)
-							getEntry( key);
-					}
-
+					registerEntry(key, valuesParsed);
+					
+					getEntry( key);
 
 				}
 			}
 
 			//Benchmark4: All operations: alternated, distribution discussed (without sums or multiplications)
 			else if(command.equals("4")) {
-				value = "newElement";
+				value = " nome dummy4444444 idade 100 morada RandomStreet telefone 9158128912";
+				HashMap<String, String> valuesParsed = parseValuesToMap(value);
 
-				for(int i = 0;i<50;i++) {
-					value = "newElement"+Integer.toString(i);
-					addElement(value);
-					readElement(String.valueOf(i), 4+i);
+				for(int i = 0;i<15;i++) {
+					key = Integer.toString(i);
+
+					registerEntry(key, valuesParsed);
+					getEntry( key);
+					isElement(key, "100");
+					readElement(key, 0);
+					writeElement(key, "10000", 1);
+					addElement("NewElement");
+					removeSet(key);
+
 				}
 			}
 
 			//Benchmark5: 
 			else if(command.equals("5")) {
 
-				Random randomGenerator = new Random();
-				String element = "newElement";
+				value = " nome dummy5555555 idade 100 morada RandomStreet telefone 9158128912";
+				HashMap<String, String> valuesParsed = parseValuesToMap(value);
 
-				for(int i = 0; i < 100 ; i++) {
-					int r = randomGenerator.nextInt(7);
-					switch (r) {
-					case 0: 
-						value = " nome dummy idade 100 morada RandomStreet telefone 9158128912";
-						registerEntry(String.valueOf(i), parseValuesToMap(value));
-						break;
-					case 1:
-						try {
-							getEntry(String.valueOf(i));
-						} catch (Exception e) {
-							System.out.println("Get Entry: doesn't exist. | "+String.valueOf(i));
+				for(int i = 0;i<15;i++) {
+					key = Integer.toString(i);
+
+					registerEntry(key, valuesParsed);
+					getEntry( key);
+					isElement(key, "100");
+					readElement(key, 0);
+					writeElement(key, "10000", 1);
+					addElement("NewElement");
+					
+					if(i>0 && i<11) {
+						String key2 = Integer.toString(i-1);
+						Mult(1, key2, key);
+					}
+					
+				}
+				
+				for(int i = 0;i<15;i++) {
+					key = Integer.toString(i);
+					removeSet(key);
+				}
+
+			}
+			
+			//Benchmark6: 
+					else if(command.equals("6")) {
+
+						value = " nome dummy5555555 idade 100 morada RandomStreet telefone 9158128912";
+						HashMap<String, String> valuesParsed = parseValuesToMap(value);
+
+						for(int i = 0;i<15;i++) {
+							key = Integer.toString(i);
+
+							registerEntry(key, valuesParsed);
+							getEntry( key);
+							isElement(key, "100");
+							readElement(key, 0);
+							writeElement(key, "10000", 1);
+							addElement("NewElement");
+							
+							if(i>0 && i<11) {
+								String key2 = Integer.toString(i-1);
+								Sum(1, key2, key);
+							}
+							
+						}
+						
+						for(int i = 0;i<15;i++) {
+							key = Integer.toString(i);
+							removeSet(key);
 						}
 
-						break;
-					case 2: 
-						addElement(element+String.valueOf(i));
-						break;
-					case 3: 
-						removeSet(String.valueOf(i));
-						break;
-					case 4: 
-						writeElement(String.valueOf(i), element+String.valueOf(i), 3);
-						break;
-					case 5: 
-						readElement(String.valueOf(i), 3);
-						break;
-					case 6: 
-						isElement(String.valueOf(i), "RandomStreet");
-						break;
 					}
-				}
-			}
 
 			long totalTime = (System.currentTimeMillis() - timeInit);
 			System.out.println("Thread #"+threadId+" Time: "+totalTime+" ms");

@@ -152,7 +152,7 @@ public class ServerInterfaceResources {
 			dos.writeUTF(key2);
 			dos.writeInt(pos);
 			System.out.println("Mult "+key1+ " "+key2+" "+pos);
-			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeUnordered(out.toByteArray()));
+			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeOrdered(out.toByteArray()));
 			DataInputStream dis = new DataInputStream(in);
 			int res = dis.read();
 
@@ -216,7 +216,7 @@ public class ServerInterfaceResources {
 			dos.writeUTF(String.valueOf(key));
 			dos.writeUTF(String.valueOf(element));
 
-			byte[] reply = clientProxy.invokeUnordered(out.toByteArray());
+			byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
 
 			boolean res = new String(reply).equals("true");
 
@@ -258,7 +258,7 @@ public class ServerInterfaceResources {
 			dos.writeInt(RequestType.READELEMENT);
 			dos.writeUTF(String.valueOf(key));
 			dos.writeInt(pos);
-			byte[] reply = clientProxy.invokeUnordered(out.toByteArray());
+			byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
 
 			return reply;
 		}
@@ -274,7 +274,6 @@ public class ServerInterfaceResources {
 			DataOutputStream dos = new DataOutputStream(out);
 			dos.writeInt(RequestType.GETSET);
 			dos.writeUTF(String.valueOf(key));
-//			byte[] reply = clientProxy.invokeUnordered(out.toByteArray());
 			byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
 			System.out.println(new String(reply, StandardCharsets.UTF_8));
 			return reply;
