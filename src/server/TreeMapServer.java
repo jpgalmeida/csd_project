@@ -237,10 +237,11 @@ public class TreeMapServer extends DefaultRecoverable {
 
 					Object result = jedis.hget(key, current_field);
 
-					if(result.toString().equalsIgnoreCase(element)) {
-						System.out.println(true);
-						return "true".getBytes();
-					}
+					if(result!=null)
+						if(result.toString().equalsIgnoreCase(element)) {
+							System.out.println(true);
+							return "true".getBytes();
+						}
 
 				}
 				System.out.println(false);
@@ -259,7 +260,9 @@ public class TreeMapServer extends DefaultRecoverable {
 				result = jedis.hget(key, field);
 				System.out.println(result);
 
-				return result.getBytes();
+				if(result != null)
+					return result.getBytes();
+				return null;
 				
 			} else if (reqType == RequestType.MULT) {
 				
