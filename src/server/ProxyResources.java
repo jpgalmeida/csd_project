@@ -41,7 +41,9 @@ public class ProxyResources {
 	private static Client client;
 	private static URI serverURI;
 	private static WebTarget target;
-
+	private PaillierKey pk;
+	
+	
 	public ProxyResources(String serverUri) {
 		this.serverUri = serverUri;
 		
@@ -51,6 +53,9 @@ public class ProxyResources {
 				.build();
 		target = client.target( serverURI );
 	
+		
+		//Homomorphic Init
+		pk = HomoAdd.generateKey();
 
 	}
 
@@ -138,12 +143,15 @@ public class ProxyResources {
 	public int sumImplementation(String key1, String key2, int pos) {
 		
 		
-		int response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos)
+		int response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos+"/"+pk.getNsquare().toString())
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<Integer>(){});
 		
+		BigInteger bi = new BigInteger(String.valueOf(response));
 		
+		
+		response = homoSumDecryption(bi).intValue();
 		return response;
 	}
 
@@ -178,8 +186,23 @@ public class ProxyResources {
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<byte[]>() {});
 
-
-		return response;
+		String res = new String(response, StandardCharsets.UTF_8);
+		String[] parsedString = res.split(" ");
+		String encryptedAge = "";
+		for(int i = 0; i<parsedString.length;i++ ) {
+			if(parsedString[i].equals("idade")) {
+				encryptedAge = parsedString[i+1];
+				System.out.println("FOUND AGE");
+				
+				break;
+			}
+		}
+		
+		BigInteger ageBigInt = homoSumDecryption(new BigInteger(encryptedAge));
+		System.out.println("DECAGE "+ageBigInt);
+		res.replaceAll(encryptedAge, ageBigInt.toString());
+		
+		return res.getBytes();
 	}
 
 
@@ -187,12 +210,13 @@ public class ProxyResources {
 
 		Entry entry = new Entry(id, attributes);
 
-//		Map<String, String> hm = entry.getAttributes();
-//		
-//		String age = hm.get("idade");
-//		byte[] ageEncrypted = homoSumEncryption(age);
-//		hm.remove("idade");
-//		hm.put("idade", ageEncrypted);
+		Map<String, String> hm = entry.getAttributes();
+		
+		String age = hm.get("idade");
+		byte[] ageEncrypted = homoSumEncryption(age);
+		hm.remove("idade");
+		hm.put("idade", new String(ageEncrypted, StandardCharsets.UTF_8));
+		entry.setAttributes(hm);
 		
 		Response response = target.path("/entries/ps/"+id)
 				.request()
@@ -210,16 +234,28 @@ public class ProxyResources {
 	}
 	
 	public byte[] homoSumEncryption(String n1) {
-		PaillierKey pk = HomoAdd.generateKey();
+		
 		BigInteger big1 = new BigInteger(n1);
 
 		try {
 			return HomoAdd.encrypt(big1, pk).toByteArray();
 		} catch (Exception e) {
-			System.out.println("ERRO");
+			System.out.println("> Erro Sum encryption!");
 		}
 		return null;
 		
+	}
+	
+	public BigInteger homoSumDecryption(BigInteger big3Code) {
+		
+		try {
+			return HomoAdd.decrypt(big3Code, pk);
+		} catch (Exception e) {
+			System.out.println("> Erro Sum decryption!");
+		}
+		
+		//se for necessario retornar -1 ou assim
+		return null;
 	}
 
 

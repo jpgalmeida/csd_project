@@ -106,11 +106,12 @@ public class ServerInterfaceResources {
 	}
 
 	@GET
-	@Path("/sum/{id1}/{id2}/{pos}")
+	@Path("/sum/{id1}/{id2}/{pos}/{encKey}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public int sum(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
-
-		return sumImplementation(id1, id2, pos);
+	public int sum(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos, @PathParam("encKey") String encKey) {
+		
+			
+		return sumImplementation(id1, id2, pos, encKey);
 
 	}
 
@@ -123,7 +124,7 @@ public class ServerInterfaceResources {
 	}
 
 
-	public int sumImplementation(String key1, String key2, int pos) {
+	public int sumImplementation(String key1, String key2, int pos, String encKey) {
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			DataOutputStream dos = new DataOutputStream(out);
@@ -131,11 +132,13 @@ public class ServerInterfaceResources {
 			dos.writeUTF(key1);
 			dos.writeUTF(key2);
 			dos.writeInt(pos);
-
+			dos.writeUTF(encKey);
+			
 			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeUnordered(out.toByteArray()));
 			DataInputStream dis = new DataInputStream(in);
 			int res = dis.read();
 
+			System.out.println("SUM RES "+res);
 			return res;
 		}
 		catch(IOException e) {
@@ -275,7 +278,7 @@ public class ServerInterfaceResources {
 			dos.writeInt(RequestType.GETSET);
 			dos.writeUTF(String.valueOf(key));
 			byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
-			System.out.println(new String(reply, StandardCharsets.UTF_8));
+			
 			return reply;
 		} catch (IOException ioe) {
 			System.out.println("Exception getting value from the hashmap: " + ioe.getMessage());

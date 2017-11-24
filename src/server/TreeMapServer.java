@@ -4,6 +4,7 @@ package server;
 import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
+
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 
 import java.util.ArrayList;
@@ -26,6 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import homolib.*;
 
 
 public class TreeMapServer extends DefaultRecoverable {
@@ -316,16 +320,25 @@ public class TreeMapServer extends DefaultRecoverable {
 				String key1 = dis.readUTF();
 				String key2 = dis.readUTF();
 				int pos = dis.readInt();
+				String encKey = dis.readUTF();
 
-
+				
 				String field = fields.get(pos);
 
 				String val1 = jedis.hget(key1, field);
 				String val2 = jedis.hget(key2, field);
 
-				int sum = Integer.valueOf(val1) + Integer.valueOf(val2);
+//				int sum = Integer.valueOf(val1) + Integer.valueOf(val2);
+				
+				BigInteger val1BigInt = new BigInteger(val1.getBytes());
+				BigInteger val2BigInt = new BigInteger(val2.getBytes());
+				
+				BigInteger encKeyBigInt = new BigInteger(encKey);
+				
+				
+				
 				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
-				outputStream.write(sum);
+				outputStream.write(HomoAdd.sum(val1BigInt, val2BigInt, encKeyBigInt).intValue());
 
 
 				return outputStream.toByteArray();
