@@ -34,9 +34,11 @@ docker run -t -i csd-work java -cp /home/csd/* server.TreeMapServer 6 172.17.0.8
 
 docker run -t -i csd-work java -cp /home/csd/* -Djavax.net.ssl.keyStore=/home/csd/server.jks -Djavax.net.ssl.keyStorePassword=123456 server.ServerInterface 1001
 
+docker run -t -i csd-work java -cp /home/csd/* -Djavax.net.ssl.trustStore=/home/csd/client.jks  -Djavax.net.ssl.trusttorePassword=123456 -Djavax.net.ssl.keyStore=/home/csd/server.jks -Djavax.net.ssl.keyStorePassword=123456 server.Proxy https://172.17.0.16:11100/
+
 docker run -t -i csd-work java -cp /home/csd/* -Djavax.net.ssl.trustStore=/home/csd/client.jks -Djavax.net.ssl.trusttorePassword=123456 client.ClientInterface https://172.17.0.16:11100/
 
-docker run -t -i csd-work java -cp /home/csd/* -Djavax.net.ssl.trustStore=/home/csd/client.jks  -Djavax.net.ssl.trusttorePassword=123456 -Djavax.net.ssl.keyStore=/home/csd/server.jks -Djavax.net.ssl.keyStorePassword=123456 server.Proxy https://172.17.0.16:11100/
+
 
 ```
 

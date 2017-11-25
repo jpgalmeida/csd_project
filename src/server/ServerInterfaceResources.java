@@ -52,11 +52,11 @@ public class ServerInterfaceResources {
 	}
 
 	@POST
-	@Path("/ps/{id}")
+	@Path("/ps")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public void putSet( @PathParam("id") String id, Entry entry) {
+	public void putSet( Entry entry) {
 		System.out.println("Received Put Set Request");
-		putSetImplementation(id, entry.getAttributes());
+		putSetImplementation(entry.getkey(), entry.getAttributes());
 
 	}
 
@@ -271,12 +271,13 @@ public class ServerInterfaceResources {
 		}
 	}
 
-	public byte[] getSetImplementation(Object key) {
+	public byte[] getSetImplementation(String key) {
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			DataOutputStream dos = new DataOutputStream(out);
 			dos.writeInt(RequestType.GETSET);
-			dos.writeUTF(String.valueOf(key));
+			
+			dos.writeUTF(key);
 			byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
 			
 			return reply;
@@ -287,17 +288,18 @@ public class ServerInterfaceResources {
 	}
 
 
-	public Response putSetImplementation(String id, Map<String, String> attributes) {
+	public Response putSetImplementation(String id, Map<String, byte[]> attributes) {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		DataOutputStream dos = new DataOutputStream(out);
 		try {
 			dos.writeInt(RequestType.PUTSET);
 			dos.writeUTF(id);
 			dos.writeInt(attributes.entrySet().size());
-
-			for (Map.Entry<String, String> e : attributes.entrySet()){
+			
+			for (Map.Entry<String, byte[]> e : attributes.entrySet()){
 				dos.writeUTF(e.getKey());
-				dos.writeUTF(e.getValue());
+				dos.writeInt(e.getValue().length);
+				dos.write(e.getValue());
 			}
 
 			//validation

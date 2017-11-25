@@ -108,40 +108,52 @@ public class TreeMapServer extends DefaultRecoverable {
 		try {
 			reqType = dis.readInt();
 			if (reqType == RequestType.PUTSET) {
+				System.out.println("> RECEIVED PUTSET");
+				
 				String id = dis.readUTF();
+				
 				int size = dis.readInt();
-				String key="";
-				HashMap<String, String> att = new HashMap<String, String>();
+				
+				String key = "";
+				HashMap<byte[], byte[]> att = new HashMap<byte[], byte[]>();
+				
 				try {
 
 					for(int i=0;i<size;i++) {
+						
 						key = dis.readUTF();
+						
 						if(!fields.contains(key)) {
 							throw new Exception();
 						}
-						String value = dis.readUTF();
+						
+						int valueSize = dis.readInt();
+						
+						byte[] value = new byte[valueSize];
+						dis.read(value, 0, valueSize);
+						
 						if(bizantinemode)
-							att.put(key, "bizantineValue");
+							att.put(key.getBytes(), "bizantineValue".getBytes());
 						else
-							att.put(key, value);
+							att.put(key.getBytes(), value);
 					}
 				}catch(Exception e) {
-					System.out.println("Please add element first!");
+					System.out.println("Problem");
 				}
-
-
-
-				Map<String, String> attributes=null;
+				
+				Map<byte[], byte[]> attributes=null;
 				try{
-					jedis2.hmset(id, att);
-					attributes = jedis2.hgetAll(key);
+					jedis2.hmset(id.getBytes(), att);
+					attributes = jedis2.hgetAll(key.getBytes());
 				}catch(Exception e) {
 					System.out.println("Cast problem");
 				}
-
+				
+				
+				//verification if added
 				String toWrite = "true";
 				if(attributes!=null) {
-					for (Map.Entry<String, String> e : attributes.entrySet()){
+					for (Map.Entry<byte[], byte[]> e : attributes.entrySet()){
 						if(!att.get(e.getKey()).equals(e.getValue())){
 							toWrite="false";
 							break;
@@ -195,13 +207,12 @@ public class TreeMapServer extends DefaultRecoverable {
 				return out.toByteArray();
 			}
 			else if (reqType == RequestType.GETSET) {
-
 				String key = dis.readUTF();
-
-				Map<String, String> att=null;
+				
+				Map<byte[], byte[]> att=null;
 				try{
 
-					att = jedis.hgetAll(key);
+					att = jedis.hgetAll(key.getBytes());
 					
 				}catch(Exception e) {
 					e.printStackTrace();
@@ -215,11 +226,11 @@ public class TreeMapServer extends DefaultRecoverable {
 					outputStream.write(",".getBytes());
 					System.out.println("bizantine Sending"+outputStream.toString());
 				}
-				else if(att!=null) {	
-					for (Map.Entry<String, String> e : att.entrySet()){
-						outputStream.write(e.getKey().getBytes(StandardCharsets.UTF_8));
+				else if(att!=null) {
+					for (Map.Entry<byte[], byte[]> e : att.entrySet()){
+						outputStream.write(e.getKey());
 						outputStream.write(",".getBytes());
-						outputStream.write(e.getValue().getBytes(StandardCharsets.UTF_8));
+						outputStream.write(e.getValue());
 						outputStream.write(",".getBytes());
 					}
 				}

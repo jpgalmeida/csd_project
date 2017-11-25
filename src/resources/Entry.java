@@ -5,7 +5,11 @@ import java.util.Map;
 /**
  * Informação sobre servidor.
  */
-public class Entry {
+public class Entry implements java.io.Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	/**
 	 * key do servidor
 	 */
@@ -13,12 +17,12 @@ public class Entry {
 	/**
 	 * Dicionario com informação sobre o servidor.
 	 */
-	private Map<String, String> attributes;
+	private Map<String, byte[]> attributes;
 
 	public Entry() {
 	}
 
-	public Entry(String key, Map<String, String> attributes) {
+	public Entry(String key, Map<String, byte[]> attributes) {
 		this.key = key;
 		this.attributes = attributes;
 	}
@@ -27,7 +31,7 @@ public class Entry {
 		this.key = key;
 	}
 
-	public void setAttributes(Map<String, String> attributes) {
+	public void setAttributes(Map<String, byte[]> attributes) {
 		this.attributes = attributes;
 	}
 
@@ -35,7 +39,7 @@ public class Entry {
 		return key;
 	}
 
-	public Map<String, String> getAttributes() {
+	public Map<String, byte[]> getAttributes() {
 		return attributes;
 	}
 

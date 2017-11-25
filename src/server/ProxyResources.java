@@ -59,6 +59,16 @@ public class ProxyResources {
 
 	}
 
+	@POST
+	@Path("/ps")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public void putSet( Entry entry) {
+		System.out.println("Received Put Set Request");
+		putSetImplementation(entry.getkey(), entry.getAttributes());
+
+	}
+
+	
 	@GET
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -68,14 +78,6 @@ public class ProxyResources {
 		return getSetImplementation(id);
 	}
 
-	@POST
-	@Path("/ps/{id}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public void putSet( @PathParam("id") String id, Entry entry) {
-		System.out.println("Received Put Set Request");
-		putSetImplementation(id, entry.getAttributes());
-
-	}
 
 	@POST
 	@Path("/adde/{id}")
@@ -186,39 +188,42 @@ public class ProxyResources {
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<byte[]>() {});
 
-		String res = new String(response, StandardCharsets.UTF_8);
-		String[] parsedString = res.split(" ");
-		String encryptedAge = "";
-		for(int i = 0; i<parsedString.length;i++ ) {
-			if(parsedString[i].equals("idade")) {
-				encryptedAge = parsedString[i+1];
-				System.out.println("FOUND AGE");
-				
-				break;
-			}
-		}
-		
-		BigInteger ageBigInt = homoSumDecryption(new BigInteger(encryptedAge));
-		System.out.println("DECAGE "+ageBigInt);
-		res.replaceAll(encryptedAge, ageBigInt.toString());
-		
-		return res.getBytes();
+//		String res = new String(response, StandardCharsets.UTF_8);
+//		String[] parsedString = res.split(" ");
+//		String encryptedAge = "";
+//		for(int i = 0; i<parsedString.length;i++ ) {
+//			if(parsedString[i].equals("idade")) {
+//				encryptedAge = parsedString[i+1];
+//				System.out.println("FOUND AGE");
+//				
+//				break;
+//			}
+//		}
+//		
+//		BigInteger ageBigInt = homoSumDecryption(new BigInteger(encryptedAge));
+//		System.out.println("DECAGE "+ageBigInt);
+//		res.replaceAll(encryptedAge, ageBigInt.toString());
+//		
+//		return res.getBytes();
+		return response;
 	}
 
 
-	public Response putSetImplementation(String id, Map<String, String> attributes) {
+	public Response putSetImplementation(String id, Map<String, byte[]> attributes) {
 
 		Entry entry = new Entry(id, attributes);
 
-		Map<String, String> hm = entry.getAttributes();
+//		Map<byte[], byte[]> hm = entry.getAttributes();
 		
-		String age = hm.get("idade");
-		byte[] ageEncrypted = homoSumEncryption(age);
-		hm.remove("idade");
-		hm.put("idade", new String(ageEncrypted, StandardCharsets.UTF_8));
-		entry.setAttributes(hm);
+//		byte[] age = hm.get("idade");
+//		byte[] ageEncrypted = homoSumEncryption(new String(age, StandardCharsets.UTF_8));
+//		hm.remove("idade");
+//		hm.put("idade", new String(ageEncrypted, StandardCharsets.UTF_8));
+//		entry.setAttributes(hm);
 		
-		Response response = target.path("/entries/ps/"+id)
+//		String id2 = new String(id, StandardCharsets.UTF_8);
+		
+		Response response = target.path("/entries/ps/")
 				.request()
 				.post( Entity.entity(entry, MediaType.APPLICATION_JSON));
 		
