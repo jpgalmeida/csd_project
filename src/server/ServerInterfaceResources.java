@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
@@ -108,9 +109,8 @@ public class ServerInterfaceResources {
 	@GET
 	@Path("/sum/{id1}/{id2}/{pos}/{encKey}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public int sum(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos, @PathParam("encKey") String encKey) {
-		
-			
+	public byte[] sum(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos, @PathParam("encKey") String encKey) {
+		System.out.println("Received Sum Request");
 		return sumImplementation(id1, id2, pos, encKey);
 
 	}
@@ -124,7 +124,7 @@ public class ServerInterfaceResources {
 	}
 
 
-	public int sumImplementation(String key1, String key2, int pos, String encKey) {
+	public byte[] sumImplementation(String key1, String key2, int pos, String encKey) {
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			DataOutputStream dos = new DataOutputStream(out);
@@ -136,13 +136,14 @@ public class ServerInterfaceResources {
 			
 			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeUnordered(out.toByteArray()));
 			DataInputStream dis = new DataInputStream(in);
-			int res = dis.read();
+			int size = dis.readInt();
+			byte[] res = new byte[size]; 
+			dis.read(res, 0, size);
 
-			System.out.println("SUM RES "+res);
 			return res;
 		}
 		catch(IOException e) {
-			return 0;
+			return "0".getBytes();
 		}
 	}
 

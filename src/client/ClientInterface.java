@@ -1,5 +1,8 @@
 package client;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -68,7 +71,7 @@ public class ClientInterface {
 				byte[] fields = getSet( key);
 
 				if(fields != null)
-					System.out.println(new String(fields));
+					System.out.println(new String(fields, StandardCharsets.UTF_8));
 				else
 					System.out.println("> Failed!");
 
@@ -144,9 +147,9 @@ public class ClientInterface {
 				String key1 = sc.next();
 				String key2 = sc.next();
 
-				int sum_res = Sum(pos, key1, key2);
+				String sum_res = Sum(pos, key1, key2);
 
-				System.out.println("> Sum is: "+sum_res);
+				System.out.println("> Sum is: "+ sum_res);
 				break;
 
 			case "mult":
@@ -214,14 +217,24 @@ public class ClientInterface {
 	}
 
 
-	private static int Sum(int pos, String key1, String key2) {
+	private static String Sum(int pos, String key1, String key2) {
 
-		int response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos)
+		byte[] response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
-				.get(new GenericType<Integer>(){});
+				.get(new GenericType<byte[]>(){});
 
-		return response;
+		ByteArrayInputStream in = new ByteArrayInputStream(response);
+		DataInputStream res = new DataInputStream(in);
+		
+		String result ="";
+		try {
+			result = res.readUTF();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return result;
 	}
 
 
@@ -275,7 +288,30 @@ public class ClientInterface {
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<byte[]>() {});
 
-		return response;
+		
+		ByteArrayInputStream in = new ByteArrayInputStream(response);
+		DataInputStream res = new DataInputStream(in);
+		
+		String finalResult="";
+		String k="";
+		String v="";
+		
+		try {
+			int attSize = res.readInt();
+			for(int i = 0; i < attSize; i++) {
+				k = res.readUTF();
+				finalResult+=k;
+				finalResult+=",";
+				v = res.readUTF();
+				finalResult+=v;
+				finalResult+=",";
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return finalResult.getBytes();
 	}
 
 	public static int removeSet(String key) {

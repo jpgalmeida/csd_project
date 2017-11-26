@@ -1,5 +1,10 @@
 package server;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -36,24 +41,24 @@ import resources.Entry;
 public class ProxyResources {
 
 	public String serverUri;
-	
-	
+
+
 	private static Client client;
 	private static URI serverURI;
 	private static WebTarget target;
 	private PaillierKey pk;
-	
-	
+
+
 	public ProxyResources(String serverUri) {
 		this.serverUri = serverUri;
-		
+
 		//Server connection
 		serverURI = UriBuilder.fromUri(serverUri).port(11100).build();
 		client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
 				.build();
 		target = client.target( serverURI );
-	
-		
+
+
 		//Homomorphic Init
 		pk = HomoAdd.generateKey();
 
@@ -68,7 +73,7 @@ public class ProxyResources {
 
 	}
 
-	
+
 	@GET
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -127,8 +132,8 @@ public class ProxyResources {
 	@GET
 	@Path("/sum/{id1}/{id2}/{pos}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public int sum(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
-
+	public byte[] sum(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
+		System.out.println("Received Sum Request");
 		return sumImplementation(id1, id2, pos);
 
 	}
@@ -142,19 +147,48 @@ public class ProxyResources {
 	}
 
 
-	public int sumImplementation(String key1, String key2, int pos) {
-		
-		
-		int response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos+"/"+pk.getNsquare().toString())
+	public byte[] sumImplementation(String key1, String key2, int pos) {
+
+
+		byte[] response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos+"/"+pk.getNsquare().toString())
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
-				.get(new GenericType<Integer>(){});
+				.get(new GenericType<byte[]>(){});
+
+		ByteArrayInputStream in = new ByteArrayInputStream(response);
+		DataInputStream res = new DataInputStream(in);
 		
-		BigInteger bi = new BigInteger(String.valueOf(response));
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		DataOutputStream dos = new DataOutputStream(out);
 		
+		byte[] result = null;
+		try {
+			
+			int size = res.readInt();
+			result = new byte[size];
+			
+			res.read(result, 0, size);
+			
+			BigInteger resultDec = homoSumDecryption(result);
+			
+			result = resultDec.toByteArray();
+			if (result[0] == 0) {
+			    byte[] tmp = new byte[result.length - 1];
+			    System.arraycopy(result, 1, tmp, 0, tmp.length);
+			    result = tmp;
+			}
+			
+			dos.writeUTF(new String(result, StandardCharsets.UTF_8));
+			
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		
-		response = homoSumDecryption(bi).intValue();
-		return response;
+		if(response==null)
+			System.out.println("decription nao deu");
+
+		return out.toByteArray();
 	}
 
 	public int multImplementation(String key1, String key2, int pos) {
@@ -181,31 +215,59 @@ public class ProxyResources {
 		return null;
 	}
 
-	public byte[] getSetImplementation(Object key) {
-		
+	public byte[] getSetImplementation(String key) {
+
 		byte[] response = target.path("/entries/"+key)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<byte[]>() {});
 
-//		String res = new String(response, StandardCharsets.UTF_8);
-//		String[] parsedString = res.split(" ");
-//		String encryptedAge = "";
-//		for(int i = 0; i<parsedString.length;i++ ) {
-//			if(parsedString[i].equals("idade")) {
-//				encryptedAge = parsedString[i+1];
-//				System.out.println("FOUND AGE");
-//				
-//				break;
-//			}
-//		}
-//		
-//		BigInteger ageBigInt = homoSumDecryption(new BigInteger(encryptedAge));
-//		System.out.println("DECAGE "+ageBigInt);
-//		res.replaceAll(encryptedAge, ageBigInt.toString());
-//		
-//		return res.getBytes();
-		return response;
+		ByteArrayInputStream in = new ByteArrayInputStream(response);
+		DataInputStream res = new DataInputStream(in);
+		
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		DataOutputStream dos = new DataOutputStream(out);
+		
+		int attSize;
+		try {
+			attSize = res.readInt();
+			dos.writeInt(attSize);
+			
+			for(int i = 0; i < attSize; i++) {
+				int keySize = res.readInt();
+				byte[] keyRead = new byte[keySize];
+				res.read(keyRead, 0, keySize);
+				
+				int valueSize = res.readInt();
+				byte[] valueRead = new byte[valueSize];
+				res.read(valueRead, 0, valueSize);
+				
+				String keyString = new String(keyRead, StandardCharsets.UTF_8);
+				
+				if(keyString.equals("idade")) {
+					
+					BigInteger ageBigInt = homoSumDecryption(valueRead);
+					
+					valueRead = ageBigInt.toByteArray();
+					if (valueRead[0] == 0) {
+					    byte[] tmp = new byte[valueRead.length - 1];
+					    System.arraycopy(valueRead, 1, tmp, 0, tmp.length);
+					    valueRead = tmp;
+					}
+					
+				}
+				String k = new String(keyRead, StandardCharsets.UTF_8);
+				String v = new String(valueRead, StandardCharsets.UTF_8);
+				
+				dos.writeUTF(k);
+				dos.writeUTF(v);
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return out.toByteArray();
 	}
 
 
@@ -213,57 +275,61 @@ public class ProxyResources {
 
 		Entry entry = new Entry(id, attributes);
 
-//		Map<byte[], byte[]> hm = entry.getAttributes();
+		Map<String, byte[]> hm = entry.getAttributes();
+
+		byte[] age = hm.get("idade");
 		
-//		byte[] age = hm.get("idade");
-//		byte[] ageEncrypted = homoSumEncryption(new String(age, StandardCharsets.UTF_8));
-//		hm.remove("idade");
-//		hm.put("idade", new String(ageEncrypted, StandardCharsets.UTF_8));
-//		entry.setAttributes(hm);
+		byte[] ageEncrypted = homoSumEncryption(age);
 		
-//		String id2 = new String(id, StandardCharsets.UTF_8);
-		
+		hm.remove("idade");
+		hm.put("idade", ageEncrypted);
+		entry.setAttributes(hm);
+
 		Response response = target.path("/entries/ps/")
 				.request()
 				.post( Entity.entity(entry, MediaType.APPLICATION_JSON));
-		
+
+
 		return response;
 	}
-	
+
 	public String homoSearch(String name) {
-		
+
 		SecretKey key = homolib.HomoSearch.generateKey();
-		
+
 		return HomoSearch.encrypt(key, name);
-		
+
 	}
-	
-	public byte[] homoSumEncryption(String n1) {
+
+	public byte[] homoSumEncryption(byte[] n1) {
 		
 		BigInteger big1 = new BigInteger(n1);
-
+		
 		try {
-			return HomoAdd.encrypt(big1, pk).toByteArray();
+			byte[] enc = HomoAdd.encrypt(big1, pk).toByteArray();
+			
+			return enc;
 		} catch (Exception e) {
 			System.out.println("> Erro Sum encryption!");
 		}
 		return null;
-		
+
 	}
-	
-	public BigInteger homoSumDecryption(BigInteger big3Code) {
+
+	public BigInteger homoSumDecryption(byte[] n1) {
+		
+		BigInteger big1 = new BigInteger(n1);
 		
 		try {
-			return HomoAdd.decrypt(big3Code, pk);
+			return HomoAdd.decrypt(big1, pk);
 		} catch (Exception e) {
 			System.out.println("> Erro Sum decryption!");
 		}
-		
+
 		//se for necessario retornar -1 ou assim
-		return null;
+		return new BigInteger("0");
 	}
-
-
+	
 
 }
 
