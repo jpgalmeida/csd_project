@@ -134,13 +134,21 @@ public class ServerInterfaceResources {
 			dos.writeInt(pos);
 			dos.writeUTF(encKey);
 			
+			
 			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeUnordered(out.toByteArray()));
 			DataInputStream dis = new DataInputStream(in);
 			int size = dis.readInt();
 			byte[] res = new byte[size]; 
 			dis.read(res, 0, size);
-
-			return res;
+			
+			ByteArrayOutputStream out2 = new ByteArrayOutputStream();
+			DataOutputStream dos2 = new DataOutputStream(out2);
+			
+			System.out.println("size "+size);
+			dos2.writeInt(size);
+			dos2.write(res);
+			
+			return out2.toByteArray();
 		}
 		catch(IOException e) {
 			return "0".getBytes();

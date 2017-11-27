@@ -302,7 +302,37 @@ public class TreeMapServer extends DefaultRecoverable {
 
 				return outputStream.toByteArray();
 
-			} else {
+			} if (reqType == RequestType.SUM) {
+				
+				if(bizantinemode)
+					return "-1".getBytes();
+				
+				String key1 = dis.readUTF();
+				String key2 = dis.readUTF();
+				int pos = dis.readInt();
+				String encKey = dis.readUTF();
+				
+				String field = fields.get(pos);
+
+				String val1 = jedis.hget(key1, field);
+				String val2 = jedis.hget(key2, field);
+
+				
+				BigInteger val1BigInt = new BigInteger(val1.getBytes());
+				BigInteger val2BigInt = new BigInteger(val2.getBytes());
+				
+				BigInteger encKeyBigInt = new BigInteger(encKey);
+				
+				byte[] result = HomoAdd.sum(val1BigInt, val2BigInt, encKeyBigInt).toByteArray();
+				int resultSize = result.length;
+				
+				dos.writeInt(resultSize);
+				dos.write(result);
+
+				
+				return out.toByteArray();
+
+			}else {
 				System.out.println("Unknown request type: " + reqType);
 				return "".getBytes();
 			}
@@ -347,14 +377,14 @@ public class TreeMapServer extends DefaultRecoverable {
 				
 				BigInteger encKeyBigInt = new BigInteger(encKey);
 				
-				
 				byte[] result = HomoAdd.sum(val1BigInt, val2BigInt, encKeyBigInt).toByteArray();
 				int resultSize = result.length;
 				
+				System.out.println("size "+resultSize);
 				dos.writeInt(resultSize);
 				dos.write(result);
 
-
+				
 				return out.toByteArray();
 
 			}  else {

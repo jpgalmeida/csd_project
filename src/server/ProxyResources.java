@@ -149,8 +149,8 @@ public class ProxyResources {
 
 	public byte[] sumImplementation(String key1, String key2, int pos) {
 
-
-		byte[] response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos+"/"+pk.getNsquare().toString())
+		
+		byte[] response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos+"/"+new String(pk.getNsquare().toByteArray(), StandardCharsets.UTF_8))
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<byte[]>(){});
@@ -162,26 +162,29 @@ public class ProxyResources {
 		DataOutputStream dos = new DataOutputStream(out);
 		
 		byte[] result = null;
+		byte[] resultDecrypted = null;
 		try {
-			
 			int size = res.readInt();
+			System.out.println("size "+size);
 			result = new byte[size];
 			
 			res.read(result, 0, size);
 			
 			BigInteger resultDec = homoSumDecryption(result);
+			System.out.println("resultDecBIG "+resultDec);
+			resultDecrypted = resultDec.toByteArray();
 			
-			result = resultDec.toByteArray();
-			if (result[0] == 0) {
-			    byte[] tmp = new byte[result.length - 1];
-			    System.arraycopy(result, 1, tmp, 0, tmp.length);
-			    result = tmp;
+			if (resultDecrypted[0] == 0) {
+				System.out.println("Entri");
+			    byte[] tmp = new byte[resultDecrypted.length - 1];
+			    System.arraycopy(resultDecrypted, 1, tmp, 0, tmp.length);
+			    resultDecrypted = tmp;
 			}
 			
-			dos.writeUTF(new String(result, StandardCharsets.UTF_8));
+			dos.writeUTF(new String(resultDecrypted, StandardCharsets.UTF_8));
+			System.out.println(new String(resultDecrypted, StandardCharsets.UTF_8));
 			
-			
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
@@ -310,6 +313,7 @@ public class ProxyResources {
 			
 			return enc;
 		} catch (Exception e) {
+			e.printStackTrace();
 			System.out.println("> Erro Sum encryption!");
 		}
 		return null;
@@ -323,6 +327,7 @@ public class ProxyResources {
 		try {
 			return HomoAdd.decrypt(big1, pk);
 		} catch (Exception e) {
+			e.printStackTrace();
 			System.out.println("> Erro Sum decryption!");
 		}
 

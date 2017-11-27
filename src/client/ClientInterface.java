@@ -164,27 +164,28 @@ public class ClientInterface {
 
 				break;
 
-			case "sumall":
+			case "seq":
 				pos = sc.nextInt();
-
-				int sum_all = SumAll( pos);
-				break;
-
-			case "multall":
-				pos = sc.nextInt();
-
-				int mult_all = MultAll( pos);
+				value = sc.next();
 
 				break;
-
+			
 			case "se":
-				pos = sc.nextInt();
-
-				int searchAll = MultAll( pos);
+				value = sc.next();
 
 				break;
+			
+			case "sbt":
+				pos = sc.nextInt();
+				value = sc.next();
 
+				break;
+			
+			case "slt":
+				pos = sc.nextInt();
+				value = sc.next();
 
+				break;
 			}
 
 
@@ -193,19 +194,26 @@ public class ClientInterface {
 
 	}
 
-
-	private static int MultAll(int pos) {
-
+	private static int searchEq( int pos, String key1, String key2) {
 
 		return 0;
 	}
-
-	private static int SumAll(int pos) {
-
+	
+	private static int searchEntry( int pos, String key1, String key2) {
 
 		return 0;
 	}
+	
+	private static int searchBt( int pos, String key1, String key2) {
 
+		return 0;
+	}
+	
+	private static int searchLt( int pos, String key1, String key2) {
+
+		return 0;
+	}
+	
 	private static int Mult( int pos, String key1, String key2) {
 
 		int response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos)
