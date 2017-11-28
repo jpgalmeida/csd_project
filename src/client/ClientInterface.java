@@ -3,6 +3,7 @@ package client;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -149,6 +150,7 @@ public class ClientInterface {
 
 				String sum_res = Sum(pos, key1, key2);
 
+				//BigInteger bg = new BigInteger(sum_res);
 				System.out.println("> Sum is: "+ sum_res);
 				break;
 
@@ -158,7 +160,7 @@ public class ClientInterface {
 				key2 = sc.next();
 
 
-				int mult_res = Mult(pos, key1, key2);
+				String mult_res = Mult(pos, key1, key2);
 
 				System.out.println("> Mult is: "+mult_res);
 
@@ -214,15 +216,25 @@ public class ClientInterface {
 		return 0;
 	}
 	
-	private static int Mult( int pos, String key1, String key2) {
+	private static String Mult( int pos, String key1, String key2) {
 
-		int response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos)
+		byte[] response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
-				.get(new GenericType<Integer>(){});
+				.get(new GenericType<byte[]>(){});
 
-		return response;
-	}
+		ByteArrayInputStream in = new ByteArrayInputStream(response);
+		DataInputStream res = new DataInputStream(in);
+		
+		String result ="";
+		try {
+			result = res.readUTF();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+		}
 
 
 	private static String Sum(int pos, String key1, String key2) {
@@ -283,7 +295,6 @@ public class ClientInterface {
 		Response response = target.path("/entries/ps")
 				.request()
 				.post( Entity.entity(entry,MediaType.APPLICATION_JSON));
-
 
 		return response.getStatus();
 

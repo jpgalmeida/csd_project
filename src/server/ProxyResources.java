@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,6 +35,7 @@ import javax.ws.rs.core.UriBuilder;
 import client.ClientInterface.InsecureHostnameVerifier;
 import homolib.*;
 import resources.Entry;
+import resources.KeySaver;
 
 
 /**
@@ -47,6 +51,11 @@ public class ProxyResources {
 	private static URI serverURI;
 	private static WebTarget target;
 	private PaillierKey pk;
+	private KeySaver ks;
+	private KeyPair keyPair;
+	private RSAPublicKey publicKey;
+	private RSAPrivateKey privateKey;
+	private String pkSer;
 
 
 	public ProxyResources(String serverUri) {
@@ -61,6 +70,11 @@ public class ProxyResources {
 
 		//Homomorphic Init
 		pk = HomoAdd.generateKey();
+		keyPair = HomoMult.generateKey();
+		publicKey = (RSAPublicKey) keyPair.getPublic();
+		privateKey = (RSAPrivateKey) keyPair.getPrivate();
+		
+		pkSer = HelpSerial.toString(pk.getNsquare());d
 
 	}
 
@@ -141,16 +155,15 @@ public class ProxyResources {
 	@GET
 	@Path("/mult/{id1}/{id2}/{pos}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public int mult(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
-
+	public byte[] mult(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
+		System.out.println("Received Mult Request");
 		return multImplementation(id1, id2, pos);
 	}
 
 
 	public byte[] sumImplementation(String key1, String key2, int pos) {
 
-		
-		byte[] response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos+"/"+new String(pk.getNsquare().toByteArray(), StandardCharsets.UTF_8))
+		byte[] response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos+"/"+pk.getNsquare())
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<byte[]>(){});
@@ -165,25 +178,22 @@ public class ProxyResources {
 		byte[] resultDecrypted = null;
 		try {
 			int size = res.readInt();
-			System.out.println("size "+size);
 			result = new byte[size];
 			
 			res.read(result, 0, size);
 			
-			BigInteger resultDec = homoSumDecryption(result);
-			System.out.println("resultDecBIG "+resultDec);
-			resultDecrypted = resultDec.toByteArray();
-			
-			if (resultDecrypted[0] == 0) {
-				System.out.println("Entri");
-			    byte[] tmp = new byte[resultDecrypted.length - 1];
-			    System.arraycopy(resultDecrypted, 1, tmp, 0, tmp.length);
-			    resultDecrypted = tmp;
+			if (result[0] == 0) {
+			    byte[] tmp = new byte[result.length - 1];
+			    System.arraycopy(result, 1, tmp, 0, tmp.length);
+			    result = tmp;
 			}
 			
-			dos.writeUTF(new String(resultDecrypted, StandardCharsets.UTF_8));
-			System.out.println(new String(resultDecrypted, StandardCharsets.UTF_8));
+			BigInteger resultDec = homoSumDecryption(result);
+			resultDecrypted = resultDec.toByteArray();
 			
+			
+			dos.writeUTF(new String(resultDecrypted));
+			System.out.println("RES: " + resultDec.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -192,10 +202,57 @@ public class ProxyResources {
 			System.out.println("decription nao deu");
 
 		return out.toByteArray();
+		
 	}
 
-	public int multImplementation(String key1, String key2, int pos) {
-		return 0;
+	public byte[] multImplementation(String key1, String key2, int pos) {
+		
+		BigInteger modulus = publicKey.getModulus();
+		//String modString = HelpSerial.toString(modulus);
+		BigInteger pubExp = publicKey.getPublicExponent();
+		//String expString = HelpSerial.toString(pubExp);
+		byte[] response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos+"/"+modulus+"/"+pubExp)
+				.request()
+				.accept(MediaType.APPLICATION_JSON)
+				.get(new GenericType<byte[]>(){});
+
+		ByteArrayInputStream in = new ByteArrayInputStream(response);
+		DataInputStream res = new DataInputStream(in);
+		
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		DataOutputStream dos = new DataOutputStream(out);
+		
+		byte[] result = null;
+		byte[] resultDecrypted = null;
+		try {
+			int size = res.readInt();
+			result = new byte[size];
+			
+			res.read(result, 0, size);
+			
+			if (result[0] == 0) {
+				System.out.println("Entri");
+			    byte[] tmp = new byte[result.length - 1];
+			    System.arraycopy(result, 1, tmp, 0, tmp.length);
+			    result = tmp;
+			}
+			
+			BigInteger resultDec = homoMultDecryption(result);
+			resultDecrypted = resultDec.toByteArray();
+			
+			
+			
+			dos.writeUTF(new String(resultDecrypted));
+			System.out.println("RES: " + resultDec.toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		if(response==null)
+			System.out.println("decription nao deu");
+
+		return out.toByteArray();
+		
 	}
 
 	public Response addElementImplementation(String id) {
@@ -287,6 +344,15 @@ public class ProxyResources {
 		hm.remove("idade");
 		hm.put("idade", ageEncrypted);
 		entry.setAttributes(hm);
+		
+		
+		byte[] salary = hm.get("salary");
+		
+		byte[] salaryEncrypted = homoMultEncryption(salary);
+		
+		hm.remove("salary");
+		hm.put("salary", salaryEncrypted);
+		entry.setAttributes(hm);
 
 		Response response = target.path("/entries/ps/")
 				.request()
@@ -309,9 +375,7 @@ public class ProxyResources {
 		BigInteger big1 = new BigInteger(n1);
 		
 		try {
-			byte[] enc = HomoAdd.encrypt(big1, pk).toByteArray();
-			
-			return enc;
+			return HomoAdd.encrypt(big1, pk).toByteArray();
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("> Erro Sum encryption!");
@@ -326,6 +390,35 @@ public class ProxyResources {
 		
 		try {
 			return HomoAdd.decrypt(big1, pk);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("> Erro Sum decryption!");
+		}
+
+		//se for necessario retornar -1 ou assim
+		return new BigInteger("0");
+	}
+	
+	public byte[] homoMultEncryption(byte[] n1) {
+		
+		BigInteger big1 = new BigInteger(n1);
+		
+		try {
+			return HomoMult.encrypt(publicKey, big1).toByteArray();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("> Erro Sum encryption!");
+		}
+		return null;
+
+	}
+
+	public BigInteger homoMultDecryption(byte[] n1) {
+		
+		BigInteger big1 = new BigInteger(n1);
+		
+		try {
+			return HomoMult.decrypt(privateKey, big1);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("> Erro Sum decryption!");

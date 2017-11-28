@@ -1,5 +1,6 @@
 package server;
 
+import bftsmart.reconfiguration.util.RSAKeyLoader;
 // These are the classes which receive requests from clients
 import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceReplica;
@@ -8,6 +9,8 @@ import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+import resources.Entry;
+import resources.KeySaver;
 import resources.RequestType;
 
 // Classes that need to be declared to implement this
@@ -22,7 +25,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.RSAPublicKeySpec;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,8 +75,7 @@ public class TreeMapServer extends DefaultRecoverable {
 		fields=new ArrayList<String>();
 		fields.add("nome");
 		fields.add("idade");
-		fields.add("morada");
-		fields.add("telefone");
+		fields.add("salary");
 	}
 
 	public static void main(String[] args) {
@@ -263,7 +270,7 @@ public class TreeMapServer extends DefaultRecoverable {
 				System.out.println(false);
 				return "false".getBytes();
 				
-			} if (reqType == RequestType.READELEMENT) {
+			} else if (reqType == RequestType.READELEMENT) {
 				if(bizantinemode)
 					return "bizantineValue".getBytes();
 				
@@ -279,60 +286,8 @@ public class TreeMapServer extends DefaultRecoverable {
 				if(result != null)
 					return result.getBytes();
 				return null;
-				
-			} else if (reqType == RequestType.MULT) {
-				
-				if(bizantinemode)
-					return "-1".getBytes();
-				
-				String key1 = dis.readUTF();
-				String key2 = dis.readUTF();
-				int pos = dis.readInt();
 
-				System.out.println("Mult "+key1+ " "+key2+" "+pos);
-				String field = fields.get(pos);
-
-				String val1 = jedis.hget(key1, field);
-				String val2 = jedis.hget(key2, field);
-
-				int mult = Integer.valueOf(val1) * Integer.valueOf(val2);
-				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
-				outputStream.write(mult);
-
-
-				return outputStream.toByteArray();
-
-			} if (reqType == RequestType.SUM) {
-				
-				if(bizantinemode)
-					return "-1".getBytes();
-				
-				String key1 = dis.readUTF();
-				String key2 = dis.readUTF();
-				int pos = dis.readInt();
-				String encKey = dis.readUTF();
-				
-				String field = fields.get(pos);
-
-				String val1 = jedis.hget(key1, field);
-				String val2 = jedis.hget(key2, field);
-
-				
-				BigInteger val1BigInt = new BigInteger(val1.getBytes());
-				BigInteger val2BigInt = new BigInteger(val2.getBytes());
-				
-				BigInteger encKeyBigInt = new BigInteger(encKey);
-				
-				byte[] result = HomoAdd.sum(val1BigInt, val2BigInt, encKeyBigInt).toByteArray();
-				int resultSize = result.length;
-				
-				dos.writeInt(resultSize);
-				dos.write(result);
-
-				
-				return out.toByteArray();
-
-			}else {
+			} else {
 				System.out.println("Unknown request type: " + reqType);
 				return "".getBytes();
 			}
@@ -357,7 +312,6 @@ public class TreeMapServer extends DefaultRecoverable {
 			reqType = dis.readInt();
 			
 			if (reqType == RequestType.SUM) {
-				
 				if(bizantinemode)
 					return "-1".getBytes();
 				
@@ -380,19 +334,68 @@ public class TreeMapServer extends DefaultRecoverable {
 				byte[] result = HomoAdd.sum(val1BigInt, val2BigInt, encKeyBigInt).toByteArray();
 				int resultSize = result.length;
 				
-				System.out.println("size "+resultSize);
 				dos.writeInt(resultSize);
 				dos.write(result);
 
 				
 				return out.toByteArray();
 
-			}  else {
+			}else if (reqType == RequestType.MULT) {
+				
+				System.out.println(">RECEIVED MULT");
+				
+				if(bizantinemode)
+					return "-1".getBytes();
+				
+				String key1 = dis.readUTF();
+				String key2 = dis.readUTF();
+				int pos = dis.readInt();
+				String mod = dis.readUTF();
+				String exp = dis.readUTF();
+
+				System.out.println("Mult "+key1+ " "+key2+" "+pos);
+				String field = fields.get(pos);
+
+				String val1 = jedis.hget(key1, field);
+				String val2 = jedis.hget(key2, field);
+				
+				BigInteger bg1 = new BigInteger(val1.getBytes());
+				BigInteger bg2 = new BigInteger(val2.getBytes());
+				
+				BigInteger mod1 = new BigInteger(mod);
+				BigInteger exp1 = new BigInteger(exp);
+				
+				RSAPublicKeySpec pkSpec = new RSAPublicKeySpec(mod1, exp1);
+				KeyFactory kf = KeyFactory.getInstance("RSA");
+				RSAPublicKey generatedPublic = (RSAPublicKey) kf.generatePublic(pkSpec);
+				
+				byte[] mult = HomoMult.multiply(bg1, bg2, generatedPublic).toByteArray();
+
+				System.out.println("MULT: " + mult);
+				int resultSize = mult.length;
+				
+				//System.out.println("size "+resultSize);
+				dos.writeInt(resultSize);
+				dos.write(mult);
+
+
+				return out.toByteArray();
+			}
+
+			else {
 				System.out.println("Unknown request type: " + reqType);
 				return null;
 			}
 		} catch (IOException e) {
 			System.out.println("Exception reading data in the replica: " + e.getMessage());
+			e.printStackTrace();
+			return null;
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		} catch (InvalidKeySpecException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
 		}

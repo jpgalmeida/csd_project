@@ -17,11 +17,14 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import bftsmart.tom.ServiceProxy;
 import resources.Entry;
+import resources.KeySaver;
 import resources.RequestType;
 
 
@@ -116,15 +119,16 @@ public class ServerInterfaceResources {
 	}
 
 	@GET
-	@Path("/mult/{id1}/{id2}/{pos}")
+	@Path("/mult/{id1}/{id2}/{pos}/{mod}/{exp}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public int mult(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
-
-		return multImplementation(id1, id2, pos);
+	public byte[] mult(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos, @PathParam("mod") String mod, @PathParam("exp") String exp) {
+		System.out.println("MULT");
+		return multImplementation(id1, id2, pos, mod, exp);
 	}
 
 
 	public byte[] sumImplementation(String key1, String key2, int pos, String encKey) {
+		System.out.println("Received Sum Request");
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			DataOutputStream dos = new DataOutputStream(out);
@@ -133,7 +137,6 @@ public class ServerInterfaceResources {
 			dos.writeUTF(key2);
 			dos.writeInt(pos);
 			dos.writeUTF(encKey);
-			
 			
 			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeUnordered(out.toByteArray()));
 			DataInputStream dis = new DataInputStream(in);
@@ -144,18 +147,20 @@ public class ServerInterfaceResources {
 			ByteArrayOutputStream out2 = new ByteArrayOutputStream();
 			DataOutputStream dos2 = new DataOutputStream(out2);
 			
-			System.out.println("size "+size);
 			dos2.writeInt(size);
 			dos2.write(res);
 			
+			System.out.println("SUM: " + res);
 			return out2.toByteArray();
 		}
 		catch(IOException e) {
+			e.printStackTrace();
 			return "0".getBytes();
 		}
 	}
 
-	public int multImplementation(String key1, String key2, int pos) {
+	public byte[] multImplementation(String key1, String key2, int pos, String mod, String exp) {
+		System.out.println("Received Mult Request");
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			DataOutputStream dos = new DataOutputStream(out);
@@ -163,15 +168,27 @@ public class ServerInterfaceResources {
 			dos.writeUTF(key1);
 			dos.writeUTF(key2);
 			dos.writeInt(pos);
-			System.out.println("Mult "+key1+ " "+key2+" "+pos);
-			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeOrdered(out.toByteArray()));
+			dos.writeUTF(mod);
+			dos.writeUTF(exp);
+			
+			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeUnordered(out.toByteArray()));
 			DataInputStream dis = new DataInputStream(in);
-			int res = dis.read();
-
-			return res;
+			int size = dis.readInt();
+			byte[] res = new byte[size]; 
+			dis.read(res, 0, size);
+			
+			ByteArrayOutputStream out2 = new ByteArrayOutputStream();
+			DataOutputStream dos2 = new DataOutputStream(out2);
+			
+			dos2.writeInt(size);
+			dos2.write(res);
+			
+			System.out.println("MULT: " + res);
+			return out2.toByteArray();
 		}
 		catch(IOException e) {
-			return 0;
+			e.printStackTrace();
+			return "0".getBytes();
 		}
 	}
 	
