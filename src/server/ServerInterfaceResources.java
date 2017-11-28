@@ -110,11 +110,11 @@ public class ServerInterfaceResources {
 	}
 
 	@GET
-	@Path("/sum/{id1}/{id2}/{pos}/{encKey}")
+	@Path("/sum/{id1}/{id2}/{pos}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public byte[] sum(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos, @PathParam("encKey") String encKey) {
+	public byte[] sum(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
 		System.out.println("Received Sum Request");
-		return sumImplementation(id1, id2, pos, encKey);
+		return sumImplementation(id1, id2, pos);
 
 	}
 
@@ -127,7 +127,7 @@ public class ServerInterfaceResources {
 	}
 
 
-	public byte[] sumImplementation(String key1, String key2, int pos, String encKey) {
+	public byte[] sumImplementation(String key1, String key2, int pos) {
 		System.out.println("Received Sum Request");
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -136,7 +136,6 @@ public class ServerInterfaceResources {
 			dos.writeUTF(key1);
 			dos.writeUTF(key2);
 			dos.writeInt(pos);
-			dos.writeUTF(encKey);
 			
 			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeUnordered(out.toByteArray()));
 			DataInputStream dis = new DataInputStream(in);
