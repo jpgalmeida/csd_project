@@ -257,7 +257,16 @@ public class ProxyResources {
 	}
 
 	public Response addElementImplementation(String id) {
-		return null;
+		
+		//convert new field to bytes for encription
+		byte[] newField = homoSumEncryption(id.getBytes());
+
+		Response response = target.path("/adde/"+newField)
+				.request()
+				.post( Entity.entity(newField, MediaType.APPLICATION_JSON));
+
+
+		return response;
 	}
 
 	public Response writeElementImplementation(String key, int pos, String element) {
