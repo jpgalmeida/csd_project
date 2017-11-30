@@ -5,7 +5,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
@@ -17,14 +16,11 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import bftsmart.tom.ServiceProxy;
 import resources.Entry;
-import resources.KeySaver;
 import resources.RequestType;
 
 
@@ -119,11 +115,11 @@ public class ServerInterfaceResources {
 	}
 
 	@GET
-	@Path("/mult/{id1}/{id2}/{pos}/{mod}/{exp}")
+	@Path("/mult/{id1}/{id2}/{pos}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public byte[] mult(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos, @PathParam("mod") String mod, @PathParam("exp") String exp) {
+	public byte[] mult(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
 		System.out.println("MULT");
-		return multImplementation(id1, id2, pos, mod, exp);
+		return multImplementation(id1, id2, pos);
 	}
 
 
@@ -156,7 +152,7 @@ public class ServerInterfaceResources {
 		}
 	}
 
-	public byte[] multImplementation(String key1, String key2, int pos, String mod, String exp) {
+	public byte[] multImplementation(String key1, String key2, int pos) {
 		System.out.println("Received Mult Request");
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -165,22 +161,18 @@ public class ServerInterfaceResources {
 			dos.writeUTF(key1);
 			dos.writeUTF(key2);
 			dos.writeInt(pos);
-			dos.writeUTF(mod);
-			dos.writeUTF(exp);
 			
 			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeUnordered(out.toByteArray()));
+			
 			DataInputStream dis = new DataInputStream(in);
-			int size = dis.readInt();
-			byte[] res = new byte[size]; 
-			dis.read(res, 0, size);
+			
+			String res = dis.readUTF();
 			
 			ByteArrayOutputStream out2 = new ByteArrayOutputStream();
 			DataOutputStream dos2 = new DataOutputStream(out2);
 			
-			dos2.writeInt(size);
-			dos2.write(res);
+			dos2.writeUTF(res);
 			
-			System.out.println("MULT: " + res);
 			return out2.toByteArray();
 		}
 		catch(IOException e) {

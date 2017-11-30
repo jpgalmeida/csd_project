@@ -11,7 +11,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.crypto.SecretKey;
@@ -35,7 +34,6 @@ import javax.ws.rs.core.UriBuilder;
 import client.ClientInterface.InsecureHostnameVerifier;
 import homolib.*;
 import resources.Entry;
-import resources.KeySaver;
 
 
 /**
@@ -52,9 +50,9 @@ public class ProxyResources {
 	private static WebTarget target;
 	private PaillierKey pk;
 	//	private KeySaver ks;
-		private KeyPair keyPair;
-		private RSAPublicKey pubKey;
-		private RSAPrivateKey privKey;
+	private KeyPair keyPair;
+	private RSAPublicKey publicKey;
+	private RSAPrivateKey privateKey;
 	//	private String pkSer;
 
 
@@ -67,17 +65,6 @@ public class ProxyResources {
 				.build();
 		target = client.target( serverURI );
 
-
-		//Homomorphic Init
-		//		pk = HomoAdd.generateKey();
-				keyPair = HomoMult.generateKey();
-				System.out.println(HelpSerial.toString(keyPair));
-				pubKey = (RSAPublicKey) keyPair.getPublic();
-				System.out.println(HelpSerial.toString(pubKey));
-				privKey = (RSAPrivateKey) keyPair.getPrivate();
-				System.out.println(HelpSerial.toString(privKey));
-		//		
-		//		pkSer = HelpSerial.toString(pk.getNsquare());
 
 		keysInit();
 	}
@@ -178,28 +165,14 @@ public class ProxyResources {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		DataOutputStream dos = new DataOutputStream(out);
 
-		//byte[] result = null;
 		try {
-			//int size = res.readInt();
-			//result = new byte[size];
 
-			//res.read(result, 0, size);
-			
 			String result = res.readUTF();
 
 			BigInteger resultDec = homoSumDecryption(result);
-			
-			System.out.println(resultDec.intValue());
-			
-			//byte[] valueRead = resultDec.toByteArray();
-//			if (valueRead[0] == 0) {
-//				byte[] tmp = new byte[valueRead.length - 1];
-//				System.arraycopy(valueRead, 1, tmp, 0, tmp.length);
-//				valueRead = tmp;
-//			}
 
-			//System.out.println(new String(valueRead, StandardCharsets.UTF_8));
-			//dos.writeUTF(new String(valueRead, StandardCharsets.UTF_8));
+			System.out.println(resultDec.intValue());
+
 			dos.writeUTF(resultDec.toString());
 
 		} catch (Exception e) {
@@ -215,51 +188,36 @@ public class ProxyResources {
 
 	public byte[] multImplementation(String key1, String key2, int pos) {
 
-		//		BigInteger modulus = publicKey.getModulus();
-		//		//String modString = HelpSerial.toString(modulus);
-		//		BigInteger pubExp = publicKey.getPublicExponent();
-		//		//String expString = HelpSerial.toString(pubExp);
+
 		byte[] response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<byte[]>(){});
-		
-				ByteArrayInputStream in = new ByteArrayInputStream(response);
-				DataInputStream res = new DataInputStream(in);
-				
-				ByteArrayOutputStream out = new ByteArrayOutputStream();
-				DataOutputStream dos = new DataOutputStream(out);
-				
-//				byte[] result = null;
-//				byte[] resultDecrypted = null;
-//				try {
-//					int size = res.readInt();
-//					result = new byte[size];
-//					
-//					res.read(result, 0, size);
-//					
-//					if (result[0] == 0) {
-//						System.out.println("Entri");
-//					    byte[] tmp = new byte[result.length - 1];
-//					    System.arraycopy(result, 1, tmp, 0, tmp.length);
-//					    result = tmp;
-//					}
-//					
-//					BigInteger resultDec = homoMultDecryption(result);
-//					resultDecrypted = resultDec.toByteArray();
-//					
-//					
-//					
-//					dos.writeUTF(new String(resultDecrypted));
-//					System.out.println("RES: " + resultDec.toString());
-//				} catch (Exception e) {
-//					e.printStackTrace();
-//				}
-//				
-				if(response==null)
-					System.out.println("decription nao deu");
 
-		return response;
+		ByteArrayInputStream in = new ByteArrayInputStream(response);
+		DataInputStream res = new DataInputStream(in);
+
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		DataOutputStream dos = new DataOutputStream(out);
+
+		try {
+
+			String result = res.readUTF();
+
+			BigInteger resultDec = homoMultDecryption(result);
+
+			System.out.println(resultDec.intValue());
+
+			dos.writeInt(resultDec.intValue());
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		if(response==null)
+			System.out.println("decription nao deu");
+
+		return out.toByteArray();
 
 	}
 
@@ -308,13 +266,21 @@ public class ProxyResources {
 				String valueRead = res.readUTF();
 
 				BigInteger ageBigInt = BigInteger.ZERO;
+				BigInteger salaryBigInt = BigInteger.ZERO;
+
 				if(keyRead.equals("idade")) {
 
 					ageBigInt = homoSumDecryption(valueRead);
 
 					valueRead = ageBigInt.toString();
+
+				}else if(keyRead.equals("salario")) {
+
+					salaryBigInt = homoMultDecryption(valueRead);
+
+					valueRead = salaryBigInt.toString();
 				}
-				
+
 				dos.writeUTF(keyRead);
 				dos.writeUTF(valueRead);
 			}
@@ -340,11 +306,11 @@ public class ProxyResources {
 		entry.setAttributes(hm);
 
 
-//		String salary = hm.get("salario");
-//		String salaryEncryted = homoMultEncryption(salary);
-//		hm.remove("salario");
-//		hm.put("salario", salaryEncryted);
-//		entry.setAttributes(hm);
+		String salary = hm.get("salario");
+		String salaryEncryted = homoMultEncryption(salary);
+		hm.remove("salario");
+		hm.put("salario", salaryEncryted);
+		entry.setAttributes(hm);
 
 		Response response = target.path("/entries/ps/")
 				.request()
@@ -396,7 +362,7 @@ public class ProxyResources {
 		BigInteger big1 = new BigInteger(n1);
 
 		try {
-			return HelpSerial.toString(HomoMult.encrypt(pubKey,big1));
+			return HelpSerial.toString(HomoMult.encrypt(publicKey,big1));
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("> Erro Mult encryption!");
@@ -410,7 +376,7 @@ public class ProxyResources {
 		BigInteger big1 = (BigInteger)HelpSerial.fromString(n1);
 
 		try {
-			return HomoAdd.decrypt(big1, pk);
+			return HomoMult.decrypt(privateKey, big1);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("> Erro Mult decryption!");
@@ -430,10 +396,14 @@ public class ProxyResources {
 		BigInteger mu= new BigInteger("10764710170199705233505124648403165529212121097251541238630848444075093447516964785205597958481049283727512957031604667816674248857448556510271529970874283604552567490353946909078236103554182238191052855718220882052619345516515693973054537482264701461696815779529446468287302168827771150173417514736422669687979284523815191260980144040912580877240622591274236027834960423283507192909636457092402464733915052269697941390794296895075429564446858419232956003307010864348252281569967299423436088375589035087840328077636794366867752894760877219307000371333455584163863445072399914002612110509695415230312776539225702051571");
 
 		pk = new PaillierKey(p, q, lambda, n, nsquare, g, mu);
-		
-		
 
-		//		pk.printValues();
+		String keyPlain = "rO0ABXNyABVqYXZhLnNlY3VyaXR5LktleVBhaXKXAww60s0SkwIAAkwACnByaXZhdGVLZXl0ABpMamF2YS9zZWN1cml0eS9Qcml2YXRlS2V5O0wACXB1YmxpY0tleXQAGUxqYXZhL3NlY3VyaXR5L1B1YmxpY0tleTt4cHNyABRqYXZhLnNlY3VyaXR5LktleVJlcL35T7OImqVDAgAETAAJYWxnb3JpdGhtdAASTGphdmEvbGFuZy9TdHJpbmc7WwAHZW5jb2RlZHQAAltCTAAGZm9ybWF0cQB+AAVMAAR0eXBldAAbTGphdmEvc2VjdXJpdHkvS2V5UmVwJFR5cGU7eHB0AANSU0F1cgACW0Ks8xf4BghU4AIAAHhwAAACejCCAnYCAQAwDQYJKoZIhvcNAQEBBQAEggJgMIICXAIBAAKBgQC50ennsB25CrkFWnF8Ast2DH6QLjSK91vnxlZVUFujCSTtII91rf7oJ19D4DsamQM/5rrywojK0i1hmMUuRyloJzYUyAEIJLfnGo/7o9EoZMeP6eS1B2mx2zGrqDhbCxQCckSf5Nyu5Qmmm7x6O0I+qBQtvUKn5uZfgpOq5Qm+YQIDAQABAoGAcT/UNNaLZul4FiEnJRN2+T1oLWtbro5PPxUMLPbKwrSiArtjc69Vuhu03eNdYjp7VojCy41wXVx3OBIpqqjIPJyl3UYJW15UPUbAbi2m04JCN3EWLvvBMqFCEQ9dINuHJXS8XVDgFnedwdOND6/ripBZ072vd5uy29oxmx0ORSECQQDzV1BHJNoQ02yVURgzKbyWk0H7axFrozbFpQxuctoF5QhpE4j372wNlGclrCh6mb7ZfrhJS19jVwIessTJ5ZmdAkEAw3yQnUZcM3RRiHpSf/CsAb/ml7IawfXyEDmh5UUpsiHBIoxOaMIXoc+O9CRFG256riMxffGigXe0Xs5Ka4fOlQJBAI6WgSHPBECLwrqT9Dw2np0U2Lr7+A88aiHSHsCxZ/PASvdXTRELKCOk6/P1Nxrv8Bb92/qGwfQxzbozQoCTmzkCQDGrmOMdWZgJWh4fVo8Di/D13ZV1v67A2zycKDKlHC8SvIwWsmWTy4Vlw6DtBlIuBCXy80RY/T2AOOhN6kLgQvECQAaKM4moehE+g9UZESA07PDXcNTyQjq59XxgiFYF1bSCfa88cIDmq6KcNRxJp+/oFhO59TJt0Fua2pu6KRE5klJ0AAZQS0NTIzh+cgAZamF2YS5zZWN1cml0eS5LZXlSZXAkVHlwZQAAAAAAAAAAEgAAeHIADmphdmEubGFuZy5FbnVtAAAAAAAAAAASAAB4cHQAB1BSSVZBVEVzcQB+AARxAH4ACXVxAH4ACgAAAKIwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALnR6eewHbkKuQVacXwCy3YMfpAuNIr3W+fGVlVQW6MJJO0gj3Wt/ugnX0PgOxqZAz/muvLCiMrSLWGYxS5HKWgnNhTIAQgkt+caj/uj0Shkx4/p5LUHabHbMauoOFsLFAJyRJ/k3K7lCaabvHo7Qj6oFC29Qqfm5l+Ck6rlCb5hAgMBAAF0AAVYLjUwOX5xAH4ADXQABlBVQkxJQw==";
+
+		keyPair =  HomoMult.keyFromString(keyPlain);
+
+		publicKey = (RSAPublicKey) keyPair.getPublic();
+		privateKey = (RSAPrivateKey) keyPair.getPrivate();
+
 	}
 
 }

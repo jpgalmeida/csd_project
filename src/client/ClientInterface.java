@@ -3,11 +3,9 @@ package client;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Scanner;
 
 import javax.net.ssl.HostnameVerifier;
@@ -160,7 +158,7 @@ public class ClientInterface {
 				key2 = sc.next();
 
 
-				String mult_res = Mult(pos, key1, key2);
+				int mult_res = Mult(pos, key1, key2);
 
 				System.out.println("> Mult is: "+mult_res);
 
@@ -216,7 +214,7 @@ public class ClientInterface {
 		return 0;
 	}
 	
-	private static String Mult( int pos, String key1, String key2) {
+	private static int Mult( int pos, String key1, String key2) {
 
 		byte[] response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos)
 				.request()
@@ -226,9 +224,9 @@ public class ClientInterface {
 		ByteArrayInputStream in = new ByteArrayInputStream(response);
 		DataInputStream res = new DataInputStream(in);
 		
-		String result ="";
+		int result = 0;
 		try {
-			result = res.readUTF();
+			result = res.readInt();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

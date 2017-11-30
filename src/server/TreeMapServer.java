@@ -1,6 +1,5 @@
 package server;
 
-import bftsmart.reconfiguration.util.RSAKeyLoader;
 // These are the classes which receive requests from clients
 import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceReplica;
@@ -9,8 +8,6 @@ import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
-import resources.Entry;
-import resources.KeySaver;
 import resources.RequestType;
 
 // Classes that need to be declared to implement this
@@ -24,10 +21,8 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
@@ -47,7 +42,7 @@ public class TreeMapServer extends DefaultRecoverable {
 	private List<String> fields;
 	private JedisPool pool;
 	private static boolean bizantinemode = false;
-	private BigInteger nsquare;
+	private BigInteger nsquare, modulus, exponent;
 	
 	
 	public TreeMapServer(int id, String serverUri){
@@ -77,7 +72,7 @@ public class TreeMapServer extends DefaultRecoverable {
 		fields=new ArrayList<String>();
 		fields.add("nome");
 		fields.add("idade");
-		//fields.add("salario");
+		fields.add("salario");
 		
 		keysInit();
 	}
@@ -348,8 +343,6 @@ public class TreeMapServer extends DefaultRecoverable {
 				String key1 = dis.readUTF();
 				String key2 = dis.readUTF();
 				int pos = dis.readInt();
-				String mod = dis.readUTF();
-				String exp = dis.readUTF();
 
 				System.out.println("Mult "+key1+ " "+key2+" "+pos);
 				String field = fields.get(pos);
@@ -357,24 +350,18 @@ public class TreeMapServer extends DefaultRecoverable {
 				String val1 = jedis.hget(key1, field);
 				String val2 = jedis.hget(key2, field);
 				
-				BigInteger bg1 = new BigInteger(val1.getBytes());
-				BigInteger bg2 = new BigInteger(val2.getBytes());
+				BigInteger val1BigInt = (BigInteger)HelpSerial.fromString(val1);
+				BigInteger val2BigInt = (BigInteger)HelpSerial.fromString(val2);
 				
-				BigInteger mod1 = new BigInteger(mod);
-				BigInteger exp1 = new BigInteger(exp);
 				
-				RSAPublicKeySpec pkSpec = new RSAPublicKeySpec(mod1, exp1);
+				RSAPublicKeySpec pkSpec = new RSAPublicKeySpec(modulus, exponent);
 				KeyFactory kf = KeyFactory.getInstance("RSA");
 				RSAPublicKey generatedPublic = (RSAPublicKey) kf.generatePublic(pkSpec);
 				
-				byte[] mult = HomoMult.multiply(bg1, bg2, generatedPublic).toByteArray();
-
-				System.out.println("MULT: " + mult);
-				int resultSize = mult.length;
+				String resultBI = HelpSerial.toString(HomoMult.multiply(val1BigInt, val2BigInt, generatedPublic));
 				
-				//System.out.println("size "+resultSize);
-				dos.writeInt(resultSize);
-				dos.write(mult);
+				
+				dos.writeUTF(resultBI);
 
 
 				return out.toByteArray();
@@ -401,6 +388,10 @@ public class TreeMapServer extends DefaultRecoverable {
 
 	public void keysInit() {
 		nsquare = new BigInteger("450114259778886752345994972925686146945175719516761522713198032574212830403533700183623261468021445078621760277779263141968015314983806128821058275802755545379938157291541399835009995569683895334890113014285060082790243552087685381383203593754939202348592721888034967877276307286156255678855763399447355959224711916549581546885085076426020478521602260395624180860696575344834409471583415670097862455826930115321719679903616216507036425955946871540061083041188261888011387921155914785756600965822823820335396455565877600925391487234095866282893990501955926369072534595727702891613849272847282083068819208706653784963946902373565121574954362690827541488261200963131888214781747205025305288855145274621870061838362489615190239392460517201952524600831191354242747305690851938059864987581083260076537564172705633914487255514251288518489875766184202330155222520855879090477482527774846732519751497906986646845790885449414100375356594455653634608031360028117692359146525986187077013576268060089986639104363108940356956657085556867213560550690477282013323735081036608396242294777772679166416552518895073108745808291336395838454225511647635991804381856099567271039293748901550303296912200005568012909142450882237697100362114845207902918991561");
+		
+		modulus = new BigInteger("130487224226764029103379992274406128521227926260527674247729988501680805927872808994651616026679464842579366924718518730473975925824458708424193507742886054685776005837909295920529709252527342539911219764516786824960672308893646723687457895142977908483514986464012078223985582254092525512451181114852568055393");
+		
+		exponent = new BigInteger("65537");
 	}
 	
 	
