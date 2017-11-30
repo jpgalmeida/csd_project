@@ -132,9 +132,9 @@ public class ClientInterface {
 				key = sc.next();
 				String element = sc.next();
 
-				boolean res = isElement(key, element);
+				String res = isElement(key, element);
 
-				if(res)
+				if(res.equals("true"))
 					System.out.println("> " +element+" is element");
 				else
 					System.out.println("> " +element+" isn't element");
@@ -257,12 +257,12 @@ public class ClientInterface {
 
 
 
-	private static boolean isElement(String key, String element) {
+	private static String isElement(String key, String element) {
 
-		boolean response = target.path("/entries/ie/"+key+"/"+element)
+		String response = target.path("/entries/ie/"+key+"/"+element)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
-				.get(new GenericType<Boolean>(){});
+				.get(new GenericType<String>(){});
 
 		return response;
 	}

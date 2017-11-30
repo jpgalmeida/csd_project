@@ -185,21 +185,7 @@ public class TreeMapServer extends DefaultRecoverable {
 
 
 				return out.toByteArray();
-			}else if (reqType == RequestType.WRITEELEMENT) {
-				String key = dis.readUTF();
-				int pos = dis.readInt();
-				String new_element = dis.readUTF();
 
-				if(pos < 0 || pos >= fields.size()) {
-					dos.writeUTF("false");
-					return out.toByteArray();
-				}
-
-				String field = fields.get(pos);
-				System.out.println(jedis.hset(key, field, new_element));
-
-				dos.writeUTF("true");
-				return out.toByteArray();
 			}else if (reqType == RequestType.ADDE) {
 				String key = dis.readUTF();
 
@@ -210,8 +196,8 @@ public class TreeMapServer extends DefaultRecoverable {
 					dos.writeUTF("true");
 				}
 				return out.toByteArray();
-			}
-			else if (reqType == RequestType.GETSET) {
+				
+			}else if (reqType == RequestType.GETSET) {
 				System.out.println("> RECEIVED GETSET");
 				String key = dis.readUTF();
 				
@@ -246,45 +232,6 @@ public class TreeMapServer extends DefaultRecoverable {
 				
 
 				return out.toByteArray();
-
-			}else if (reqType == RequestType.ISELEMENT) {
-				
-				if(bizantinemode)
-					return "bizantineValue".getBytes();
-				
-				String key = dis.readUTF();
-				String element = dis.readUTF();
-
-				for (String current_field : fields) {
-
-					Object result = jedis.hget(key, current_field);
-
-					if(result!=null)
-						if(result.toString().equalsIgnoreCase(element)) {
-							System.out.println(true);
-							return "true".getBytes();
-						}
-
-				}
-				System.out.println(false);
-				return "false".getBytes();
-				
-			} else if (reqType == RequestType.READELEMENT) {
-				if(bizantinemode)
-					return "bizantineValue".getBytes();
-				
-				
-				String key = dis.readUTF();
-				int pos = dis.readInt();
-				
-				String field = fields.get(pos);
-				String result = "";
-				result = jedis.hget(key, field);
-				System.out.println(result);
-
-				if(result != null)
-					return result.getBytes();
-				return null;
 
 			} else {
 				System.out.println("Unknown request type: " + reqType);

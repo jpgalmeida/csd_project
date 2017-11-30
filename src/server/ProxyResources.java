@@ -109,18 +109,22 @@ public class ProxyResources {
 	public String readElement(@PathParam("id") String id, @PathParam("pos") int pos) {
 		System.out.println("Received Read Element Request");
 
-		byte[] res = readElementImplementation(id,pos);
-		String a = new String(res, StandardCharsets.UTF_8);
-		return a;
+		String res = readElementImplementation(id,pos);
+		
+		return res;
 	}
 
 
 	@GET
 	@Path("/ie/{id}/{element}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public boolean isElement(@PathParam("id") String id, @PathParam("element") String element) {
+	public String isElement(@PathParam("id") String id, @PathParam("element") String element) {
 		System.out.println("Received Is Element Request");
-		return isElementImplementation(id,element);
+		boolean found = isElementImplementation(id,element);
+		if (found)
+			return "true";
+		
+		return "false"; 
 	}
 
 	@PUT
@@ -228,10 +232,15 @@ public class ProxyResources {
 
 	public Response addElementImplementation(String id) {
 
+		
+		
 		Response response = target.path("/entries/adde/"+id)
 				.request()
 				.post( Entity.entity(null, MediaType.APPLICATION_JSON));
 
+		if(response.getStatus() == 204)
+			fields.add(id);
+			
 		return response;
 	}
 
@@ -248,6 +257,7 @@ public class ProxyResources {
 		String field = fields.get(pos);
 		int attSize;
 		Map<String, String> hm = new HashMap<String, String>();
+		boolean added = false;
 		
 		try {
 			attSize = res.readInt();
@@ -268,7 +278,7 @@ public class ProxyResources {
 
 					String ageEncrypted = homoSumEncryption(element);
 					hm.put("idade", ageEncrypted);
-
+					added = true;
 					
 				}else if(field.equals(keyRead) &&  field.equals("salario")) {
 
@@ -277,12 +287,17 @@ public class ProxyResources {
 					
 					String salaryEncryted = homoMultEncryption(element);
 					hm.put("salario", salaryEncryted);
+					added = true;
 				}
-				else if(field.equals(keyRead))
+				else if(field.equals(keyRead)) {
 					hm.put(keyRead, element);
-
+					added = true;
+				}
 
 			}
+			
+			if(!added)
+				hm.put(fields.get(pos), element);
 			
 			Entry entry = new Entry(key, hm);
 			
@@ -300,8 +315,54 @@ public class ProxyResources {
 		return null;
 	}
 
-	public boolean isElementImplementation(Object key, Object element) {
+	public boolean isElementImplementation(String key, String element) {
+
+		byte[] response = target.path("/entries/"+key)
+				.request()
+				.accept(MediaType.APPLICATION_JSON)
+				.get(new GenericType<byte[]>() {});
+
+		ByteArrayInputStream in = new ByteArrayInputStream(response);
+		DataInputStream res = new DataInputStream(in);
+		
+		int attSize;
+		
+		try {
+			attSize = res.readInt();
+
+			for(int i = 0; i < attSize; i++) {
+
+				String keyRead = res.readUTF();
+				String valueRead = res.readUTF();
+
+				BigInteger ageBigInt = BigInteger.ZERO;
+				BigInteger salaryBigInt = BigInteger.ZERO;
+				
+				if(keyRead.equals("idade")) {
+
+					ageBigInt = homoSumDecryption(valueRead);
+					valueRead = ageBigInt.toString();
+					
+				}else if(keyRead.equals("salario")) {
+
+					salaryBigInt = homoMultDecryption(valueRead);
+					valueRead = salaryBigInt.toString();
+					
+				}
+				
+				if(valueRead.equals(element)) {
+					return true;
+				}
+
+			}
+			
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		return false;
+		
+		
 	}
 
 	public Response removeSetImplementation(String key) {
@@ -313,8 +374,59 @@ public class ProxyResources {
 		return response;
 	}
 
-	public byte[] readElementImplementation(Object key, int pos) {
-		return null;
+	public String readElementImplementation(String key, int pos) {
+		
+		byte[] response = target.path("/entries/"+key)
+				.request()
+				.accept(MediaType.APPLICATION_JSON)
+				.get(new GenericType<byte[]>() {});
+
+		ByteArrayInputStream in = new ByteArrayInputStream(response);
+		DataInputStream res = new DataInputStream(in);
+		
+		String field = fields.get(pos);
+		int attSize;
+		String elementRead = "not found";
+		
+		try {
+			attSize = res.readInt();
+
+			for(int i = 0; i < attSize; i++) {
+
+				String keyRead = res.readUTF();
+				String valueRead = res.readUTF();
+
+				BigInteger ageBigInt = BigInteger.ZERO;
+				BigInteger salaryBigInt = BigInteger.ZERO;
+
+				
+				if(field.equals(keyRead) && field.equals("idade")) {
+
+					ageBigInt = homoSumDecryption(valueRead);
+					valueRead = ageBigInt.toString();
+					elementRead = valueRead;
+					
+				}else if(field.equals(keyRead) &&  field.equals("salario")) {
+
+					salaryBigInt = homoMultDecryption(valueRead);
+					valueRead = salaryBigInt.toString();
+					elementRead = valueRead;
+				}
+				else if(field.equals(keyRead))
+					elementRead = valueRead;
+
+
+			}
+			
+
+			
+			
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return elementRead;
+		
 	}
 
 	public byte[] getSetImplementation(String key) {
