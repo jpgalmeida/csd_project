@@ -138,16 +138,15 @@ public class ServerInterfaceResources {
 			dos.writeInt(pos);
 			
 			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeUnordered(out.toByteArray()));
+			
 			DataInputStream dis = new DataInputStream(in);
-			int size = dis.readInt();
-			byte[] res = new byte[size]; 
-			dis.read(res, 0, size);
+			
+			String res = dis.readUTF();
 			
 			ByteArrayOutputStream out2 = new ByteArrayOutputStream();
 			DataOutputStream dos2 = new DataOutputStream(out2);
 			
-			dos2.writeInt(size);
-			dos2.write(res);
+			dos2.writeUTF(res);
 			
 			return out2.toByteArray();
 		}
@@ -313,7 +312,7 @@ public class ServerInterfaceResources {
 	}
 
 
-	public Response putSetImplementation(String id, Map<String, byte[]> attributes) {
+	public Response putSetImplementation(String id, Map<String, String> attributes) {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		DataOutputStream dos = new DataOutputStream(out);
 		try {
@@ -321,10 +320,9 @@ public class ServerInterfaceResources {
 			dos.writeUTF(id);
 			dos.writeInt(attributes.entrySet().size());
 			
-			for (Map.Entry<String, byte[]> e : attributes.entrySet()){
+			for (Map.Entry<String, String> e : attributes.entrySet()){
 				dos.writeUTF(e.getKey());
-				dos.writeInt(e.getValue().length);
-				dos.write(e.getValue());
+				dos.writeUTF(e.getValue());
 			}
 
 			//validation

@@ -55,7 +55,7 @@ public class ClientInterface {
 				key = sc.next();
 				value = sc.nextLine();
 
-				HashMap<String, byte[]> valuesParsed = parseValuesToMap(value);
+				HashMap<String, String> valuesParsed = parseValuesToMap(value);
 
 				result = putSet(key, valuesParsed);
 				
@@ -288,7 +288,7 @@ public class ClientInterface {
 		return response.getStatus();
 	}
 
-	public static int putSet(String key, HashMap<String, byte[]> values){
+	public static int putSet(String key, HashMap<String, String> values){
 
 		Entry entry = new Entry(key, values);
 
@@ -365,12 +365,23 @@ public class ClientInterface {
 	}
 
 
-	private static HashMap<String, byte[]> parseValuesToMap(String values) {
+	/*private static HashMap<String, String> parseValuesToMap(String values) {
 		HashMap<String, byte[]> hm = new HashMap<String, byte[]>();
 		String [] parts = values.split(" ");
 
 		for( int i = 1 ; i < parts.length-1 ; i = i+2)
 			hm.put(parts[i], parts[i+1].getBytes(StandardCharsets.UTF_8));
+
+		return hm;
+	}*/
+	
+	
+	private static HashMap<String, String> parseValuesToMap(String values) {
+		HashMap<String, String> hm = new HashMap<String, String>();
+		String [] parts = values.split(" ");
+
+		for( int i = 1 ; i < parts.length-1 ; i = i+2)
+			hm.put(parts[i], parts[i+1]);
 
 		return hm;
 	}

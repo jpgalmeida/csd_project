@@ -52,9 +52,9 @@ public class ProxyResources {
 	private static WebTarget target;
 	private PaillierKey pk;
 	//	private KeySaver ks;
-	//	private KeyPair keyPair;
-	//	private RSAPublicKey publicKey;
-	//	private RSAPrivateKey privateKey;
+		private KeyPair keyPair;
+		private RSAPublicKey pubKey;
+		private RSAPrivateKey privKey;
 	//	private String pkSer;
 
 
@@ -70,9 +70,12 @@ public class ProxyResources {
 
 		//Homomorphic Init
 		//		pk = HomoAdd.generateKey();
-		//		keyPair = HomoMult.generateKey();
-		//		publicKey = (RSAPublicKey) keyPair.getPublic();
-		//		privateKey = (RSAPrivateKey) keyPair.getPrivate();
+				keyPair = HomoMult.generateKey();
+				System.out.println(HelpSerial.toString(keyPair));
+				pubKey = (RSAPublicKey) keyPair.getPublic();
+				System.out.println(HelpSerial.toString(pubKey));
+				privKey = (RSAPrivateKey) keyPair.getPrivate();
+				System.out.println(HelpSerial.toString(privKey));
 		//		
 		//		pkSer = HelpSerial.toString(pk.getNsquare());
 
@@ -175,26 +178,29 @@ public class ProxyResources {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		DataOutputStream dos = new DataOutputStream(out);
 
-		byte[] result = null;
+		//byte[] result = null;
 		try {
-			int size = res.readInt();
-			result = new byte[size];
+			//int size = res.readInt();
+			//result = new byte[size];
 
-			res.read(result, 0, size);
+			//res.read(result, 0, size);
+			
+			String result = res.readUTF();
 
 			BigInteger resultDec = homoSumDecryption(result);
 			
 			System.out.println(resultDec.intValue());
 			
-			byte[] valueRead = resultDec.toByteArray();
+			//byte[] valueRead = resultDec.toByteArray();
 //			if (valueRead[0] == 0) {
 //				byte[] tmp = new byte[valueRead.length - 1];
 //				System.arraycopy(valueRead, 1, tmp, 0, tmp.length);
 //				valueRead = tmp;
 //			}
 
-			System.out.println(new String(valueRead, StandardCharsets.UTF_8));
-			dos.writeUTF(new String(valueRead, StandardCharsets.UTF_8));
+			//System.out.println(new String(valueRead, StandardCharsets.UTF_8));
+			//dos.writeUTF(new String(valueRead, StandardCharsets.UTF_8));
+			dos.writeUTF(resultDec.toString());
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -213,45 +219,45 @@ public class ProxyResources {
 		//		//String modString = HelpSerial.toString(modulus);
 		//		BigInteger pubExp = publicKey.getPublicExponent();
 		//		//String expString = HelpSerial.toString(pubExp);
-		byte[] response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos+"/")
+		byte[] response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<byte[]>(){});
-		//
-		//		ByteArrayInputStream in = new ByteArrayInputStream(response);
-		//		DataInputStream res = new DataInputStream(in);
-		//		
-		//		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		//		DataOutputStream dos = new DataOutputStream(out);
-		//		
-		//		byte[] result = null;
-		//		byte[] resultDecrypted = null;
-		//		try {
-		//			int size = res.readInt();
-		//			result = new byte[size];
-		//			
-		//			res.read(result, 0, size);
-		//			
-		//			if (result[0] == 0) {
-		//				System.out.println("Entri");
-		//			    byte[] tmp = new byte[result.length - 1];
-		//			    System.arraycopy(result, 1, tmp, 0, tmp.length);
-		//			    result = tmp;
-		//			}
-		//			
-		//			BigInteger resultDec = homoMultDecryption(result);
-		//			resultDecrypted = resultDec.toByteArray();
-		//			
-		//			
-		//			
-		//			dos.writeUTF(new String(resultDecrypted));
-		//			System.out.println("RES: " + resultDec.toString());
-		//		} catch (Exception e) {
-		//			e.printStackTrace();
-		//		}
-		//		
-		//		if(response==null)
-		//			System.out.println("decription nao deu");
+		
+				ByteArrayInputStream in = new ByteArrayInputStream(response);
+				DataInputStream res = new DataInputStream(in);
+				
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				DataOutputStream dos = new DataOutputStream(out);
+				
+//				byte[] result = null;
+//				byte[] resultDecrypted = null;
+//				try {
+//					int size = res.readInt();
+//					result = new byte[size];
+//					
+//					res.read(result, 0, size);
+//					
+//					if (result[0] == 0) {
+//						System.out.println("Entri");
+//					    byte[] tmp = new byte[result.length - 1];
+//					    System.arraycopy(result, 1, tmp, 0, tmp.length);
+//					    result = tmp;
+//					}
+//					
+//					BigInteger resultDec = homoMultDecryption(result);
+//					resultDecrypted = resultDec.toByteArray();
+//					
+//					
+//					
+//					dos.writeUTF(new String(resultDecrypted));
+//					System.out.println("RES: " + resultDec.toString());
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//				}
+//				
+				if(response==null)
+					System.out.println("decription nao deu");
 
 		return response;
 
@@ -296,33 +302,21 @@ public class ProxyResources {
 			dos.writeInt(attSize);
 
 			for(int i = 0; i < attSize; i++) {
-				int keySize = res.readInt();
-				byte[] keyRead = new byte[keySize];
-				res.read(keyRead, 0, keySize);
 
-				int valueSize = res.readInt();
-				byte[] valueRead = new byte[valueSize];
-				res.read(valueRead, 0, valueSize);
+				String keyRead = res.readUTF();
 
-				String keyString = new String(keyRead, StandardCharsets.UTF_8);
+				String valueRead = res.readUTF();
 
-				if(keyString.equals("idade")) {
+				BigInteger ageBigInt = BigInteger.ZERO;
+				if(keyRead.equals("idade")) {
 
-					BigInteger ageBigInt = homoSumDecryption(valueRead);
+					ageBigInt = homoSumDecryption(valueRead);
 
-					valueRead = ageBigInt.toByteArray();
-					if (valueRead[0] == 0) {
-						byte[] tmp = new byte[valueRead.length - 1];
-						System.arraycopy(valueRead, 1, tmp, 0, tmp.length);
-						valueRead = tmp;
-					}
-
+					valueRead = ageBigInt.toString();
 				}
-				String k = new String(keyRead, StandardCharsets.UTF_8);
-				String v = new String(valueRead, StandardCharsets.UTF_8);
-
-				dos.writeUTF(k);
-				dos.writeUTF(v);
+				
+				dos.writeUTF(keyRead);
+				dos.writeUTF(valueRead);
 			}
 
 		} catch (IOException e) {
@@ -333,28 +327,24 @@ public class ProxyResources {
 	}
 
 
-	public Response putSetImplementation(String id, Map<String, byte[]> attributes) {
+	public Response putSetImplementation(String id, Map<String, String> attributes) {
 
 		Entry entry = new Entry(id, attributes);
 
-		Map<String, byte[]> hm = entry.getAttributes();
+		Map<String, String> hm = entry.getAttributes();
 
-		byte[] age = hm.get("idade");
-
-		byte[] ageEncrypted = homoSumEncryption(age);
-
+		String age = hm.get("idade");
+		String ageEncrypted = homoSumEncryption(age);
 		hm.remove("idade");
 		hm.put("idade", ageEncrypted);
 		entry.setAttributes(hm);
 
 
-		//		byte[] salary = hm.get("salary");
-		//		
-		//		byte[] salaryEncrypted = homoMultEncryption(salary);
-		//		
-		//		hm.remove("salary");
-		//		hm.put("salary", salaryEncrypted);
-		//		entry.setAttributes(hm);
+//		String salary = hm.get("salario");
+//		String salaryEncryted = homoMultEncryption(salary);
+//		hm.remove("salario");
+//		hm.put("salario", salaryEncryted);
+//		entry.setAttributes(hm);
 
 		Response response = target.path("/entries/ps/")
 				.request()
@@ -372,12 +362,12 @@ public class ProxyResources {
 
 	}
 
-	public byte[] homoSumEncryption(byte[] n1) {
+	public String homoSumEncryption(String n1) {
 
 		BigInteger big1 = new BigInteger(n1);
 
 		try {
-			return HomoAdd.encrypt(big1, pk).toByteArray();
+			return HelpSerial.toString(HomoAdd.encrypt(big1, pk));
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("> Erro Sum encryption!");
@@ -386,9 +376,9 @@ public class ProxyResources {
 
 	}
 
-	public BigInteger homoSumDecryption(byte[] n1) {
+	public BigInteger homoSumDecryption(String n1) {
 
-		BigInteger big1 = new BigInteger(n1);
+		BigInteger big1 = (BigInteger)HelpSerial.fromString(n1);
 
 		try {
 			return HomoAdd.decrypt(big1, pk);
@@ -401,30 +391,30 @@ public class ProxyResources {
 		return new BigInteger("0");
 	}
 
-	public byte[] homoMultEncryption(byte[] n1) {
+	public String homoMultEncryption(String n1) {
 
 		BigInteger big1 = new BigInteger(n1);
 
-		//		try {
-		//			return HomoMult.encrypt(publicKey, big1).toByteArray();
-		//		} catch (Exception e) {
-		//			e.printStackTrace();
-		//			System.out.println("> Erro Sum encryption!");
-		//		}
+		try {
+			return HelpSerial.toString(HomoMult.encrypt(pubKey,big1));
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("> Erro Mult encryption!");
+		}
 		return null;
 
 	}
 
-	public BigInteger homoMultDecryption(byte[] n1) {
+	public BigInteger homoMultDecryption(String n1) {
 
-		BigInteger big1 = new BigInteger(n1);
+		BigInteger big1 = (BigInteger)HelpSerial.fromString(n1);
 
-		//		try {
-		//			return HomoMult.decrypt(privateKey, big1);
-		//		} catch (Exception e) {
-		//			e.printStackTrace();
-		//			System.out.println("> Erro Sum decryption!");
-		//		}
+		try {
+			return HomoAdd.decrypt(big1, pk);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("> Erro Mult decryption!");
+		}
 
 		//se for necessario retornar -1 ou assim
 		return new BigInteger("0");
@@ -440,6 +430,8 @@ public class ProxyResources {
 		BigInteger mu= new BigInteger("10764710170199705233505124648403165529212121097251541238630848444075093447516964785205597958481049283727512957031604667816674248857448556510271529970874283604552567490353946909078236103554182238191052855718220882052619345516515693973054537482264701461696815779529446468287302168827771150173417514736422669687979284523815191260980144040912580877240622591274236027834960423283507192909636457092402464733915052269697941390794296895075429564446858419232956003307010864348252281569967299423436088375589035087840328077636794366867752894760877219307000371333455584163863445072399914002612110509695415230312776539225702051571");
 
 		pk = new PaillierKey(p, q, lambda, n, nsquare, g, mu);
+		
+		
 
 		//		pk.printValues();
 	}

@@ -77,7 +77,7 @@ public class TreeMapServer extends DefaultRecoverable {
 		fields=new ArrayList<String>();
 		fields.add("nome");
 		fields.add("idade");
-//		fields.add("salary");
+		//fields.add("salario");
 		
 		keysInit();
 	}
@@ -126,7 +126,7 @@ public class TreeMapServer extends DefaultRecoverable {
 				int size = dis.readInt();
 				
 				String key = "";
-				HashMap<byte[], byte[]> att = new HashMap<byte[], byte[]>();
+				HashMap<String, String> att = new HashMap<String, String>();
 				
 				try {
 
@@ -137,25 +137,22 @@ public class TreeMapServer extends DefaultRecoverable {
 						if(!fields.contains(key)) {
 							throw new Exception();
 						}
-						
-						int valueSize = dis.readInt();
-						
-						byte[] value = new byte[valueSize];
-						dis.read(value, 0, valueSize);
+
+						String value = dis.readUTF();
 						
 						if(bizantinemode)
-							att.put(key.getBytes(), "bizantineValue".getBytes());
+							att.put(key, "bizantineValue");
 						else
-							att.put(key.getBytes(), value);
+							att.put(key, value);
 					}
 				}catch(Exception e) {
 					System.out.println("Problem");
 				}
 				
-				Map<byte[], byte[]> attributes=null;
+				Map<String, String> attributes=null;
 				try{
-					jedis2.hmset(id.getBytes(), att);
-					attributes = jedis2.hgetAll(key.getBytes());
+					jedis2.hmset(id, att);
+					attributes = jedis2.hgetAll(key);
 				}catch(Exception e) {
 					System.out.println("Cast problem");
 				}
@@ -164,7 +161,7 @@ public class TreeMapServer extends DefaultRecoverable {
 				//verification if added
 				String toWrite = "true";
 				if(attributes!=null) {
-					for (Map.Entry<byte[], byte[]> e : attributes.entrySet()){
+					for (Map.Entry<String, String> e : attributes.entrySet()){
 						if(!att.get(e.getKey()).equals(e.getValue())){
 							toWrite="false";
 							break;
@@ -221,36 +218,35 @@ public class TreeMapServer extends DefaultRecoverable {
 				System.out.println("> RECEIVED GETSET");
 				String key = dis.readUTF();
 				
-				Map<byte[], byte[]> att=null;
+				Map<String, String> att=null;
 				try{
 
-					att = jedis.hgetAll(key.getBytes());
+					att = jedis.hgetAll(key);
 					
 				}catch(Exception e) {
 					e.printStackTrace();
 				}
 
 				if(bizantinemode && att != null) {
-					dos.write("123".getBytes());
-					dos.write(",".getBytes());
-					dos.write("bizantinevalue".getBytes());
-					dos.write(",".getBytes());
+					dos.writeUTF("123");
+					dos.writeUTF(",");
+					dos.writeUTF("bizantinevalue");
+					dos.writeUTF(",");
 					System.out.println("bizantine Sending"+dos.toString());
 				}
 				else if(att!=null) {
 					dos.writeInt(att.entrySet().size());
-					for (Map.Entry<byte[], byte[]> e : att.entrySet()){
-						dos.writeInt(e.getKey().length);
-						dos.write(e.getKey());
-						dos.writeInt(e.getValue().length);
-						dos.write(e.getValue());
+					for (Map.Entry<String, String> e : att.entrySet()){
+
+						dos.writeUTF(e.getKey());
+
+						dos.writeUTF(e.getValue());
 					}
 				}
 				else {
-					dos.write("".getBytes());
+					dos.writeUTF("");
 				}
 				
-//				System.out.println(new String(out.toByteArray(), StandardCharsets.UTF_8));
 
 				return out.toByteArray();
 
@@ -327,22 +323,17 @@ public class TreeMapServer extends DefaultRecoverable {
 				
 				String field = fields.get(pos);
 
-//				String val1 = jedis.hget(key1, field);
-//				String val2 = jedis.hget(key2, field);
+				String val1 = jedis.hget(key1, field);
+				String val2 = jedis.hget(key2, field);
 				
-				byte[] val1 = jedis.hget(key1.getBytes(), field.getBytes());
-				byte[] val2 = jedis.hget(key2.getBytes(), field.getBytes());
+
+				BigInteger val1BigInt = (BigInteger)HelpSerial.fromString(val1);
+				BigInteger val2BigInt = (BigInteger)HelpSerial.fromString(val2);
 				
-				BigInteger val1BigInt = new BigInteger(val1);
-				BigInteger val2BigInt = new BigInteger(val2);
+				String resultBI = HelpSerial.toString(HomoAdd.sum(val1BigInt, val2BigInt, nsquare));
 				
-				byte[] resultBI = HomoAdd.sum(val1BigInt, val2BigInt, nsquare).toByteArray();
-				
-				
-				int resultSize = resultBI.length;
-				
-				dos.writeInt(resultSize);
-				dos.write(resultBI);
+
+				dos.writeUTF(resultBI);
 
 				
 				return out.toByteArray();

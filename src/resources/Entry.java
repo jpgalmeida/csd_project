@@ -3,7 +3,7 @@ package resources;
 import java.util.Map;
 
 /**
- * Informação sobre servidor.
+ * Informao sobre servidor.
  */
 public class Entry implements java.io.Serializable{
 	/**
@@ -15,14 +15,14 @@ public class Entry implements java.io.Serializable{
 	 */
 	private String key;
 	/**
-	 * Dicionario com informação sobre o servidor.
+	 * Dicionario com informao sobre o servidor.
 	 */
-	private Map<String, byte[]> attributes;
+	private Map<String, String> attributes;
 
 	public Entry() {
 	}
 
-	public Entry(String key, Map<String, byte[]> attributes) {
+	public Entry(String key, Map<String, String> attributes) {
 		this.key = key;
 		this.attributes = attributes;
 	}
@@ -31,7 +31,7 @@ public class Entry implements java.io.Serializable{
 		this.key = key;
 	}
 
-	public void setAttributes(Map<String, byte[]> attributes) {
+	public void setAttributes(Map<String, String> attributes) {
 		this.attributes = attributes;
 	}
 
@@ -39,7 +39,7 @@ public class Entry implements java.io.Serializable{
 		return key;
 	}
 
-	public Map<String, byte[]> getAttributes() {
+	public Map<String, String> getAttributes() {
 		return attributes;
 	}
 
