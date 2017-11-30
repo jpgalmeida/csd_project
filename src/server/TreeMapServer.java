@@ -77,7 +77,7 @@ public class TreeMapServer extends DefaultRecoverable {
 		fields=new ArrayList<String>();
 		fields.add("nome");
 		fields.add("idade");
-		fields.add("salary");
+//		fields.add("salary");
 		
 		keysInit();
 	}
@@ -249,6 +249,8 @@ public class TreeMapServer extends DefaultRecoverable {
 				else {
 					dos.write("".getBytes());
 				}
+				
+//				System.out.println(new String(out.toByteArray(), StandardCharsets.UTF_8));
 
 				return out.toByteArray();
 
@@ -325,17 +327,22 @@ public class TreeMapServer extends DefaultRecoverable {
 				
 				String field = fields.get(pos);
 
-				String val1 = jedis.hget(key1, field);
-				String val2 = jedis.hget(key2, field);
-
-				BigInteger val1BigInt = new BigInteger(val1.getBytes());
-				BigInteger val2BigInt = new BigInteger(val2.getBytes());
+//				String val1 = jedis.hget(key1, field);
+//				String val2 = jedis.hget(key2, field);
 				
-				byte[] result = HomoAdd.sum(val1BigInt, val2BigInt, nsquare).toByteArray();
-				int resultSize = result.length;
+				byte[] val1 = jedis.hget(key1.getBytes(), field.getBytes());
+				byte[] val2 = jedis.hget(key2.getBytes(), field.getBytes());
+				
+				BigInteger val1BigInt = new BigInteger(val1);
+				BigInteger val2BigInt = new BigInteger(val2);
+				
+				byte[] resultBI = HomoAdd.sum(val1BigInt, val2BigInt, nsquare).toByteArray();
+				
+				
+				int resultSize = resultBI.length;
 				
 				dos.writeInt(resultSize);
-				dos.write(result);
+				dos.write(resultBI);
 
 				
 				return out.toByteArray();

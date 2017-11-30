@@ -149,7 +149,6 @@ public class ServerInterfaceResources {
 			dos2.writeInt(size);
 			dos2.write(res);
 			
-			System.out.println("SUM: " + res);
 			return out2.toByteArray();
 		}
 		catch(IOException e) {
@@ -305,6 +304,7 @@ public class ServerInterfaceResources {
 			dos.writeUTF(key);
 			byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
 			
+//			System.out.println(new String(reply, StandardCharsets.UTF_8));
 			return reply;
 		} catch (IOException ioe) {
 			System.out.println("Exception getting value from the hashmap: " + ioe.getMessage());

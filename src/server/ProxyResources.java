@@ -51,11 +51,11 @@ public class ProxyResources {
 	private static URI serverURI;
 	private static WebTarget target;
 	private PaillierKey pk;
-//	private KeySaver ks;
-//	private KeyPair keyPair;
-//	private RSAPublicKey publicKey;
-//	private RSAPrivateKey privateKey;
-//	private String pkSer;
+	//	private KeySaver ks;
+	//	private KeyPair keyPair;
+	//	private RSAPublicKey publicKey;
+	//	private RSAPrivateKey privateKey;
+	//	private String pkSer;
 
 
 	public ProxyResources(String serverUri) {
@@ -69,13 +69,13 @@ public class ProxyResources {
 
 
 		//Homomorphic Init
-//		pk = HomoAdd.generateKey();
-//		keyPair = HomoMult.generateKey();
-//		publicKey = (RSAPublicKey) keyPair.getPublic();
-//		privateKey = (RSAPrivateKey) keyPair.getPrivate();
-//		
-//		pkSer = HelpSerial.toString(pk.getNsquare());
-		
+		//		pk = HomoAdd.generateKey();
+		//		keyPair = HomoMult.generateKey();
+		//		publicKey = (RSAPublicKey) keyPair.getPublic();
+		//		privateKey = (RSAPrivateKey) keyPair.getPrivate();
+		//		
+		//		pkSer = HelpSerial.toString(pk.getNsquare());
+
 		keysInit();
 	}
 
@@ -171,89 +171,90 @@ public class ProxyResources {
 
 		ByteArrayInputStream in = new ByteArrayInputStream(response);
 		DataInputStream res = new DataInputStream(in);
-		
+
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		DataOutputStream dos = new DataOutputStream(out);
-		
+
 		byte[] result = null;
-		byte[] resultDecrypted = null;
 		try {
 			int size = res.readInt();
 			result = new byte[size];
-			
+
 			res.read(result, 0, size);
-			
-			if (result[0] == 0) {
-			    byte[] tmp = new byte[result.length - 1];
-			    System.arraycopy(result, 1, tmp, 0, tmp.length);
-			    result = tmp;
-			}
-			
+
 			BigInteger resultDec = homoSumDecryption(result);
-			resultDecrypted = resultDec.toByteArray();
 			
+			System.out.println(resultDec.intValue());
 			
-			dos.writeUTF(new String(resultDecrypted));
-			System.out.println("RES: " + resultDec.toString());
+			byte[] valueRead = resultDec.toByteArray();
+//			if (valueRead[0] == 0) {
+//				byte[] tmp = new byte[valueRead.length - 1];
+//				System.arraycopy(valueRead, 1, tmp, 0, tmp.length);
+//				valueRead = tmp;
+//			}
+
+			System.out.println(new String(valueRead, StandardCharsets.UTF_8));
+			dos.writeUTF(new String(valueRead, StandardCharsets.UTF_8));
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		if(response==null)
 			System.out.println("decription nao deu");
 
 		return out.toByteArray();
-		
+
 	}
 
 	public byte[] multImplementation(String key1, String key2, int pos) {
-		
-//		BigInteger modulus = publicKey.getModulus();
-//		//String modString = HelpSerial.toString(modulus);
-//		BigInteger pubExp = publicKey.getPublicExponent();
-//		//String expString = HelpSerial.toString(pubExp);
+
+		//		BigInteger modulus = publicKey.getModulus();
+		//		//String modString = HelpSerial.toString(modulus);
+		//		BigInteger pubExp = publicKey.getPublicExponent();
+		//		//String expString = HelpSerial.toString(pubExp);
 		byte[] response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos+"/")
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
 				.get(new GenericType<byte[]>(){});
-//
-//		ByteArrayInputStream in = new ByteArrayInputStream(response);
-//		DataInputStream res = new DataInputStream(in);
-//		
-//		ByteArrayOutputStream out = new ByteArrayOutputStream();
-//		DataOutputStream dos = new DataOutputStream(out);
-//		
-//		byte[] result = null;
-//		byte[] resultDecrypted = null;
-//		try {
-//			int size = res.readInt();
-//			result = new byte[size];
-//			
-//			res.read(result, 0, size);
-//			
-//			if (result[0] == 0) {
-//				System.out.println("Entri");
-//			    byte[] tmp = new byte[result.length - 1];
-//			    System.arraycopy(result, 1, tmp, 0, tmp.length);
-//			    result = tmp;
-//			}
-//			
-//			BigInteger resultDec = homoMultDecryption(result);
-//			resultDecrypted = resultDec.toByteArray();
-//			
-//			
-//			
-//			dos.writeUTF(new String(resultDecrypted));
-//			System.out.println("RES: " + resultDec.toString());
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//		
-//		if(response==null)
-//			System.out.println("decription nao deu");
+		//
+		//		ByteArrayInputStream in = new ByteArrayInputStream(response);
+		//		DataInputStream res = new DataInputStream(in);
+		//		
+		//		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		//		DataOutputStream dos = new DataOutputStream(out);
+		//		
+		//		byte[] result = null;
+		//		byte[] resultDecrypted = null;
+		//		try {
+		//			int size = res.readInt();
+		//			result = new byte[size];
+		//			
+		//			res.read(result, 0, size);
+		//			
+		//			if (result[0] == 0) {
+		//				System.out.println("Entri");
+		//			    byte[] tmp = new byte[result.length - 1];
+		//			    System.arraycopy(result, 1, tmp, 0, tmp.length);
+		//			    result = tmp;
+		//			}
+		//			
+		//			BigInteger resultDec = homoMultDecryption(result);
+		//			resultDecrypted = resultDec.toByteArray();
+		//			
+		//			
+		//			
+		//			dos.writeUTF(new String(resultDecrypted));
+		//			System.out.println("RES: " + resultDec.toString());
+		//		} catch (Exception e) {
+		//			e.printStackTrace();
+		//		}
+		//		
+		//		if(response==null)
+		//			System.out.println("decription nao deu");
 
 		return response;
-		
+
 	}
 
 	public Response addElementImplementation(String id) {
@@ -285,41 +286,41 @@ public class ProxyResources {
 
 		ByteArrayInputStream in = new ByteArrayInputStream(response);
 		DataInputStream res = new DataInputStream(in);
-		
+
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		DataOutputStream dos = new DataOutputStream(out);
-		
+
 		int attSize;
 		try {
 			attSize = res.readInt();
 			dos.writeInt(attSize);
-			
+
 			for(int i = 0; i < attSize; i++) {
 				int keySize = res.readInt();
 				byte[] keyRead = new byte[keySize];
 				res.read(keyRead, 0, keySize);
-				
+
 				int valueSize = res.readInt();
 				byte[] valueRead = new byte[valueSize];
 				res.read(valueRead, 0, valueSize);
-				
+
 				String keyString = new String(keyRead, StandardCharsets.UTF_8);
-				
+
 				if(keyString.equals("idade")) {
-					
+
 					BigInteger ageBigInt = homoSumDecryption(valueRead);
-					
+
 					valueRead = ageBigInt.toByteArray();
 					if (valueRead[0] == 0) {
-					    byte[] tmp = new byte[valueRead.length - 1];
-					    System.arraycopy(valueRead, 1, tmp, 0, tmp.length);
-					    valueRead = tmp;
+						byte[] tmp = new byte[valueRead.length - 1];
+						System.arraycopy(valueRead, 1, tmp, 0, tmp.length);
+						valueRead = tmp;
 					}
-					
+
 				}
 				String k = new String(keyRead, StandardCharsets.UTF_8);
 				String v = new String(valueRead, StandardCharsets.UTF_8);
-				
+
 				dos.writeUTF(k);
 				dos.writeUTF(v);
 			}
@@ -339,21 +340,21 @@ public class ProxyResources {
 		Map<String, byte[]> hm = entry.getAttributes();
 
 		byte[] age = hm.get("idade");
-		
+
 		byte[] ageEncrypted = homoSumEncryption(age);
-		
+
 		hm.remove("idade");
 		hm.put("idade", ageEncrypted);
 		entry.setAttributes(hm);
-		
-		
-		byte[] salary = hm.get("salary");
-		
-		byte[] salaryEncrypted = homoMultEncryption(salary);
-		
-		hm.remove("salary");
-		hm.put("salary", salaryEncrypted);
-		entry.setAttributes(hm);
+
+
+		//		byte[] salary = hm.get("salary");
+		//		
+		//		byte[] salaryEncrypted = homoMultEncryption(salary);
+		//		
+		//		hm.remove("salary");
+		//		hm.put("salary", salaryEncrypted);
+		//		entry.setAttributes(hm);
 
 		Response response = target.path("/entries/ps/")
 				.request()
@@ -372,9 +373,9 @@ public class ProxyResources {
 	}
 
 	public byte[] homoSumEncryption(byte[] n1) {
-		
+
 		BigInteger big1 = new BigInteger(n1);
-		
+
 		try {
 			return HomoAdd.encrypt(big1, pk).toByteArray();
 		} catch (Exception e) {
@@ -386,9 +387,9 @@ public class ProxyResources {
 	}
 
 	public BigInteger homoSumDecryption(byte[] n1) {
-		
+
 		BigInteger big1 = new BigInteger(n1);
-		
+
 		try {
 			return HomoAdd.decrypt(big1, pk);
 		} catch (Exception e) {
@@ -399,36 +400,36 @@ public class ProxyResources {
 		//se for necessario retornar -1 ou assim
 		return new BigInteger("0");
 	}
-	
+
 	public byte[] homoMultEncryption(byte[] n1) {
-		
+
 		BigInteger big1 = new BigInteger(n1);
-		
-//		try {
-//			return HomoMult.encrypt(publicKey, big1).toByteArray();
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//			System.out.println("> Erro Sum encryption!");
-//		}
+
+		//		try {
+		//			return HomoMult.encrypt(publicKey, big1).toByteArray();
+		//		} catch (Exception e) {
+		//			e.printStackTrace();
+		//			System.out.println("> Erro Sum encryption!");
+		//		}
 		return null;
 
 	}
 
 	public BigInteger homoMultDecryption(byte[] n1) {
-		
+
 		BigInteger big1 = new BigInteger(n1);
-		
-//		try {
-//			return HomoMult.decrypt(privateKey, big1);
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//			System.out.println("> Erro Sum decryption!");
-//		}
+
+		//		try {
+		//			return HomoMult.decrypt(privateKey, big1);
+		//		} catch (Exception e) {
+		//			e.printStackTrace();
+		//			System.out.println("> Erro Sum decryption!");
+		//		}
 
 		//se for necessario retornar -1 ou assim
 		return new BigInteger("0");
 	}
-	
+
 	public void keysInit() {
 		BigInteger p = new BigInteger("138994875545812951942834382474439690820435130839932490341999415525940925897641804006982058331728305518028094046976082044739021915739134929609713303822441456078072581110120254282102952676784311924129620936559571914774806545907957737247353761315125927913016866592166819360121783566808978691030254416533789726693");
 		BigInteger q= new BigInteger("152637975394189390753047515830973182510050897925608753126328622014011388321496978820079885386768420397661677894439851061907820324957299354405000725484191709621214388392134576842723993255383837194413281225165643503827653867292977543994297144366482480883834798863184374068696787601934670035614886437268250913383");
@@ -439,7 +440,8 @@ public class ProxyResources {
 		BigInteger mu= new BigInteger("10764710170199705233505124648403165529212121097251541238630848444075093447516964785205597958481049283727512957031604667816674248857448556510271529970874283604552567490353946909078236103554182238191052855718220882052619345516515693973054537482264701461696815779529446468287302168827771150173417514736422669687979284523815191260980144040912580877240622591274236027834960423283507192909636457092402464733915052269697941390794296895075429564446858419232956003307010864348252281569967299423436088375589035087840328077636794366867752894760877219307000371333455584163863445072399914002612110509695415230312776539225702051571");
 
 		pk = new PaillierKey(p, q, lambda, n, nsquare, g, mu);
-				
+
+		//		pk.printValues();
 	}
 
 }

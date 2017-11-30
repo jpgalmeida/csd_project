@@ -311,6 +311,8 @@ public class ClientInterface {
 		ByteArrayInputStream in = new ByteArrayInputStream(response);
 		DataInputStream res = new DataInputStream(in);
 		
+//		System.out.println(res.toString());
+		
 		String finalResult="";
 		String k="";
 		String v="";
