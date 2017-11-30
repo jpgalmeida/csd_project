@@ -11,6 +11,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.crypto.SecretKey;
@@ -49,11 +52,10 @@ public class ProxyResources {
 	private static URI serverURI;
 	private static WebTarget target;
 	private PaillierKey pk;
-	//	private KeySaver ks;
 	private KeyPair keyPair;
 	private RSAPublicKey publicKey;
 	private RSAPrivateKey privateKey;
-	//	private String pkSer;
+	private List<String> fields;
 
 
 	public ProxyResources(String serverUri) {
@@ -65,7 +67,10 @@ public class ProxyResources {
 				.build();
 		target = client.target( serverURI );
 
-
+		fields=new ArrayList<String>();
+		fields.add("nome");
+		fields.add("idade");
+		fields.add("salario");
 		keysInit();
 	}
 
@@ -222,10 +227,76 @@ public class ProxyResources {
 	}
 
 	public Response addElementImplementation(String id) {
-		return null;
+
+		Response response = target.path("/entries/adde/"+id)
+				.request()
+				.post( Entity.entity(null, MediaType.APPLICATION_JSON));
+
+		return response;
 	}
 
 	public Response writeElementImplementation(String key, int pos, String element) {
+
+		byte[] response = target.path("/entries/"+key)
+				.request()
+				.accept(MediaType.APPLICATION_JSON)
+				.get(new GenericType<byte[]>() {});
+
+		ByteArrayInputStream in = new ByteArrayInputStream(response);
+		DataInputStream res = new DataInputStream(in);
+		
+		String field = fields.get(pos);
+		int attSize;
+		Map<String, String> hm = new HashMap<String, String>();
+		
+		try {
+			attSize = res.readInt();
+
+			for(int i = 0; i < attSize; i++) {
+
+				String keyRead = res.readUTF();
+				String valueRead = res.readUTF();
+
+				BigInteger ageBigInt = BigInteger.ZERO;
+				BigInteger salaryBigInt = BigInteger.ZERO;
+
+				
+				if(field.equals(keyRead) && field.equals("idade")) {
+
+					ageBigInt = homoSumDecryption(valueRead);
+					valueRead = ageBigInt.toString();
+
+					String ageEncrypted = homoSumEncryption(element);
+					hm.put("idade", ageEncrypted);
+
+					
+				}else if(field.equals(keyRead) &&  field.equals("salario")) {
+
+					salaryBigInt = homoMultDecryption(valueRead);
+					valueRead = salaryBigInt.toString();
+					
+					String salaryEncryted = homoMultEncryption(element);
+					hm.put("salario", salaryEncryted);
+				}
+				else if(field.equals(keyRead))
+					hm.put(keyRead, element);
+
+
+			}
+			
+			Entry entry = new Entry(key, hm);
+			
+			Response response2 = target.path("/entries/ps")
+					.request()
+					.post( Entity.entity(entry, MediaType.APPLICATION_JSON));
+
+			return response2;
+			
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+
+
 		return null;
 	}
 
@@ -233,8 +304,13 @@ public class ProxyResources {
 		return false;
 	}
 
-	public Response removeSetImplementation(Object key) {
-		return null;
+	public Response removeSetImplementation(String key) {
+
+		Response response = target.path("/entries/rs/"+key)
+				.request()
+				.delete(new GenericType<Response>() {});
+
+		return response;
 	}
 
 	public byte[] readElementImplementation(Object key, int pos) {

@@ -170,6 +170,8 @@ public class TreeMapServer extends DefaultRecoverable {
 				return out.toByteArray();
 
 			} else if (reqType == RequestType.REMOVESET) {
+				System.out.println("> RECEIVED REMOVESET");
+				
 				String key = dis.readUTF();
 
 				String att = jedis.hget(key,fields.get(0));
@@ -179,7 +181,7 @@ public class TreeMapServer extends DefaultRecoverable {
 				else
 					dos.writeUTF("false");
 
-				jedis.del(key.getBytes());
+				jedis.del(key);
 
 
 				return out.toByteArray();
