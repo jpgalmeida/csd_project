@@ -7,7 +7,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -56,7 +55,7 @@ public class ProxyResources {
 	private RSAPublicKey publicKey;
 	private RSAPrivateKey privateKey;
 	private List<String> fields;
-
+	private SecretKey secretKey;
 
 	public ProxyResources(String serverUri) {
 		this.serverUri = serverUri;
@@ -160,7 +159,49 @@ public class ProxyResources {
 		return multImplementation(id1, id2, pos);
 	}
 
+	@GET
+	@Path("/seq/{pos}/{val}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public byte[] searchEq(@PathParam("pos") int pos, @PathParam("val") String val) {
+		System.out.println("Received Seq Request");
+		return searchEqImplementation(pos, val);
+	}
+	
 
+	public byte[] searchEqImplementation(int pos, String val) {
+
+
+		String palavraEnc = HomoSearch.wordDigest64(secretKey, val);
+		
+		byte[] response = target.path("/entries/seq/"+pos+"/"+palavraEnc)
+				.request()
+				.accept(MediaType.APPLICATION_JSON)
+				.get(new GenericType<byte[]>(){});
+
+		ByteArrayInputStream in = new ByteArrayInputStream(response);
+		DataInputStream res = new DataInputStream(in);
+
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		DataOutputStream dos = new DataOutputStream(out);
+
+		try {
+			String entries = res.readUTF();
+			
+			dos.writeUTF(entries);
+			
+			return out.toByteArray();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		if(response==null)
+			System.out.println("decription nao deu");
+
+		return out.toByteArray();
+
+	}
+	
+	
 	public byte[] sumImplementation(String key1, String key2, int pos) {
 
 		byte[] response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos)
@@ -455,8 +496,13 @@ public class ProxyResources {
 
 				BigInteger ageBigInt = BigInteger.ZERO;
 				BigInteger salaryBigInt = BigInteger.ZERO;
+				
+				if(keyRead.equals("nome")) {
 
-				if(keyRead.equals("idade")) {
+					valueRead = HomoSearch.decrypt(HomoSearch.stringFromKey(secretKey), valueRead);
+
+
+				}else if(keyRead.equals("idade")) {
 
 					ageBigInt = homoSumDecryption(valueRead);
 
@@ -487,6 +533,12 @@ public class ProxyResources {
 
 		Map<String, String> hm = entry.getAttributes();
 
+		String name = hm.get("nome");
+		String nameEncryted = HomoSearch.encrypt(secretKey , name);
+		hm.remove("nome");
+		hm.put("nome", nameEncryted);
+		entry.setAttributes(hm);
+
 		String age = hm.get("idade");
 		String ageEncrypted = homoSumEncryption(age);
 		hm.remove("idade");
@@ -500,6 +552,8 @@ public class ProxyResources {
 		hm.put("salario", salaryEncryted);
 		entry.setAttributes(hm);
 
+
+		
 		Response response = target.path("/entries/ps/")
 				.request()
 				.post( Entity.entity(entry, MediaType.APPLICATION_JSON));
@@ -591,6 +645,10 @@ public class ProxyResources {
 
 		publicKey = (RSAPublicKey) keyPair.getPublic();
 		privateKey = (RSAPrivateKey) keyPair.getPrivate();
+		
+		String secretKeyPlain = "rO0ABXNyAB9qYXZheC5jcnlwdG8uc3BlYy5TZWNyZXRLZXlTcGVjW0cLZuIwYU0CAAJMAAlhbGdvcml0aG10ABJMamF2YS9sYW5nL1N0cmluZztbAANrZXl0AAJbQnhwdAADQUVTdXIAAltCrPMX+AYIVOACAAB4cAAAABB5X7gu2CRr89/kS2tRSv2U";
+		
+		secretKey = HomoSearch.keyFromString(secretKeyPlain); 
 
 	}
 

@@ -148,7 +148,6 @@ public class ClientInterface {
 
 				String sum_res = Sum(pos, key1, key2);
 
-				//BigInteger bg = new BigInteger(sum_res);
 				System.out.println("> Sum is: "+ sum_res);
 				break;
 
@@ -168,6 +167,9 @@ public class ClientInterface {
 				pos = sc.nextInt();
 				value = sc.next();
 
+				String seq_res = searchEq(pos, value);
+				
+				System.out.println("> Search Eq is: "+seq_res);
 				break;
 			
 			case "se":
@@ -194,9 +196,14 @@ public class ClientInterface {
 
 	}
 
-	private static int searchEq( int pos, String key1, String key2) {
-
-		return 0;
+	private static String searchEq( int pos, String val) {
+		String response = target.path("/entries/seq/"+pos+"/"+val)
+				.request()
+				.accept(MediaType.APPLICATION_JSON)
+				.get(new GenericType<String>(){});
+		
+		
+		return response;
 	}
 	
 	private static int searchEntry( int pos, String key1, String key2) {

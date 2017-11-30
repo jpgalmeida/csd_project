@@ -93,6 +93,45 @@ public class ServerInterfaceResources {
 		return multImplementation(id1, id2, pos);
 	}
 
+	@GET
+	@Path("/seq/{pos}/{val}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public byte[] searchEq(@PathParam("pos") int pos, @PathParam("val") String val) {
+		System.out.println("Received Seq Request");
+		return searchEqImplementation(pos, val);
+	}
+	
+	
+	public byte[] searchEqImplementation(int pos, String val) {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		DataOutputStream dos = new DataOutputStream(out);
+		
+		try {
+			dos.writeInt(RequestType.SEQ);
+			dos.writeInt(pos);
+			dos.writeUTF(val);
+			
+			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeUnordered(out.toByteArray()));
+			DataInputStream dis = new DataInputStream(in);
+			
+			String entries = dis.readUTF();
+			
+			ByteArrayOutputStream out2 = new ByteArrayOutputStream();
+			DataOutputStream dos2 = new DataOutputStream(out2);
+			
+			dos2.writeUTF(entries);
+			
+			return out2.toByteArray();
+		} catch (IOException e) {
+			
+			e.printStackTrace();
+		}
+		
+		
+		
+		
+		return null;
+	}
 
 	public byte[] sumImplementation(String key1, String key2, int pos) {
 		System.out.println("Received Sum Request");
