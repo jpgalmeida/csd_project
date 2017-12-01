@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
+import java.util.Random;
 
 public class TreeMapServer extends DefaultRecoverable {
 
@@ -34,7 +34,9 @@ public class TreeMapServer extends DefaultRecoverable {
 	private Jedis jedis;
 	private List<String> fields;
 	private JedisPool pool;
-	private static boolean bizantinemode = false;
+	private static boolean bizantine = false;
+	private static String bizantineValue = "";
+	private static int bizantineCertainty = 0; // how likely a fault is to happen
 
 	public TreeMapServer(int id, String serverUri){
 
@@ -53,10 +55,8 @@ public class TreeMapServer extends DefaultRecoverable {
 
 		jedis=pool.getResource();
 
-
 		new ServiceReplica(id, configHome, this, this, null, null);
 		//Connecting to Redis server on localhost 
-
 
 		//check whether server is running or not 
 		System.out.println("Redis server is running: "+jedis.ping()); 
@@ -75,8 +75,11 @@ public class TreeMapServer extends DefaultRecoverable {
 
 		new TreeMapServer(Integer.parseInt(args[0]), args[1]);
 
-		if(args.length>2)
-			bizantinemode = true;
+		if(args.length>2) {
+			bizantine = true;
+			bizantineValue = args[2];
+			bizantineCertainty = Integer.parseInt(args[3]);
+		}
 	}
 
 	@Override
@@ -99,7 +102,6 @@ public class TreeMapServer extends DefaultRecoverable {
 
 		Jedis jedis2=pool.getResource();
 
-
 		int reqType;
 		try {
 			reqType = dis.readInt();
@@ -116,16 +118,19 @@ public class TreeMapServer extends DefaultRecoverable {
 							throw new Exception();
 						}
 						String value = dis.readUTF();
-						if(bizantinemode)
-							att.put(key, "bizantineValue");
-						else
-							att.put(key, value);
+						if(bizantine) {
+							// decide if adding wrong value
+							att.put(key, bizantineValue);
+						}
+						else {
+							att.put(key, value);							
+						}
+
 					}
-				}catch(Exception e) {
+					
+				} catch(Exception e) {
 					System.out.println("Please add element first!");
 				}
-
-
 
 				Map<String, String> attributes=null;
 				try{
@@ -142,26 +147,23 @@ public class TreeMapServer extends DefaultRecoverable {
 							toWrite="false";
 							break;
 						}
-
 					}
 				}
 
 				dos.writeUTF(toWrite);
-
-				return out.toByteArray();
+				out.toByteArray();
 
 			} else if (reqType == RequestType.REMOVESET) {
 				String key = dis.readUTF();
-
 				String att = jedis.hget(key,fields.get(0));
 
 				if(att!=null)
 					dos.writeUTF("true");
 				else
 					dos.writeUTF("false");
-
+				
+				// check exception
 				jedis.del(key.getBytes());
-
 
 				return out.toByteArray();
 			}else if (reqType == RequestType.WRITEELEMENT) {
@@ -204,7 +206,7 @@ public class TreeMapServer extends DefaultRecoverable {
 				}
 
 				ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
-				if(bizantinemode && att != null) {
+				if(checkBizantineFault() && att != null) {
 					outputStream.write("123".getBytes());
 					outputStream.write(",".getBytes());
 					outputStream.write("bizantinevalue".getBytes());
@@ -227,8 +229,8 @@ public class TreeMapServer extends DefaultRecoverable {
 
 			}else if (reqType == RequestType.ISELEMENT) {
 				
-				if(bizantinemode)
-					return "bizantineValue".getBytes();
+				if(checkBizantineFault())
+					return bizantineValue.getBytes();
 				
 				String key = dis.readUTF();
 				String element = dis.readUTF();
@@ -247,9 +249,8 @@ public class TreeMapServer extends DefaultRecoverable {
 				return "false".getBytes();
 				
 			} if (reqType == RequestType.READELEMENT) {
-				if(bizantinemode)
-					return "bizantineValue".getBytes();
-				
+				if(checkBizantineFault())
+					return bizantineValue.getBytes();
 				
 				String key = dis.readUTF();
 				int pos = dis.readInt();
@@ -263,7 +264,7 @@ public class TreeMapServer extends DefaultRecoverable {
 				
 			} else if (reqType == RequestType.MULT) {
 				
-				if(bizantinemode)
+				if(checkBizantineFault())
 					return "-1".getBytes();
 				
 				String key1 = dis.readUTF();
@@ -307,7 +308,7 @@ public class TreeMapServer extends DefaultRecoverable {
 			
 			if (reqType == RequestType.SUM) {
 				
-				if(bizantinemode)
+				if(checkBizantineFault())
 					return "-1".getBytes();
 				
 				String key1 = dis.readUTF();
@@ -336,6 +337,18 @@ public class TreeMapServer extends DefaultRecoverable {
 			e.printStackTrace();
 			return null;
 		}
+	}
+	
+	private boolean checkBizantineFault() {
+		if( !bizantine ) return false;
+		
+		Random rand = new Random();
+		int n = rand.nextInt(100);
+		
+		if(n < bizantineCertainty)
+			return true;
+		
+		return false;
 	}
 
 	@Override
