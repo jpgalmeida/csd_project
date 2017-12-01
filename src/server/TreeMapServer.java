@@ -78,7 +78,7 @@ public class TreeMapServer extends DefaultRecoverable {
 		if(args.length>2) {
 			bizantine = true;
 			bizantineValue = args[2];
-			bizantineCertainty = Integer.parseInt(args[3]);
+			bizantineCertainty = Integer.parseInt(args[3]);	// value from 0 to 100
 		}
 	}
 
