@@ -93,16 +93,16 @@ public class ServerInterfaceResources {
 		return multImplementation(id1, id2, pos);
 	}
 
-	@GET
-	@Path("/seq/{pos}/{val}")
+	@POST
+	@Path("/seq/{pos}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public byte[] searchEq(@PathParam("pos") int pos, @PathParam("val") String val) {
+	public Response searchEq(@PathParam("pos") int pos, String val) {
 		System.out.println("Received Seq Request");
 		return searchEqImplementation(pos, val);
 	}
 	
 	
-	public byte[] searchEqImplementation(int pos, String val) {
+	public Response searchEqImplementation(int pos, String val) {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		DataOutputStream dos = new DataOutputStream(out);
 		
@@ -115,13 +115,18 @@ public class ServerInterfaceResources {
 			DataInputStream dis = new DataInputStream(in);
 			
 			String entries = dis.readUTF();
-			
+			System.out.println(entries);
 			ByteArrayOutputStream out2 = new ByteArrayOutputStream();
 			DataOutputStream dos2 = new DataOutputStream(out2);
 			
 			dos2.writeUTF(entries);
 			
-			return out2.toByteArray();
+			Response resp = Response.ok(entries, MediaType.APPLICATION_JSON).build();
+			
+			System.out.println(resp);
+			return resp;
+			
+//			return out2.toByteArray();
 		} catch (IOException e) {
 			
 			e.printStackTrace();
@@ -267,6 +272,7 @@ public class ServerInterfaceResources {
 				dos.writeUTF(e.getValue());
 			}
 
+			
 			//validation
 			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeOrdered(out.toByteArray()));
 			DataInputStream dis = new DataInputStream(in);

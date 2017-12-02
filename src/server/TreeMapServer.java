@@ -225,37 +225,6 @@ public class TreeMapServer extends DefaultRecoverable {
 
 						dos.writeUTF(e.getValue());
 					}
-				}else if (reqType == RequestType.SEQ) {
-					System.out.println("> RECEIVED SEQ");
-					
-					int pos = dis.readInt();
-					String val = dis.readUTF();
-
-					String field = fields.get(pos);
-					
-					Set<String> l = jedis.keys("*");
-					Map<String, String> entry = null;
-					String result = "";
-					
-					try{
-						
-						for( String entryKey : l ) {
-							att = jedis.hgetAll(entryKey);
-							
-							String toSearch = att.get(entryKey);
-							
-							if(HomoSearch.pesquisa(val, toSearch))
-								result += ","+entryKey;
-								
-						}
-						
-						dos.writeUTF(result);
-						
-					}catch(Exception e) {
-						e.printStackTrace();
-					}
-					return out.toByteArray();
-
 				}else {
 					dos.writeUTF("");
 				}
@@ -344,6 +313,38 @@ public class TreeMapServer extends DefaultRecoverable {
 
 
 				return out.toByteArray();
+			}else if (reqType == RequestType.SEQ) {
+				System.out.println("> RECEIVED SEQ");
+				
+				int pos = dis.readInt();
+				String val = dis.readUTF();
+
+				String field = fields.get(pos);
+				
+				Set<String> l = jedis.keys("*");
+				Map<String, String> entry = null;
+				String result = "";
+				
+				try{
+					
+					for( String entryKey : l ) {
+//						att = jedis.hgetAll(entryKey);
+						
+						String toSearch = jedis.hget(entryKey,field);
+//						String toSearch = att.get(entryKey);
+						
+						if(HomoSearch.pesquisa(val, toSearch))
+							result += entryKey+",";
+							
+					}
+					System.out.println(result);
+					dos.writeUTF(result);
+					
+				}catch(Exception e) {
+					e.printStackTrace();
+				}
+				return out.toByteArray();
+
 			}
 
 			else {

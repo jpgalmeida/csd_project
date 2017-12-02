@@ -7,6 +7,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -161,43 +162,25 @@ public class ProxyResources {
 
 	@GET
 	@Path("/seq/{pos}/{val}")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public byte[] searchEq(@PathParam("pos") int pos, @PathParam("val") String val) {
+	public String searchEq(@PathParam("pos") int pos, @PathParam("val") String val) {
 		System.out.println("Received Seq Request");
 		return searchEqImplementation(pos, val);
 	}
 	
 
-	public byte[] searchEqImplementation(int pos, String val) {
-
+	public String searchEqImplementation(int pos, String val) {
 
 		String palavraEnc = HomoSearch.wordDigest64(secretKey, val);
 		
-		byte[] response = target.path("/entries/seq/"+pos+"/"+palavraEnc)
+		
+		Response response = target.path("/entries/seq/"+pos)
 				.request()
-				.accept(MediaType.APPLICATION_JSON)
-				.get(new GenericType<byte[]>(){});
+				.post( Entity.entity(palavraEnc, MediaType.APPLICATION_JSON));
+		
 
-		ByteArrayInputStream in = new ByteArrayInputStream(response);
-		DataInputStream res = new DataInputStream(in);
-
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		DataOutputStream dos = new DataOutputStream(out);
-
-		try {
-			String entries = res.readUTF();
-			
-			dos.writeUTF(entries);
-			
-			return out.toByteArray();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		if(response==null)
-			System.out.println("decription nao deu");
-
-		return out.toByteArray();
+		return new String(response.readEntity(new GenericType<byte[]>(){}), StandardCharsets.UTF_8);
 
 	}
 	
@@ -272,8 +255,6 @@ public class ProxyResources {
 	}
 
 	public Response addElementImplementation(String id) {
-
-		
 		
 		Response response = target.path("/entries/adde/"+id)
 				.request()
