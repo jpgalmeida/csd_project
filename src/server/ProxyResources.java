@@ -57,7 +57,8 @@ public class ProxyResources {
 	private RSAPrivateKey privateKey;
 	private List<String> fields;
 	private SecretKey secretKey;
-
+	private HomoOpeInt ope;
+	
 	public ProxyResources(String serverUri) {
 		this.serverUri = serverUri;
 
@@ -71,6 +72,7 @@ public class ProxyResources {
 		fields.add("nome");
 		fields.add("idade");
 		fields.add("salario");
+		fields.add("golos");
 		keysInit();
 	}
 
@@ -477,6 +479,7 @@ public class ProxyResources {
 
 				BigInteger ageBigInt = BigInteger.ZERO;
 				BigInteger salaryBigInt = BigInteger.ZERO;
+				int goalsDec = 0;
 				
 				if(keyRead.equals("nome")) {
 
@@ -494,6 +497,14 @@ public class ProxyResources {
 					salaryBigInt = homoMultDecryption(valueRead);
 
 					valueRead = salaryBigInt.toString();
+					
+				}else if(keyRead.equals("golos")) {
+					
+					long l1 = (long) HelpSerial.fromString(valueRead);
+					goalsDec = ope.decrypt(l1);
+					
+
+					valueRead = Integer.toString(goalsDec);
 				}
 
 				dos.writeUTF(keyRead);
@@ -533,7 +544,11 @@ public class ProxyResources {
 		hm.put("salario", salaryEncryted);
 		entry.setAttributes(hm);
 
-
+		String goals = hm.get("golos");
+		String goalsEncrypted = HelpSerial.toString(ope.encrypt(Integer.valueOf(goals)));
+		hm.remove("golos");
+		hm.put("golos", goalsEncrypted);
+		entry.setAttributes(hm);
 		
 		Response response = target.path("/entries/ps/")
 				.request()
@@ -630,6 +645,8 @@ public class ProxyResources {
 		String secretKeyPlain = "rO0ABXNyAB9qYXZheC5jcnlwdG8uc3BlYy5TZWNyZXRLZXlTcGVjW0cLZuIwYU0CAAJMAAlhbGdvcml0aG10ABJMamF2YS9sYW5nL1N0cmluZztbAANrZXl0AAJbQnhwdAADQUVTdXIAAltCrPMX+AYIVOACAAB4cAAAABB5X7gu2CRr89/kS2tRSv2U";
 		
 		secretKey = HomoSearch.keyFromString(secretKeyPlain); 
+		
+		ope = new HomoOpeInt(3447202209197703099L);
 
 	}
 

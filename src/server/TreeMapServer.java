@@ -73,7 +73,7 @@ public class TreeMapServer extends DefaultRecoverable {
 		fields.add("nome");
 		fields.add("idade");
 		fields.add("salario");
-
+		fields.add("golos");
 		keysInit();
 	}
 
