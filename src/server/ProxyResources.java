@@ -58,7 +58,7 @@ public class ProxyResources {
 	private List<String> fields;
 	private SecretKey secretKey;
 	private HomoOpeInt ope;
-	
+
 	public ProxyResources(String serverUri) {
 		this.serverUri = serverUri;
 
@@ -112,7 +112,7 @@ public class ProxyResources {
 		System.out.println("Received Read Element Request");
 
 		String res = readElementImplementation(id,pos);
-		
+
 		return res;
 	}
 
@@ -125,7 +125,7 @@ public class ProxyResources {
 		boolean found = isElementImplementation(id,element);
 		if (found)
 			return "true";
-		
+
 		return "false"; 
 	}
 
@@ -170,23 +170,65 @@ public class ProxyResources {
 		System.out.println("Received Seq Request");
 		return searchEqImplementation(pos, val);
 	}
-	
 
-	public String searchEqImplementation(int pos, String val) {
+	@GET
+	@Path("/sbt/{pos}/{val}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String searchBt(@PathParam("pos") int pos, @PathParam("val") String val) {
+		System.out.println("Received Sbt Request");
+		return searchBtImplementation(pos, val);
+	}
 
-		String palavraEnc = HomoSearch.wordDigest64(secretKey, val);
-		
-		
-		Response response = target.path("/entries/seq/"+pos)
+	@GET
+	@Path("/slt/{pos}/{val}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String searchLt(@PathParam("pos") int pos, @PathParam("val") String val) {
+		System.out.println("Received Slt Request");
+		return searchLtImplementation(pos, val);
+	}
+
+	public String searchLtImplementation(int pos, String val) {
+
+
+		Response response = target.path("/entries/slt/"+pos)
 				.request()
-				.post( Entity.entity(palavraEnc, MediaType.APPLICATION_JSON));
-		
+				.post( Entity.entity(HelpSerial.toString(ope.encrypt(Integer.valueOf(val))), MediaType.APPLICATION_JSON));
+
 
 		return new String(response.readEntity(new GenericType<byte[]>(){}), StandardCharsets.UTF_8);
 
 	}
-	
-	
+
+	public String searchBtImplementation(int pos, String val) {
+		
+		
+		Response response = target.path("/entries/sbt/"+pos)
+				.request()
+				.post( Entity.entity(HelpSerial.toString(ope.encrypt(Integer.valueOf(val))), MediaType.APPLICATION_JSON));
+
+
+		return new String(response.readEntity(new GenericType<byte[]>(){}), StandardCharsets.UTF_8);
+
+	}
+
+
+	public String searchEqImplementation(int pos, String val) {
+
+		String palavraEnc = HomoSearch.wordDigest64(secretKey, val);
+
+
+		Response response = target.path("/entries/seq/"+pos)
+				.request()
+				.post( Entity.entity(palavraEnc, MediaType.APPLICATION_JSON));
+
+
+		return new String(response.readEntity(new GenericType<byte[]>(){}), StandardCharsets.UTF_8);
+
+	}
+
+
 	public byte[] sumImplementation(String key1, String key2, int pos) {
 
 		byte[] response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos)
@@ -257,14 +299,14 @@ public class ProxyResources {
 	}
 
 	public Response addElementImplementation(String id) {
-		
+
 		Response response = target.path("/entries/adde/"+id)
 				.request()
 				.post( Entity.entity(null, MediaType.APPLICATION_JSON));
 
 		if(response.getStatus() == 204)
 			fields.add(id);
-			
+
 		return response;
 	}
 
@@ -277,12 +319,12 @@ public class ProxyResources {
 
 		ByteArrayInputStream in = new ByteArrayInputStream(response);
 		DataInputStream res = new DataInputStream(in);
-		
+
 		String field = fields.get(pos);
 		int attSize;
 		Map<String, String> hm = new HashMap<String, String>();
 		boolean added = false;
-		
+
 		try {
 			attSize = res.readInt();
 
@@ -294,7 +336,7 @@ public class ProxyResources {
 				BigInteger ageBigInt = BigInteger.ZERO;
 				BigInteger salaryBigInt = BigInteger.ZERO;
 
-				
+
 				if(field.equals(keyRead) && field.equals("idade")) {
 
 					ageBigInt = homoSumDecryption(valueRead);
@@ -303,12 +345,12 @@ public class ProxyResources {
 					String ageEncrypted = homoSumEncryption(element);
 					hm.put("idade", ageEncrypted);
 					added = true;
-					
+
 				}else if(field.equals(keyRead) &&  field.equals("salario")) {
 
 					salaryBigInt = homoMultDecryption(valueRead);
 					valueRead = salaryBigInt.toString();
-					
+
 					String salaryEncryted = homoMultEncryption(element);
 					hm.put("salario", salaryEncryted);
 					added = true;
@@ -319,18 +361,18 @@ public class ProxyResources {
 				}
 
 			}
-			
+
 			if(!added)
 				hm.put(fields.get(pos), element);
-			
+
 			Entry entry = new Entry(key, hm);
-			
+
 			Response response2 = target.path("/entries/ps")
 					.request()
 					.post( Entity.entity(entry, MediaType.APPLICATION_JSON));
 
 			return response2;
-			
+
 		}catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -348,9 +390,9 @@ public class ProxyResources {
 
 		ByteArrayInputStream in = new ByteArrayInputStream(response);
 		DataInputStream res = new DataInputStream(in);
-		
+
 		int attSize;
-		
+
 		try {
 			attSize = res.readInt();
 
@@ -361,32 +403,32 @@ public class ProxyResources {
 
 				BigInteger ageBigInt = BigInteger.ZERO;
 				BigInteger salaryBigInt = BigInteger.ZERO;
-				
+
 				if(keyRead.equals("idade")) {
 
 					ageBigInt = homoSumDecryption(valueRead);
 					valueRead = ageBigInt.toString();
-					
+
 				}else if(keyRead.equals("salario")) {
 
 					salaryBigInt = homoMultDecryption(valueRead);
 					valueRead = salaryBigInt.toString();
-					
+
 				}
-				
+
 				if(valueRead.equals(element)) {
 					return true;
 				}
 
 			}
-			
+
 		}catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		return false;
-		
-		
+
+
 	}
 
 	public Response removeSetImplementation(String key) {
@@ -399,7 +441,7 @@ public class ProxyResources {
 	}
 
 	public String readElementImplementation(String key, int pos) {
-		
+
 		byte[] response = target.path("/entries/"+key)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
@@ -407,11 +449,11 @@ public class ProxyResources {
 
 		ByteArrayInputStream in = new ByteArrayInputStream(response);
 		DataInputStream res = new DataInputStream(in);
-		
+
 		String field = fields.get(pos);
 		int attSize;
 		String elementRead = "not found";
-		
+
 		try {
 			attSize = res.readInt();
 
@@ -423,13 +465,13 @@ public class ProxyResources {
 				BigInteger ageBigInt = BigInteger.ZERO;
 				BigInteger salaryBigInt = BigInteger.ZERO;
 
-				
+
 				if(field.equals(keyRead) && field.equals("idade")) {
 
 					ageBigInt = homoSumDecryption(valueRead);
 					valueRead = ageBigInt.toString();
 					elementRead = valueRead;
-					
+
 				}else if(field.equals(keyRead) &&  field.equals("salario")) {
 
 					salaryBigInt = homoMultDecryption(valueRead);
@@ -441,16 +483,16 @@ public class ProxyResources {
 
 
 			}
-			
 
-			
-			
+
+
+
 		}catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		return elementRead;
-		
+
 	}
 
 	public byte[] getSetImplementation(String key) {
@@ -480,7 +522,7 @@ public class ProxyResources {
 				BigInteger ageBigInt = BigInteger.ZERO;
 				BigInteger salaryBigInt = BigInteger.ZERO;
 				int goalsDec = 0;
-				
+
 				if(keyRead.equals("nome")) {
 
 					valueRead = HomoSearch.decrypt(HomoSearch.stringFromKey(secretKey), valueRead);
@@ -497,12 +539,11 @@ public class ProxyResources {
 					salaryBigInt = homoMultDecryption(valueRead);
 
 					valueRead = salaryBigInt.toString();
-					
+
 				}else if(keyRead.equals("golos")) {
-					
+
 					long l1 = (long) HelpSerial.fromString(valueRead);
 					goalsDec = ope.decrypt(l1);
-					
 
 					valueRead = Integer.toString(goalsDec);
 				}
@@ -549,7 +590,7 @@ public class ProxyResources {
 		hm.remove("golos");
 		hm.put("golos", goalsEncrypted);
 		entry.setAttributes(hm);
-		
+
 		Response response = target.path("/entries/ps/")
 				.request()
 				.post( Entity.entity(entry, MediaType.APPLICATION_JSON));
@@ -641,11 +682,11 @@ public class ProxyResources {
 
 		publicKey = (RSAPublicKey) keyPair.getPublic();
 		privateKey = (RSAPrivateKey) keyPair.getPrivate();
-		
+
 		String secretKeyPlain = "rO0ABXNyAB9qYXZheC5jcnlwdG8uc3BlYy5TZWNyZXRLZXlTcGVjW0cLZuIwYU0CAAJMAAlhbGdvcml0aG10ABJMamF2YS9sYW5nL1N0cmluZztbAANrZXl0AAJbQnhwdAADQUVTdXIAAltCrPMX+AYIVOACAAB4cAAAABB5X7gu2CRr89/kS2tRSv2U";
-		
+
 		secretKey = HomoSearch.keyFromString(secretKeyPlain); 
-		
+
 		ope = new HomoOpeInt(3447202209197703099L);
 
 	}

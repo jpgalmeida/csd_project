@@ -101,6 +101,92 @@ public class ServerInterfaceResources {
 		return searchEqImplementation(pos, val);
 	}
 	
+	@POST
+	@Path("/sbt/{pos}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response searchBt(@PathParam("pos") int pos, String val) {
+		System.out.println("Received Sbt Request");
+		return searchBtImplementation(pos, val);
+	}
+	
+	@POST
+	@Path("/slt/{pos}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response searchLt(@PathParam("pos") int pos, String val) {
+		System.out.println("Received Slt Request");
+		return searchLtImplementation(pos, val);
+	}
+	
+	public Response searchLtImplementation(int pos, String val) {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		DataOutputStream dos = new DataOutputStream(out);
+		
+		try {
+			dos.writeInt(RequestType.SLT);
+			dos.writeInt(pos);
+			dos.writeUTF(val);
+			
+			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeOrdered(out.toByteArray()));
+			DataInputStream dis = new DataInputStream(in);
+			
+			String entries = dis.readUTF();
+			System.out.println(entries);
+			ByteArrayOutputStream out2 = new ByteArrayOutputStream();
+			DataOutputStream dos2 = new DataOutputStream(out2);
+			
+			dos2.writeUTF(entries);
+			
+			Response resp = Response.ok(entries, MediaType.APPLICATION_JSON).build();
+			
+			System.out.println(resp);
+			return resp;
+
+		} catch (IOException e) {
+			
+			e.printStackTrace();
+		}
+		
+		
+		
+		
+		return null;
+	}
+	
+	public Response searchBtImplementation(int pos, String val) {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		DataOutputStream dos = new DataOutputStream(out);
+		
+		try {
+			dos.writeInt(RequestType.SBT);
+			dos.writeInt(pos);
+			dos.writeUTF(val);
+			
+			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeOrdered(out.toByteArray()));
+			DataInputStream dis = new DataInputStream(in);
+			
+			String entries = dis.readUTF();
+			System.out.println(entries);
+			ByteArrayOutputStream out2 = new ByteArrayOutputStream();
+			DataOutputStream dos2 = new DataOutputStream(out2);
+			
+			dos2.writeUTF(entries);
+			
+			Response resp = Response.ok(entries, MediaType.APPLICATION_JSON).build();
+			
+			System.out.println(resp);
+			return resp;
+
+		} catch (IOException e) {
+			
+			e.printStackTrace();
+		}
+		
+		
+		
+		
+		return null;
+	}
+	
 	
 	public Response searchEqImplementation(int pos, String val) {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -126,7 +212,6 @@ public class ServerInterfaceResources {
 			System.out.println(resp);
 			return resp;
 			
-//			return out2.toByteArray();
 		} catch (IOException e) {
 			
 			e.printStackTrace();
@@ -247,11 +332,37 @@ public class ServerInterfaceResources {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			DataOutputStream dos = new DataOutputStream(out);
 			dos.writeInt(RequestType.GETSET);
-			
 			dos.writeUTF(key);
-			byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
 			
-			return reply;
+//			byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
+			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeOrdered(out.toByteArray()));
+			DataInputStream res = new DataInputStream(in);
+			
+			ByteArrayOutputStream out2 = new ByteArrayOutputStream();
+			DataOutputStream dos2 = new DataOutputStream(out2);
+			
+			int attSize;
+			try {
+				attSize = res.readInt();
+				dos2.writeInt(attSize);
+
+				for(int i = 0; i < attSize; i++) {
+
+					String keyRead = res.readUTF();
+					String valueRead = res.readUTF();
+					
+					dos2.writeUTF(keyRead);
+					dos2.writeUTF(valueRead);
+				}
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			
+			return out2.toByteArray();
+			
+			
 		} catch (IOException ioe) {
 			System.out.println("Exception getting value from the hashmap: " + ioe.getMessage());
 			return "".getBytes();

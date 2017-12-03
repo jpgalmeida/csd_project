@@ -173,13 +173,22 @@ public class ClientInterface {
 				break;
 			
 			case "se":
+				pos = sc.nextInt();
 				value = sc.next();
 
+//				String sbt_res = searchBt(pos, value);
+//				
+//				System.out.println("> Search Bt is: "+sbt_res);
+				
 				break;
 			
 			case "sbt":
 				pos = sc.nextInt();
 				value = sc.next();
+
+				String sbt_res = searchBt(pos, value);
+				
+				System.out.println("> Search Bt is: "+sbt_res);
 
 				break;
 			
@@ -187,6 +196,10 @@ public class ClientInterface {
 				pos = sc.nextInt();
 				value = sc.next();
 
+				String slt_res = searchLt(pos, value);
+				
+				System.out.println("> Search Lt is: "+slt_res);
+				
 				break;
 			}
 
@@ -211,15 +224,24 @@ public class ClientInterface {
 		return 0;
 	}
 	
-	private static int searchBt( int pos, String key1, String key2) {
-
-		return 0;
+	private static String searchBt( int pos, String val) {
+		String response = target.path("/entries/sbt/"+pos+"/"+val)
+				.request()
+				.accept(MediaType.APPLICATION_JSON)
+				.get(new GenericType<String>(){});
+		
+		return response;
 	}
 	
-	private static int searchLt( int pos, String key1, String key2) {
-
-		return 0;
+	private static String searchLt( int pos, String val) {
+		String response = target.path("/entries/slt/"+pos+"/"+val)
+				.request()
+				.accept(MediaType.APPLICATION_JSON)
+				.get(new GenericType<String>(){});
+		
+		return response;
 	}
+
 	
 	private static int Mult( int pos, String key1, String key2) {
 

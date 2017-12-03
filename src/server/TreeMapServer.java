@@ -43,7 +43,7 @@ public class TreeMapServer extends DefaultRecoverable {
 	private JedisPool pool;
 	private static boolean bizantinemode = false;
 	private BigInteger nsquare, modulus, exponent;
-
+	private HomoOpeInt ope;
 
 	public TreeMapServer(int id, String serverUri){
 
@@ -222,7 +222,6 @@ public class TreeMapServer extends DefaultRecoverable {
 					for (Map.Entry<String, String> e : att.entrySet()){
 
 						dos.writeUTF(e.getKey());
-
 						dos.writeUTF(e.getValue());
 					}
 				}else {
@@ -231,210 +230,278 @@ public class TreeMapServer extends DefaultRecoverable {
 
 
 				return out.toByteArray();
+			}else if (reqType == RequestType.SBT) {
+				System.out.println("> RECEIVED SBT");
 
-			} else {
-				System.out.println("Unknown request type: " + reqType);
-				return "".getBytes();
-			}
-		} catch (IOException e) {
-			System.out.println("Exception reading data in the replica: " + e.getMessage());
-			e.printStackTrace();
-			return null;
-		}
-
-	}
-
-	@Override
-	public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
-		ByteArrayInputStream in = new ByteArrayInputStream(command);
-		DataInputStream dis = new DataInputStream(in);
-		int reqType;
-
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		DataOutputStream dos = new DataOutputStream(out);
-
-		try {
-			reqType = dis.readInt();
-
-			if (reqType == RequestType.SUM) {
-				if(bizantinemode)
-					return "-1".getBytes();
-
-				String key1 = dis.readUTF();
-				String key2 = dis.readUTF();
-				int pos = dis.readInt();
-
-				String field = fields.get(pos);
-
-				String val1 = jedis.hget(key1, field);
-				String val2 = jedis.hget(key2, field);
-
-
-				BigInteger val1BigInt = (BigInteger)HelpSerial.fromString(val1);
-				BigInteger val2BigInt = (BigInteger)HelpSerial.fromString(val2);
-
-				String resultBI = HelpSerial.toString(HomoAdd.sum(val1BigInt, val2BigInt, nsquare));
-
-
-				dos.writeUTF(resultBI);
-
-
-				return out.toByteArray();
-
-			}else if (reqType == RequestType.MULT) {
-
-				System.out.println(">RECEIVED MULT");
-
-				if(bizantinemode)
-					return "-1".getBytes();
-
-				String key1 = dis.readUTF();
-				String key2 = dis.readUTF();
-				int pos = dis.readInt();
-
-				System.out.println("Mult "+key1+ " "+key2+" "+pos);
-				String field = fields.get(pos);
-
-				String val1 = jedis.hget(key1, field);
-				String val2 = jedis.hget(key2, field);
-
-				BigInteger val1BigInt = (BigInteger)HelpSerial.fromString(val1);
-				BigInteger val2BigInt = (BigInteger)HelpSerial.fromString(val2);
-
-
-				RSAPublicKeySpec pkSpec = new RSAPublicKeySpec(modulus, exponent);
-				KeyFactory kf = KeyFactory.getInstance("RSA");
-				RSAPublicKey generatedPublic = (RSAPublicKey) kf.generatePublic(pkSpec);
-
-				String resultBI = HelpSerial.toString(HomoMult.multiply(val1BigInt, val2BigInt, generatedPublic));
-
-
-				dos.writeUTF(resultBI);
-
-
-				return out.toByteArray();
-			}else if (reqType == RequestType.SEQ) {
-				System.out.println("> RECEIVED SEQ");
-				
 				int pos = dis.readInt();
 				String val = dis.readUTF();
 
 				String field = fields.get(pos);
-				
+
 				Set<String> l = jedis.keys("*");
-				Map<String, String> entry = null;
 				String result = "";
+
+//				long l1 = Long.parseLong((String) HelpSerial.fromString(val));
+				long l1 = (long) HelpSerial.fromString(val);
+				
 				
 				try{
-					
+
 					for( String entryKey : l ) {
-//						att = jedis.hgetAll(entryKey);
-						
+
 						String toSearch = jedis.hget(entryKey,field);
-//						String toSearch = att.get(entryKey);
-						
-						if(HomoSearch.pesquisa(val, toSearch))
+
+						long l2 = (long) HelpSerial.fromString(toSearch);
+
+						if(ope.compare(l2, l1))
 							result += entryKey+",";
-							
+
 					}
 					System.out.println(result);
 					dos.writeUTF(result);
-					
+
 				}catch(Exception e) {
 					e.printStackTrace();
 				}
 				return out.toByteArray();
 
-			}
+			}else if (reqType == RequestType.SLT) {
+				System.out.println("> RECEIVED SLT");
 
-			else {
-				System.out.println("Unknown request type: " + reqType);
-				return null;
-			}
-		} catch (IOException e) {
-			System.out.println("Exception reading data in the replica: " + e.getMessage());
-			e.printStackTrace();
-			return null;
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
-		} catch (InvalidKeySpecException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
+				int pos = dis.readInt();
+				String val = dis.readUTF();
+
+				String field = fields.get(pos);
+
+				Set<String> l = jedis.keys("*");
+				String result = "";
+
+//				long l1 = Long.parseLong((String) HelpSerial.fromString(val));
+				long l1 = (long) HelpSerial.fromString(val);
+				
+				
+				try{
+
+					for( String entryKey : l ) {
+
+						String toSearch = jedis.hget(entryKey,field);
+
+						long l2 = (long) HelpSerial.fromString(toSearch);
+						if(ope.compare(l1, l2))
+							result += entryKey+",";
+
+					}
+					System.out.println(result);
+					dos.writeUTF(result);
+
+				}catch(Exception e) {
+					e.printStackTrace();
+				}
+				return out.toByteArray();
+
+			
+
+		} else {
+			System.out.println("Unknown request type ordered: " + reqType);
+			return "".getBytes();
 		}
+	} catch (IOException e) {
+		System.out.println("Exception reading data in the replica: " + e.getMessage());
+		e.printStackTrace();
+		return null;
 	}
 
-	public void keysInit() {
-		nsquare = new BigInteger("450114259778886752345994972925686146945175719516761522713198032574212830403533700183623261468021445078621760277779263141968015314983806128821058275802755545379938157291541399835009995569683895334890113014285060082790243552087685381383203593754939202348592721888034967877276307286156255678855763399447355959224711916549581546885085076426020478521602260395624180860696575344834409471583415670097862455826930115321719679903616216507036425955946871540061083041188261888011387921155914785756600965822823820335396455565877600925391487234095866282893990501955926369072534595727702891613849272847282083068819208706653784963946902373565121574954362690827541488261200963131888214781747205025305288855145274621870061838362489615190239392460517201952524600831191354242747305690851938059864987581083260076537564172705633914487255514251288518489875766184202330155222520855879090477482527774846732519751497906986646845790885449414100375356594455653634608031360028117692359146525986187077013576268060089986639104363108940356956657085556867213560550690477282013323735081036608396242294777772679166416552518895073108745808291336395838454225511647635991804381856099567271039293748901550303296912200005568012909142450882237697100362114845207902918991561");
+}
 
-		modulus = new BigInteger("130487224226764029103379992274406128521227926260527674247729988501680805927872808994651616026679464842579366924718518730473975925824458708424193507742886054685776005837909295920529709252527342539911219764516786824960672308893646723687457895142977908483514986464012078223985582254092525512451181114852568055393");
+@Override
+public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
+	ByteArrayInputStream in = new ByteArrayInputStream(command);
+	DataInputStream dis = new DataInputStream(in);
+	int reqType;
 
-		exponent = new BigInteger("65537");
-	}
+	ByteArrayOutputStream out = new ByteArrayOutputStream();
+	DataOutputStream dos = new DataOutputStream(out);
+
+	try {
+		reqType = dis.readInt();
+
+		if (reqType == RequestType.SUM) {
+			if(bizantinemode)
+				return "-1".getBytes();
+
+			String key1 = dis.readUTF();
+			String key2 = dis.readUTF();
+			int pos = dis.readInt();
+
+			String field = fields.get(pos);
+
+			String val1 = jedis.hget(key1, field);
+			String val2 = jedis.hget(key2, field);
 
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public void installSnapshot(byte[] state) {
-		ByteArrayInputStream bis = new ByteArrayInputStream(state);
+			BigInteger val1BigInt = (BigInteger)HelpSerial.fromString(val1);
+			BigInteger val2BigInt = (BigInteger)HelpSerial.fromString(val2);
 
-		try {
-			ObjectInput in = new ObjectInputStream(bis);
+			String resultBI = HelpSerial.toString(HomoAdd.sum(val1BigInt, val2BigInt, nsquare));
 
-			Map<String,Map<String,String>> map = (Map<String,Map<String,String>>) in.readObject();
+
+			dos.writeUTF(resultBI);
+
+
+			return out.toByteArray();
+
+		}else if (reqType == RequestType.MULT) {
+
+			System.out.println(">RECEIVED MULT");
+
+			if(bizantinemode)
+				return "-1".getBytes();
+
+			String key1 = dis.readUTF();
+			String key2 = dis.readUTF();
+			int pos = dis.readInt();
+
+			System.out.println("Mult "+key1+ " "+key2+" "+pos);
+			String field = fields.get(pos);
+
+			String val1 = jedis.hget(key1, field);
+			String val2 = jedis.hget(key2, field);
+
+			BigInteger val1BigInt = (BigInteger)HelpSerial.fromString(val1);
+			BigInteger val2BigInt = (BigInteger)HelpSerial.fromString(val2);
+
+
+			RSAPublicKeySpec pkSpec = new RSAPublicKeySpec(modulus, exponent);
+			KeyFactory kf = KeyFactory.getInstance("RSA");
+			RSAPublicKey generatedPublic = (RSAPublicKey) kf.generatePublic(pkSpec);
+
+			String resultBI = HelpSerial.toString(HomoMult.multiply(val1BigInt, val2BigInt, generatedPublic));
+
+
+			dos.writeUTF(resultBI);
+
+
+			return out.toByteArray();
+		}else if (reqType == RequestType.SEQ) {
+			System.out.println("> RECEIVED SEQ");
+
+			int pos = dis.readInt();
+			String val = dis.readUTF();
+
+			String field = fields.get(pos);
+
 			Set<String> l = jedis.keys("*");
+			Map<String, String> entry = null;
+			String result = "";
 
-			// delete previous map
-			for( String key : l )
-				jedis.del(key);
-			System.out.println("=======INSTALLING SNAPSHOT=======");
-			// write new map
-			if(map.size()>0)
-				System.out.println("=======I HAVE THINGS TO WRITE=======");
+			try{
 
-			for(String key: map.keySet()) {
-				jedis.hmset(key, map.get(key));
-				System.out.println("=======ELEMENT ADDED=======");
+				for( String entryKey : l ) {
+
+					String toSearch = jedis.hget(entryKey,field);
+
+					if(HomoSearch.pesquisa(val, toSearch))
+						result += entryKey+",";
+
+				}
+				System.out.println(result);
+				dos.writeUTF(result);
+
+			}catch(Exception e) {
+				e.printStackTrace();
 			}
+			return out.toByteArray();
 
-			in.close();
-			bis.close();
-		} catch (ClassNotFoundException e) {
-			//			System.out.print("Coudn't find Map: " + e.getMessage());
-			e.printStackTrace();
-		} catch (IOException e) {
-			System.out.print("Exception installing the application state: " + e.getMessage());
-			e.printStackTrace();
+		}else {
+			System.out.println("Unknown request type unordered: " + reqType);
+			return null;
 		}
+	} catch (IOException e) {
+		System.out.println("Exception reading data in the replica: " + e.getMessage());
+		e.printStackTrace();
+		return null;
+	} catch (NoSuchAlgorithmException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+		return null;
+	} catch (InvalidKeySpecException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+		return null;
 	}
+}
 
-	@Override
-	public byte[] getSnapshot() {
-		try {
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			ObjectOutputStream out = new ObjectOutputStream(bos);
+public void keysInit() {
+	nsquare = new BigInteger("450114259778886752345994972925686146945175719516761522713198032574212830403533700183623261468021445078621760277779263141968015314983806128821058275802755545379938157291541399835009995569683895334890113014285060082790243552087685381383203593754939202348592721888034967877276307286156255678855763399447355959224711916549581546885085076426020478521602260395624180860696575344834409471583415670097862455826930115321719679903616216507036425955946871540061083041188261888011387921155914785756600965822823820335396455565877600925391487234095866282893990501955926369072534595727702891613849272847282083068819208706653784963946902373565121574954362690827541488261200963131888214781747205025305288855145274621870061838362489615190239392460517201952524600831191354242747305690851938059864987581083260076537564172705633914487255514251288518489875766184202330155222520855879090477482527774846732519751497906986646845790885449414100375356594455653634608031360028117692359146525986187077013576268060089986639104363108940356956657085556867213560550690477282013323735081036608396242294777772679166416552518895073108745808291336395838454225511647635991804381856099567271039293748901550303296912200005568012909142450882237697100362114845207902918991561");
 
-			Set<String> l = jedis.keys("*");
-			Map<String, Map<String,String>> map = new HashMap<String, Map<String,String>>(); 
-			System.out.println("=======GETTING SNAPSHOT=======");
-			for( String key : l) {
-				System.out.println("=======GETTING VALUE=======");
-				Map<String,String> val = jedis.hgetAll(key);
-				map.put(key,val);
-			}
+	modulus = new BigInteger("130487224226764029103379992274406128521227926260527674247729988501680805927872808994651616026679464842579366924718518730473975925824458708424193507742886054685776005837909295920529709252527342539911219764516786824960672308893646723687457895142977908483514986464012078223985582254092525512451181114852568055393");
 
-			out.writeObject(map);
-			out.flush();
-			out.close();
-			bos.close();
-			return bos.toByteArray();
-		} catch (IOException e) {
-			System.out.println("Exception when trying to take a + "
-					+ "snapshot of the application state" + e.getMessage());
-			e.printStackTrace();
-			return new byte[0];
+	exponent = new BigInteger("65537");
+
+	ope = new HomoOpeInt(3447202209197703099L);
+}
+
+
+@Override
+@SuppressWarnings("unchecked")
+public void installSnapshot(byte[] state) {
+	ByteArrayInputStream bis = new ByteArrayInputStream(state);
+
+	try {
+		ObjectInput in = new ObjectInputStream(bis);
+
+		Map<String,Map<String,String>> map = (Map<String,Map<String,String>>) in.readObject();
+		Set<String> l = jedis.keys("*");
+
+		// delete previous map
+		for( String key : l )
+			jedis.del(key);
+		System.out.println("=======INSTALLING SNAPSHOT=======");
+		// write new map
+		if(map.size()>0)
+			System.out.println("=======I HAVE THINGS TO WRITE=======");
+
+		for(String key: map.keySet()) {
+			jedis.hmset(key, map.get(key));
+			System.out.println("=======ELEMENT ADDED=======");
 		}
+
+		in.close();
+		bis.close();
+	} catch (ClassNotFoundException e) {
+		//			System.out.print("Coudn't find Map: " + e.getMessage());
+		e.printStackTrace();
+	} catch (IOException e) {
+		System.out.print("Exception installing the application state: " + e.getMessage());
+		e.printStackTrace();
 	}
+}
+
+@Override
+public byte[] getSnapshot() {
+	try {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ObjectOutputStream out = new ObjectOutputStream(bos);
+
+		Set<String> l = jedis.keys("*");
+		Map<String, Map<String,String>> map = new HashMap<String, Map<String,String>>(); 
+		System.out.println("=======GETTING SNAPSHOT=======");
+		for( String key : l) {
+			System.out.println("=======GETTING VALUE=======");
+			Map<String,String> val = jedis.hgetAll(key);
+			map.put(key,val);
+		}
+
+		out.writeObject(map);
+		out.flush();
+		out.close();
+		bos.close();
+		return bos.toByteArray();
+	} catch (IOException e) {
+		System.out.println("Exception when trying to take a + "
+				+ "snapshot of the application state" + e.getMessage());
+		e.printStackTrace();
+		return new byte[0];
+	}
+}
 }
