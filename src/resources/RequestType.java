@@ -16,5 +16,6 @@ public class RequestType {
     public static final int SEQ = 13;
     public static final int SBT = 14;
     public static final int SLT = 15;
+    public static final int SENTRY = 16;
     public static final int BENCHMARK_INIT = 20;
 }

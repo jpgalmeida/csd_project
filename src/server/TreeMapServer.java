@@ -301,7 +301,13 @@ public class TreeMapServer extends DefaultRecoverable {
 
 			
 
-		} else {
+		}else if (reqType == RequestType.SENTRY) {
+			System.out.println("> RECEIVED SENTRY");
+
+			//TODO
+		
+			return null;
+	} else {
 			System.out.println("Unknown request type ordered: " + reqType);
 			return "".getBytes();
 		}

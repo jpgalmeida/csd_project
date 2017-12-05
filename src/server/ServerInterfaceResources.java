@@ -117,6 +117,14 @@ public class ServerInterfaceResources {
 		return searchLtImplementation(pos, val);
 	}
 	
+	@POST
+	@Path("/sentry/{val}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response searchLt(@PathParam("val") String val) {
+		System.out.println("Received Slt Request");
+		return searchEntryImplementation(val);
+	}
+
 	public Response searchLtImplementation(int pos, String val) {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		DataOutputStream dos = new DataOutputStream(out);
@@ -220,6 +228,11 @@ public class ServerInterfaceResources {
 		
 		
 		
+		return null;
+	}
+	
+	private Response searchEntryImplementation(String val) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 
