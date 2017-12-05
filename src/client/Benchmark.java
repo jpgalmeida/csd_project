@@ -19,7 +19,6 @@
 //
 //import resources.Entry;
 //
-//
 //public class Benchmark {
 //
 //	private static Client client;
@@ -29,16 +28,15 @@
 //	private static String command = "";
 //
 //	public static void main(String[] args) throws InterruptedException {
-//		String serverURL=args[0];
+//		String serverURL = args[0];
 //
 //		serverURI = UriBuilder.fromUri(serverURL).port(11100).build();
-//		client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier())
-//				.build();
-//		target = client.target( serverURI );
+//		client = ClientBuilder.newBuilder().hostnameVerifier(new InsecureHostnameVerifier()).build();
+//		target = client.target(serverURI);
 //
 //		System.out.println("Client ready!");
 //
-//		if(args.length < 3) {
+//		if (args.length < 3) {
 //			System.out.println("Usage: <benchmark number> <number of threads>");
 //			System.exit(1);
 //		}
@@ -46,22 +44,17 @@
 //		command = args[1];
 //		int servers = Integer.valueOf(args[2]);
 //
-//		//		if(command.equals("2"))
-//		//			BenchmarkInitRequest();	
+//		// if(command.equals("2"))
+//		// BenchmarkInitRequest();
 //
-//		for(int i = 0; i < servers; i++)
+//		for (int i = 0; i < servers; i++)
 //			(new Thread(new Tester())).start();
 //
-//		
 //	}
-//
-//
-//
-//
 //
 //	private static void BenchmarkInitRequest() {
 //		String value = " nome dummy000000 idade 100 morada RandomStreet telefone 9158128912";
-//		for( int i = 0; i < 100 ; i++)
+//		for (int i = 0; i < 100; i++)
 //			registerEntry(String.valueOf(i), parseValuesToMap(value));
 //
 //	}
@@ -75,104 +68,124 @@
 //	}
 //
 //	private static int Mult(int pos, String key1, String key2) {
-//		int response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos)
-//				.request()
-//				.accept(MediaType.APPLICATION_JSON)
-//				.get(new GenericType<Integer>(){});
-//		
-//		System.out.println("MULT "+response);
+//		int response = target.path("/entries/mult/" + key1 + "/" + key2 + "/" + pos).request()
+//				.accept(MediaType.APPLICATION_JSON).get(new GenericType<Integer>() {
+//				});
+//
+//		System.out.println("MULT " + response);
 //		return response;
 //	}
-//
 //
 //	private static int Sum(int pos, String key1, String key2) {
-//		int response = target.path("/entries/sum/"+key1+"/"+key2+"/"+pos)
-//				.request()
-//				.accept(MediaType.APPLICATION_JSON)
-//				.get(new GenericType<Integer>(){});
+//		int response = target.path("/entries/sum/" + key1 + "/" + key2 + "/" + pos).request()
+//				.accept(MediaType.APPLICATION_JSON).get(new GenericType<Integer>() {
+//				});
 //
-//		System.out.println("SUM"+response);
+//		System.out.println("SUM" + response);
 //		return response;
 //	}
 //
-//
-//
 //	private static boolean isElement(String key, String element) {
-//		boolean response = target.path("/entries/ie/"+key+"/"+element)
-//				.request()
-//				.accept(MediaType.APPLICATION_JSON)
-//				.get(new GenericType<Boolean>(){});
+//		boolean response = target.path("/entries/ie/" + key + "/" + element).request()
+//				.accept(MediaType.APPLICATION_JSON).get(new GenericType<Boolean>() {
+//				});
 //
-//		System.out.println("IE "+response);
+//		System.out.println("IE " + response);
 //		return response;
 //	}
 //
 //	private static String readElement(String key, int pos) {
-//		String response = target.path("/entries/"+key+"/"+pos)
-//				.request()
-//				.accept(MediaType.APPLICATION_JSON)
-//				.get(new GenericType<String>(){});
+//		String response = target.path("/entries/" + key + "/" + pos).request().accept(MediaType.APPLICATION_JSON)
+//				.get(new GenericType<String>() {
+//				});
 //
-//		System.out.println("READEL "+response);
+//		System.out.println("READEL " + response);
 //		return response;
 //	}
 //
 //	public static int writeElement(String key, String new_element, int pos) {
-//		Response response = target.path("/entries/"+key+"/"+pos)
-//				.request()
+//		Response response = target.path("/entries/" + key + "/" + pos).request()
 //				.put(Entity.entity(new_element, MediaType.APPLICATION_JSON));
 //
-//		System.out.println("WRITEEL "+response.toString());
+//		System.out.println("WRITEEL " + response.toString());
 //		return response.getStatus();
 //	}
 //
-//	public static int registerEntry(String key, HashMap<byte[], byte[]> values){
+//	public static int registerEntry(String key, HashMap<byte[], byte[]> values) {
 //		Entry entry = new Entry(key.getBytes(), values);
 //
-//		Response response = target.path("/entries/ps/"+key)
-//				.request()
-//				.post( Entity.entity(entry, MediaType.APPLICATION_JSON));
+//		Response response = target.path("/entries/ps/" + key).request()
+//				.post(Entity.entity(entry, MediaType.APPLICATION_JSON));
 //
-//		System.out.println("REGENTRY "+response);
+//		System.out.println("REGENTRY " + response);
 //		return response.getStatus();
 //
 //	}
 //
 //	public static String removeSet(String key) {
-//		Response response = target.path("/entries/rs/"+key)
-//				.request()
-//				.delete(new GenericType<Response>() {});
+//		Response response = target.path("/entries/rs/" + key).request().delete(new GenericType<Response>() {
+//		});
 //
-//		System.out.println("WRITEEL "+response.toString());
+//		System.out.println("WRITEEL " + response.toString());
 //		return String.valueOf(response.getStatus());
 //	}
 //
-//	public static int addElement(String element){
+//	public static int addElement(String element) {
 //
-//		Response response = target.path("/entries/adde/"+element)
-//				.request()
-//				.post( Entity.entity(element, MediaType.APPLICATION_JSON));
+//		Response response = target.path("/entries/adde/" + element).request()
+//				.post(Entity.entity(element, MediaType.APPLICATION_JSON));
 //
-//		System.out.println("WRITEEL "+response.toString());
+//		System.out.println("WRITEEL " + response.toString());
 //		return response.getStatus();
 //	}
 //
-//	public static byte[] getEntry(String key){
-//		byte[] response=null;
+//	public static byte[] getEntry(String key) {
+//		byte[] response = null;
 //
 //		try {
-//			response = target.path("/entries/"+key)
-//					.request()
-//					.accept(MediaType.APPLICATION_JSON)
-//					.get(new GenericType<byte[]>() {});
+//			response = target.path("/entries/" + key).request().accept(MediaType.APPLICATION_JSON)
+//					.get(new GenericType<byte[]>() {
+//					});
 //			System.out.println(new String(response, StandardCharsets.UTF_8));
-//		}catch(Exception e) {
-////			System.out.println("Excepcao");
+//		} catch (Exception e) {
+//			// System.out.println("Excepcao");
 //		}
 //
 //		return response;
 //	}
+//	
+//	private static String searchEq( int pos, String val) {
+//		String response = target.path("/entries/seq/"+pos+"/"+val)
+//				.request()
+//				.accept(MediaType.APPLICATION_JSON)
+//				.get(new GenericType<String>(){});
+//		
+//		
+//		return response;
+//	}
+//	
+//	private static int searchEntry( int pos, String key1, String key2) {
 //
+//		return 0;
+//	}
+//	
+//	private static String searchBt( int pos, String val) {
+//		String response = target.path("/entries/sbt/"+pos+"/"+val)
+//				.request()
+//				.accept(MediaType.APPLICATION_JSON)
+//				.get(new GenericType<String>(){});
+//		
+//		return response;
+//	}
+//	
+//	private static String searchLt( int pos, String val) {
+//		String response = target.path("/entries/slt/"+pos+"/"+val)
+//				.request()
+//				.accept(MediaType.APPLICATION_JSON)
+//				.get(new GenericType<String>(){});
+//		
+//		return response;
+//	}
 //
 //	static public class InsecureHostnameVerifier implements HostnameVerifier {
 //		@Override
@@ -183,14 +196,13 @@
 //
 //	private static HashMap<byte[], byte[]> parseValuesToMap(String values) {
 //		HashMap<byte[], byte[]> hm = new HashMap<byte[], byte[]>();
-//		String [] parts = values.split(" ");
+//		String[] parts = values.split(" ");
 //
-//		for( int i = 1 ; i < parts.length-1 ; i = i+2)
-//			hm.put(parts[i].getBytes(), parts[i+1].getBytes());
+//		for (int i = 1; i < parts.length - 1; i = i + 2)
+//			hm.put(parts[i].getBytes(), parts[i + 1].getBytes());
 //
 //		return hm;
 //	}
-//
 //
 //	static class Tester implements Runnable {
 //
@@ -201,53 +213,53 @@
 //			String key, value;
 //			long threadId = Thread.currentThread().getId();
 //
-//			System.out.println("Started Thread #"+threadId);
+//			System.out.println("Started Thread #" + threadId);
 //
-//			//Benchmark1: 100 PutSet
-//			if(command.equals("1")) {
+//			// Benchmark1: 100 PutSet
+//			if (command.equals("1")) {
 //				value = " nome dummy111111 idade 100 morada RandomStreet telefone 9158128912";
 //
 //				HashMap<String, String> valuesParsed = parseValuesToMap(value);
-//				for(int i = 0;i<100;i++) {
+//				for (int i = 0; i < 100; i++) {
 //					key = Integer.toString(i);
 //					registerEntry(key, valuesParsed);
 //				}
-//			} 
+//			}
 //
-//			//Benchmark2: 100 GetSet
-//			else if(command.equals("2")) {
-//				for(int i = 0;i<100;i++) {
+//			// Benchmark2: 100 GetSet
+//			else if (command.equals("2")) {
+//				for (int i = 0; i < 100; i++) {
 //					key = Integer.toString(i);
-//					getEntry( key);
+//					getEntry(key);
 //				}
-//
 //
 //			}
 //
-//			//Benchmark3: 50 PutSet, 50 GetSet alternated
-//			else if(command.equals("3")) {
+//			// Benchmark3: 50 PutSet, 50 GetSet alternated
+//			else if (command.equals("3")) {
 //				value = " nome dummy33333333 idade 100 morada RandomStreet telefone 9158128912";
 //				HashMap<String, String> valuesParsed = parseValuesToMap(value);
-//				for(int i = 0;i<50;i++) {
+//				for (int i = 0; i < 50; i++) {
 //					key = Integer.toString(i);
 //
 //					registerEntry(key, valuesParsed);
-//					
-//					getEntry( key);
+//
+//					getEntry(key);
 //
 //				}
 //			}
 //
-//			//Benchmark4: All operations: alternated, distribution discussed (without sums or multiplications)
-//			else if(command.equals("4")) {
+//			// Benchmark4: All operations: alternated, distribution discussed
+//			// (without sums or multiplications)
+//			else if (command.equals("4")) {
 //				value = " nome dummy4444444 idade 100 morada RandomStreet telefone 9158128912";
 //				HashMap<String, String> valuesParsed = parseValuesToMap(value);
 //
-//				for(int i = 0;i<15;i++) {
+//				for (int i = 0; i < 15; i++) {
 //					key = Integer.toString(i);
 //
 //					registerEntry(key, valuesParsed);
-//					getEntry( key);
+//					getEntry(key);
 //					isElement(key, "100");
 //					readElement(key, 0);
 //					writeElement(key, "10000", 1);
@@ -257,73 +269,139 @@
 //				}
 //			}
 //
-//			//Benchmark5: 
-//			else if(command.equals("5")) {
+//			// Benchmark5:
+//			else if (command.equals("5")) {
 //
 //				value = " nome dummy5555555 idade 100 morada RandomStreet telefone 9158128912";
 //				HashMap<String, String> valuesParsed = parseValuesToMap(value);
 //
-//				for(int i = 0;i<15;i++) {
+//				for (int i = 0; i < 15; i++) {
 //					key = Integer.toString(i);
 //
 //					registerEntry(key, valuesParsed);
-//					getEntry( key);
+//					getEntry(key);
 //					isElement(key, "100");
 //					readElement(key, 0);
 //					writeElement(key, "10000", 1);
 //					addElement("NewElement");
-//					
-//					if(i>0 && i<11) {
-//						String key2 = Integer.toString(i-1);
+//
+//					if (i > 0 && i < 11) {
+//						String key2 = Integer.toString(i - 1);
 //						Mult(1, key2, key);
 //					}
-//					
+//
 //				}
-//				
-//				for(int i = 0;i<15;i++) {
+//
+//				for (int i = 0; i < 15; i++) {
 //					key = Integer.toString(i);
 //					removeSet(key);
 //				}
 //
 //			}
-//			
-//			//Benchmark6: 
-//					else if(command.equals("6")) {
 //
-//						value = " nome dummy5555555 idade 100 morada RandomStreet telefone 9158128912";
-//						HashMap<String, String> valuesParsed = parseValuesToMap(value);
+//			// Benchmark6:
+//			else if (command.equals("6")) {
 //
-//						for(int i = 0;i<15;i++) {
-//							key = Integer.toString(i);
+//				value = " nome dummy5555555 idade 100 morada RandomStreet telefone 9158128912";
+//				HashMap<String, String> valuesParsed = parseValuesToMap(value);
 //
-//							registerEntry(key, valuesParsed);
-//							getEntry( key);
-//							isElement(key, "100");
-//							readElement(key, 0);
-//							writeElement(key, "10000", 1);
-//							addElement("NewElement");
-//							
-//							if(i>0 && i<11) {
-//								String key2 = Integer.toString(i-1);
-//								Sum(1, key2, key);
-//							}
-//							
-//						}
-//						
-//						for(int i = 0;i<15;i++) {
-//							key = Integer.toString(i);
-//							removeSet(key);
-//						}
+//				for (int i = 0; i < 15; i++) {
+//					key = Integer.toString(i);
 //
+//					registerEntry(key, valuesParsed);
+//					getEntry(key);
+//					isElement(key, "100");
+//					readElement(key, 0);
+//					writeElement(key, "10000", 1);
+//					addElement("NewElement");
+//
+//					if (i > 0 && i < 11) {
+//						String key2 = Integer.toString(i - 1);
+//						Sum(1, key2, key);
 //					}
 //
+//				}
+//
+//				for (int i = 0; i < 15; i++) {
+//					key = Integer.toString(i);
+//					removeSet(key);
+//				}
+//				
+//			//Benchmark 7 (E1)	
+//			} else if (command.equals("7")) {
+//
+//				int pos;
+//				String val;
+//				
+//				for (int i = 0; i < 10; i++) {
+//					key = Integer.toString(i);
+//
+//					searchEq(pos, val);
+//					searchEntry(pos, key1, key2);
+//					searchBt(pos, val);
+//					searchLt(pos, val);
+//
+//				}
+//
+//			//Benchmark 8 (E2)	
+//			} else if (command.equals("8")) {
+//
+//				int pos;
+//				String val;
+//				
+//				value = " nome dummy5555555 idade 100 morada RandomStreet telefone 9158128912";
+//				HashMap<String, String> valuesParsed = parseValuesToMap(value);
+//
+//				for (int i = 0; i < 10; i++) {
+//					key = Integer.toString(i);
+//
+//					registerEntry(key, valuesParsed);
+//					getEntry(key);
+//					isElement(key, "100");
+//					readElement(key, 0);
+//					writeElement(key, "10000", 1);
+//					addElement("NewElement");
+//					searchEq(pos, val);
+//					searchEntry(pos, key1, key2);
+//					searchBt(pos, val);
+//					searchLt(pos, val);
+//
+//					if (i > 0 && i < 11) {
+//						String key2 = Integer.toString(i - 1);
+//						Sum(1, key2, key);
+//					}
+//
+//				}
+//
+//				for (int i = 0; i < 10; i++) {
+//					key = Integer.toString(i);
+//					removeSet(key);
+//				}
+//
+//			//Benchmark 9 (E3)	
+//			}else if (command.equals("9")) {
+//
+//				int pos;
+//				String val;
+//				
+//				for (int i = 0; i < 10; i++) {
+//					key = Integer.toString(i);
+//
+//					//Encripted Search 
+//					
+//					searchEq(pos, val);
+//					searchEntry(pos, key1, key2);
+//					searchBt(pos, val);
+//					searchLt(pos, val);
+//
+//				}
+//			}
+//
 //			long totalTime = (System.currentTimeMillis() - timeInit);
-//			System.out.println("Thread #"+threadId+" Time: "+totalTime+" ms");
+//			System.out.println("Thread #" + threadId + " Time: " + totalTime + " ms");
 //
 //		}
 //
 //	}
 //
 //}
-//
-//
