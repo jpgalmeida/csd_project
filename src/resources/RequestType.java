@@ -12,6 +12,10 @@ public class RequestType {
     public static final int MULT = 9;
     public static final int SUMALL = 10;
     public static final int MULTALL = 11;
-    public static final int ADDE = 11;
+    public static final int ADDE = 12;
+    public static final int SEQ = 13;
+    public static final int SBT = 14;
+    public static final int SLT = 15;
+    public static final int SENTRY = 16;
     public static final int BENCHMARK_INIT = 20;
 }

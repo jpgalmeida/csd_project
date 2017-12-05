@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Scanner;
 
 import javax.net.ssl.HostnameVerifier;
@@ -54,7 +53,7 @@ public class ClientInterface {
 				key = sc.next();
 				value = sc.nextLine();
 
-				HashMap<String, byte[]> valuesParsed = parseValuesToMap(value);
+				HashMap<String, String> valuesParsed = parseValuesToMap(value);
 
 				result = putSet(key, valuesParsed);
 				
@@ -133,9 +132,9 @@ public class ClientInterface {
 				key = sc.next();
 				String element = sc.next();
 
-				boolean res = isElement(key, element);
+				String res = isElement(key, element);
 
-				if(res)
+				if(res.equals("true"))
 					System.out.println("> " +element+" is element");
 				else
 					System.out.println("> " +element+" isn't element");
@@ -168,16 +167,28 @@ public class ClientInterface {
 				pos = sc.nextInt();
 				value = sc.next();
 
+				String seq_res = searchEq(pos, value);
+				
+				System.out.println("> Search Eq is: "+seq_res);
 				break;
 			
 			case "se":
+				pos = sc.nextInt();
 				value = sc.next();
 
+//				String sbt_res = searchBt(pos, value);
+//				
+//				System.out.println("> Search Bt is: "+sbt_res);
+				
 				break;
 			
 			case "sbt":
 				pos = sc.nextInt();
 				value = sc.next();
+
+				String sbt_res = searchBt(pos, value);
+				
+				System.out.println("> Search Bt is: "+sbt_res);
 
 				break;
 			
@@ -185,6 +196,10 @@ public class ClientInterface {
 				pos = sc.nextInt();
 				value = sc.next();
 
+				String slt_res = searchLt(pos, value);
+				
+				System.out.println("> Search Lt is: "+slt_res);
+				
 				break;
 			}
 
@@ -194,9 +209,14 @@ public class ClientInterface {
 
 	}
 
-	private static int searchEq( int pos, String key1, String key2) {
-
-		return 0;
+	private static String searchEq( int pos, String val) {
+		String response = target.path("/entries/seq/"+pos+"/"+val)
+				.request()
+				.accept(MediaType.APPLICATION_JSON)
+				.get(new GenericType<String>(){});
+		
+		
+		return response;
 	}
 	
 	private static int searchEntry( int pos, String key1, String key2) {
@@ -204,25 +224,44 @@ public class ClientInterface {
 		return 0;
 	}
 	
-	private static int searchBt( int pos, String key1, String key2) {
-
-		return 0;
+	private static String searchBt( int pos, String val) {
+		String response = target.path("/entries/sbt/"+pos+"/"+val)
+				.request()
+				.accept(MediaType.APPLICATION_JSON)
+				.get(new GenericType<String>(){});
+		
+		return response;
 	}
 	
-	private static int searchLt( int pos, String key1, String key2) {
-
-		return 0;
+	private static String searchLt( int pos, String val) {
+		String response = target.path("/entries/slt/"+pos+"/"+val)
+				.request()
+				.accept(MediaType.APPLICATION_JSON)
+				.get(new GenericType<String>(){});
+		
+		return response;
 	}
+
 	
 	private static int Mult( int pos, String key1, String key2) {
 
-		int response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos)
+		byte[] response = target.path("/entries/mult/"+key1+"/"+key2+"/"+pos)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
-				.get(new GenericType<Integer>(){});
+				.get(new GenericType<byte[]>(){});
 
-		return response;
-	}
+		ByteArrayInputStream in = new ByteArrayInputStream(response);
+		DataInputStream res = new DataInputStream(in);
+		
+		int result = 0;
+		try {
+			result = res.readInt();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+		}
 
 
 	private static String Sum(int pos, String key1, String key2) {
@@ -247,12 +286,12 @@ public class ClientInterface {
 
 
 
-	private static boolean isElement(String key, String element) {
+	private static String isElement(String key, String element) {
 
-		boolean response = target.path("/entries/ie/"+key+"/"+element)
+		String response = target.path("/entries/ie/"+key+"/"+element)
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
-				.get(new GenericType<Boolean>(){});
+				.get(new GenericType<String>(){});
 
 		return response;
 	}
@@ -276,14 +315,13 @@ public class ClientInterface {
 		return response.getStatus();
 	}
 
-	public static int putSet(String key, HashMap<String, byte[]> values){
+	public static int putSet(String key, HashMap<String, String> values){
 
 		Entry entry = new Entry(key, values);
 
 		Response response = target.path("/entries/ps")
 				.request()
 				.post( Entity.entity(entry,MediaType.APPLICATION_JSON));
-
 
 		return response.getStatus();
 
@@ -299,6 +337,8 @@ public class ClientInterface {
 		
 		ByteArrayInputStream in = new ByteArrayInputStream(response);
 		DataInputStream res = new DataInputStream(in);
+		
+//		System.out.println(res.toString());
 		
 		String finalResult="";
 		String k="";
@@ -352,12 +392,23 @@ public class ClientInterface {
 	}
 
 
-	private static HashMap<String, byte[]> parseValuesToMap(String values) {
+	/*private static HashMap<String, String> parseValuesToMap(String values) {
 		HashMap<String, byte[]> hm = new HashMap<String, byte[]>();
 		String [] parts = values.split(" ");
 
 		for( int i = 1 ; i < parts.length-1 ; i = i+2)
 			hm.put(parts[i], parts[i+1].getBytes(StandardCharsets.UTF_8));
+
+		return hm;
+	}*/
+	
+	
+	private static HashMap<String, String> parseValuesToMap(String values) {
+		HashMap<String, String> hm = new HashMap<String, String>();
+		String [] parts = values.split(" ");
+
+		for( int i = 1 ; i < parts.length-1 ; i = i+2)
+			hm.put(parts[i], parts[i+1]);
 
 		return hm;
 	}
