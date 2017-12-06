@@ -7,6 +7,7 @@ package homolib;
 
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 import javax.crypto.SecretKey;
@@ -53,7 +54,7 @@ public class HomoDet {
     public static String decrypt(SecretKey key, String encrypted) {   	
     	try {
     		//System.out.println(encrypted);
-        	byte[] newValue = Base64.getDecoder().decode(encrypted.getBytes("US-ASCII"));
+        	byte[] newValue = Base64.getDecoder().decode(encrypted.getBytes("US_ASCII"));
 			return new String(decrypt(key, newValue), "UTF-8");
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
