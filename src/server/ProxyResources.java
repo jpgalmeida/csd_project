@@ -58,7 +58,8 @@ public class ProxyResources {
 	private List<String> fields;
 	private SecretKey secretKey;
 	private HomoOpeInt ope;
-
+	private RandomKeyIv keyIv;
+	
 	public ProxyResources(String serverUri) {
 		this.serverUri = serverUri;
 
@@ -304,8 +305,11 @@ public class ProxyResources {
 				.request()
 				.post( Entity.entity(null, MediaType.APPLICATION_JSON));
 
-		if(response.getStatus() == 204)
+		if(response.getStatus() == 204) {
 			fields.add(id);
+			System.out.println("cheguei aqui");
+		}
+	
 
 		return response;
 	}
@@ -324,23 +328,20 @@ public class ProxyResources {
 		int attSize;
 		Map<String, String> hm = new HashMap<String, String>();
 		boolean added = false;
-
+		
 		try {
 			attSize = res.readInt();
 
 			for(int i = 0; i < attSize; i++) {
 
 				String keyRead = res.readUTF();
-				String valueRead = res.readUTF();
 
-				BigInteger ageBigInt = BigInteger.ZERO;
-				BigInteger salaryBigInt = BigInteger.ZERO;
-
-
-				if(field.equals(keyRead) && field.equals("idade")) {
-
-					ageBigInt = homoSumDecryption(valueRead);
-					valueRead = ageBigInt.toString();
+				if(field.equals(keyRead) && field.equals("nome")) {
+					String nameEncryted = HomoSearch.encrypt(secretKey , element);
+					hm.put("nome", nameEncryted);
+					added = true;
+					
+				}else if(field.equals(keyRead) && field.equals("idade")) {
 
 					String ageEncrypted = homoSumEncryption(element);
 					hm.put("idade", ageEncrypted);
@@ -348,23 +349,28 @@ public class ProxyResources {
 
 				}else if(field.equals(keyRead) &&  field.equals("salario")) {
 
-					salaryBigInt = homoMultDecryption(valueRead);
-					valueRead = salaryBigInt.toString();
-
 					String salaryEncryted = homoMultEncryption(element);
 					hm.put("salario", salaryEncryted);
 					added = true;
 				}
+				else if(field.equals(keyRead) &&  field.equals("golos")) {
+					
+					String goalsEncrypted = HelpSerial.toString(ope.encrypt(Integer.valueOf(element)));
+					hm.put("golos", goalsEncrypted);
+					added = true;
+				}
 				else if(field.equals(keyRead)) {
-					hm.put(keyRead, element);
+					System.out.println("FIE1D: " +field);
+					hm.put(keyRead, HomoRand.encrypt(keyIv.getKey(), keyIv.getiV(), element));
 					added = true;
 				}
 
 			}
 
-			if(!added)
-				hm.put(fields.get(pos), element);
-
+			if(!added) {
+				System.out.println("FIED: " +field);
+				hm.put(field, HomoRand.encrypt(keyIv.getKey(), keyIv.getiV(), element));
+			}
 			Entry entry = new Entry(key, hm);
 
 			Response response2 = target.path("/entries/ps")
@@ -546,6 +552,9 @@ public class ProxyResources {
 					goalsDec = ope.decrypt(l1);
 
 					valueRead = Integer.toString(goalsDec);
+				} else {
+					
+					valueRead = HomoRand.decrypt(keyIv.getKey(),  keyIv.getiV(), valueRead);
 				}
 
 				dos.writeUTF(keyRead);
@@ -566,30 +575,34 @@ public class ProxyResources {
 
 		Map<String, String> hm = entry.getAttributes();
 
-		String name = hm.get("nome");
-		String nameEncryted = HomoSearch.encrypt(secretKey , name);
-		hm.remove("nome");
-		hm.put("nome", nameEncryted);
-		entry.setAttributes(hm);
-
-		String age = hm.get("idade");
-		String ageEncrypted = homoSumEncryption(age);
-		hm.remove("idade");
-		hm.put("idade", ageEncrypted);
-		entry.setAttributes(hm);
-
-
-		String salary = hm.get("salario");
-		String salaryEncryted = homoMultEncryption(salary);
-		hm.remove("salario");
-		hm.put("salario", salaryEncryted);
-		entry.setAttributes(hm);
-
-		String goals = hm.get("golos");
-		String goalsEncrypted = HelpSerial.toString(ope.encrypt(Integer.valueOf(goals)));
-		hm.remove("golos");
-		hm.put("golos", goalsEncrypted);
-		entry.setAttributes(hm);
+		for (Map.Entry<String, String> e : hm.entrySet()){
+			if(e.getKey().equals("nome")) {
+				String nameEncryted = HomoSearch.encrypt(secretKey , e.getValue());
+				hm.put("nome", nameEncryted);
+				entry.setAttributes(hm);
+			
+			} else if(e.getKey().equals("idade")) {
+				String ageEncrypted = homoSumEncryption(e.getValue());
+				hm.put("idade", ageEncrypted);
+				entry.setAttributes(hm);
+			
+			}else if(e.getKey().equals("salario")) {
+				String salaryEncryted = homoMultEncryption(e.getValue());
+				hm.put("salario", salaryEncryted);
+				entry.setAttributes(hm);
+	
+			} else if(e.getKey().equals("golos")) {
+				String goalsEncrypted = HelpSerial.toString(ope.encrypt(Integer.valueOf(e.getValue())));
+				hm.put("golos", goalsEncrypted);
+				entry.setAttributes(hm);
+				
+			} else {
+				String newElEncrypted = HomoRand.encrypt(keyIv.getKey(), keyIv.getiV(), e.getValue());
+				hm.put(e.getKey(), newElEncrypted);
+				entry.setAttributes(hm);
+			}
+			
+		}
 
 		Response response = target.path("/entries/ps/")
 				.request()
@@ -688,6 +701,9 @@ public class ProxyResources {
 		secretKey = HomoSearch.keyFromString(secretKeyPlain); 
 
 		ope = new HomoOpeInt(3447202209197703099L);
+		
+		String keyIvSeed = "rO0ABXNyABhobGliLmhqLm1saWIuUmFuZG9tS2V5SXYAAAAAAAAAAQIAAlsAAmlWdAACW0JMAANrZXl0ABhMamF2YXgvY3J5cHRvL1NlY3JldEtleTt4cHVyAAJbQqzzF/gGCFTgAgAAeHAAAAAQk6QJDxSj7qfETVWYkjCoc3NyAB9qYXZheC5jcnlwdG8uc3BlYy5TZWNyZXRLZXlTcGVjW0cLZuIwYU0CAAJMAAlhbGdvcml0aG10ABJMamF2YS9sYW5nL1N0cmluZztbAANrZXlxAH4AAXhwdAADQUVTdXEAfgAEAAAAEFXjGSWHED5GZ5DexQ/VIlQ=";
+		keyIv = HomoRand.keyIvFromString(keyIvSeed);
 
 	}
 

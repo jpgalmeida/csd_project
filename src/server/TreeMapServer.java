@@ -144,26 +144,29 @@ public class TreeMapServer extends DefaultRecoverable {
 					System.out.println("Problem");
 				}
 
+				String toWrite = "true";
+				
 				Map<String, String> attributes=null;
 				try{
 					jedis2.hmset(id, att);
-					attributes = jedis2.hgetAll(key);
+//					attributes = jedis2.hgetAll(key);
 				}catch(Exception e) {
+					toWrite = "false";
 					System.out.println("Cast problem");
 				}
 
 
 				//verification if added
-				String toWrite = "true";
-				if(attributes!=null) {
-					for (Map.Entry<String, String> e : attributes.entrySet()){
-						if(!att.get(e.getKey()).equals(e.getValue())){
-							toWrite="false";
-							break;
-						}
-
-					}
-				}
+				
+//				if(attributes!=null) {
+//					for (Map.Entry<String, String> e : attributes.entrySet()){
+//						if(!att.get(e.getKey()).equals(e.getValue())){
+//							toWrite="false";
+//							break;
+//						}
+//
+//					}
+//				}
 
 				dos.writeUTF(toWrite);
 
@@ -193,6 +196,7 @@ public class TreeMapServer extends DefaultRecoverable {
 					dos.writeUTF("false");
 				else {
 					fields.add(key);
+					System.out.println(fields.contains(key));
 					dos.writeUTF("true");
 				}
 				return out.toByteArray();

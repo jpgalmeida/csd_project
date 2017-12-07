@@ -347,10 +347,11 @@ public class ServerInterfaceResources {
 				dos2.writeInt(attSize);
 
 				for(int i = 0; i < attSize; i++) {
-
+					
 					String keyRead = res.readUTF();
 					String valueRead = res.readUTF();
 					
+					System.out.println(keyRead);
 					dos2.writeUTF(keyRead);
 					dos2.writeUTF(valueRead);
 				}
@@ -361,7 +362,7 @@ public class ServerInterfaceResources {
 
 			
 			return out2.toByteArray();
-			
+//			return reply;
 			
 		} catch (IOException ioe) {
 			System.out.println("Exception getting value from the hashmap: " + ioe.getMessage());
