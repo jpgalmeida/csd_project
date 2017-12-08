@@ -37,7 +37,6 @@ public class ServerInterfaceResources {
 		this.serverUri = serverUri;
 
 		clientProxy = new ServiceProxy(clientId, configHome);
-
 	}
 
 	@GET
@@ -53,7 +52,7 @@ public class ServerInterfaceResources {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void putSet( Entry entry) {
 		putSetImplementation(entry.getkey(), entry.getAttributes());
-
+		
 	}
 
 	@POST

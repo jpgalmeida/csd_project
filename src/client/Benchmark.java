@@ -102,7 +102,6 @@ public class Benchmark {
 		try {
 			result = res.readInt();
 		} catch (IOException e) {
-			e.printStackTrace();
 		}
 
 		return result;
@@ -123,7 +122,6 @@ public class Benchmark {
 		try {
 			result = res.readUTF();
 		} catch (IOException e) {
-			e.printStackTrace();
 		}
 
 		return result;
@@ -217,7 +215,6 @@ public class Benchmark {
 			}
 
 		} catch (IOException e) {
-			e.printStackTrace();
 		}
 
 		return finalResult.getBytes();
