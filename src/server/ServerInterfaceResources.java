@@ -5,14 +5,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -47,7 +45,6 @@ public class ServerInterfaceResources {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public byte[] getSet(@PathParam("id") String id){
-		System.out.println("Received Get Set Request");
 		return getSetImplementation(id);
 	}
 
@@ -55,7 +52,6 @@ public class ServerInterfaceResources {
 	@Path("/ps")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void putSet( Entry entry) {
-		System.out.println("Received Put Set Request");
 		putSetImplementation(entry.getkey(), entry.getAttributes());
 
 	}
@@ -64,7 +60,6 @@ public class ServerInterfaceResources {
 	@Path("/adde/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response addElement( @PathParam("id") String id) {
-		System.out.println("Received Add Element Request");
 		return addElementImplementation(id);
 	}
 
@@ -72,7 +67,6 @@ public class ServerInterfaceResources {
 	@Path("/rs/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response removeSet(@PathParam("id") String id){
-		System.out.println("Received Remove Set Request");
 		return removeSetImplementation(id);
 	}
 
@@ -80,7 +74,6 @@ public class ServerInterfaceResources {
 	@Path("/sum/{id1}/{id2}/{pos}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public byte[] sum(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
-		System.out.println("Received Sum Request");
 		return sumImplementation(id1, id2, pos);
 
 	}
@@ -89,7 +82,6 @@ public class ServerInterfaceResources {
 	@Path("/mult/{id1}/{id2}/{pos}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public byte[] mult(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
-		System.out.println("MULT");
 		return multImplementation(id1, id2, pos);
 	}
 
@@ -97,7 +89,6 @@ public class ServerInterfaceResources {
 	@Path("/seq/{pos}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response searchEq(@PathParam("pos") int pos, String val) {
-		System.out.println("Received Seq Request");
 		return searchEqImplementation(pos, val);
 	}
 	
@@ -105,7 +96,6 @@ public class ServerInterfaceResources {
 	@Path("/sbt/{pos}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response searchBt(@PathParam("pos") int pos, String val) {
-		System.out.println("Received Sbt Request");
 		return searchBtImplementation(pos, val);
 	}
 	
@@ -113,7 +103,6 @@ public class ServerInterfaceResources {
 	@Path("/slt/{pos}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response searchLt(@PathParam("pos") int pos, String val) {
-		System.out.println("Received Slt Request");
 		return searchLtImplementation(pos, val);
 	}
 	
@@ -130,7 +119,7 @@ public class ServerInterfaceResources {
 			DataInputStream dis = new DataInputStream(in);
 			
 			String entries = dis.readUTF();
-			System.out.println(entries);
+
 			ByteArrayOutputStream out2 = new ByteArrayOutputStream();
 			DataOutputStream dos2 = new DataOutputStream(out2);
 			
@@ -138,12 +127,9 @@ public class ServerInterfaceResources {
 			
 			Response resp = Response.ok(entries, MediaType.APPLICATION_JSON).build();
 			
-			System.out.println(resp);
 			return resp;
 
 		} catch (IOException e) {
-			
-			e.printStackTrace();
 		}
 		
 		
@@ -165,7 +151,7 @@ public class ServerInterfaceResources {
 			DataInputStream dis = new DataInputStream(in);
 			
 			String entries = dis.readUTF();
-			System.out.println(entries);
+
 			ByteArrayOutputStream out2 = new ByteArrayOutputStream();
 			DataOutputStream dos2 = new DataOutputStream(out2);
 			
@@ -173,12 +159,9 @@ public class ServerInterfaceResources {
 			
 			Response resp = Response.ok(entries, MediaType.APPLICATION_JSON).build();
 			
-			System.out.println(resp);
 			return resp;
 
 		} catch (IOException e) {
-			
-			e.printStackTrace();
 		}
 		
 		
@@ -201,7 +184,7 @@ public class ServerInterfaceResources {
 			DataInputStream dis = new DataInputStream(in);
 			
 			String entries = dis.readUTF();
-			System.out.println(entries);
+
 			ByteArrayOutputStream out2 = new ByteArrayOutputStream();
 			DataOutputStream dos2 = new DataOutputStream(out2);
 			
@@ -209,12 +192,10 @@ public class ServerInterfaceResources {
 			
 			Response resp = Response.ok(entries, MediaType.APPLICATION_JSON).build();
 			
-			System.out.println(resp);
+
 			return resp;
 			
 		} catch (IOException e) {
-			
-			e.printStackTrace();
 		}
 		
 		
@@ -224,7 +205,7 @@ public class ServerInterfaceResources {
 	}
 
 	public byte[] sumImplementation(String key1, String key2, int pos) {
-		System.out.println("Received Sum Request");
+
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			DataOutputStream dos = new DataOutputStream(out);
@@ -247,13 +228,12 @@ public class ServerInterfaceResources {
 			return out2.toByteArray();
 		}
 		catch(IOException e) {
-			e.printStackTrace();
 			return "0".getBytes();
 		}
 	}
 
 	public byte[] multImplementation(String key1, String key2, int pos) {
-		System.out.println("Received Mult Request");
+
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			DataOutputStream dos = new DataOutputStream(out);
@@ -276,7 +256,7 @@ public class ServerInterfaceResources {
 			return out2.toByteArray();
 		}
 		catch(IOException e) {
-			e.printStackTrace();
+
 			return "0".getBytes();
 		}
 	}
@@ -314,14 +294,14 @@ public class ServerInterfaceResources {
 			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeOrdered(out.toByteArray()));
 			DataInputStream dis = new DataInputStream(in);
 			String res = dis.readUTF();
-			System.out.println(res);
+
 			if(res.equals("true"))
 				return Response.status(204).build();
 			else
 				return Response.status(404).build();
 		}
 		catch (IOException e) {
-			System.out.println("Exception removing entry from the hashmap: "+e.getMessage());
+
 			return null;
 		}
 	}
@@ -334,38 +314,11 @@ public class ServerInterfaceResources {
 			dos.writeInt(RequestType.GETSET);
 			dos.writeUTF(key);
 			
-//			byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
-			ByteArrayInputStream in = new ByteArrayInputStream(clientProxy.invokeOrdered(out.toByteArray()));
-			DataInputStream res = new DataInputStream(in);
+			byte[] reply = clientProxy.invokeOrdered(out.toByteArray());
 			
-			ByteArrayOutputStream out2 = new ByteArrayOutputStream();
-			DataOutputStream dos2 = new DataOutputStream(out2);
-			
-			int attSize;
-			try {
-				attSize = res.readInt();
-				dos2.writeInt(attSize);
-
-				for(int i = 0; i < attSize; i++) {
-					
-					String keyRead = res.readUTF();
-					String valueRead = res.readUTF();
-					
-					System.out.println(keyRead);
-					dos2.writeUTF(keyRead);
-					dos2.writeUTF(valueRead);
-				}
-
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
-			
-			return out2.toByteArray();
-//			return reply;
+			return reply;
 			
 		} catch (IOException ioe) {
-			System.out.println("Exception getting value from the hashmap: " + ioe.getMessage());
 			return "".getBytes();
 		}
 	}
@@ -393,7 +346,6 @@ public class ServerInterfaceResources {
 			else
 				return Response.status(404).build();
 		} catch (IOException ioe) {
-			System.out.println("Exception putting value into hashmap: " + ioe.getMessage());
 			return null;
 		}
 	}

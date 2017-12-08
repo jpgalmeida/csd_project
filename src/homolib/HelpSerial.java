@@ -26,8 +26,7 @@ public class HelpSerial {
 	        ois.close();
 	        return o;
 		} catch (IOException | ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+
 		}
 		return null;
 

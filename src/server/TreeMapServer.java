@@ -6,8 +6,6 @@ import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
 import resources.RequestType;
 
 // Classes that need to be declared to implement this
@@ -40,32 +38,15 @@ public class TreeMapServer extends DefaultRecoverable {
 	private static String configHome = "/home/csd/config/";
 	private Jedis jedis;
 	private List<String> fields;
-	private JedisPool pool;
 	private static boolean bizantinemode = false;
 	private BigInteger nsquare, modulus, exponent;
 	private HomoOpeInt ope;
 
 	public TreeMapServer(int id, String serverUri){
 
-		JedisPoolConfig config = new JedisPoolConfig();
-		config.setMaxTotal(1024);
-		config.setMaxWaitMillis(30000);
-		config.setMaxIdle(512);
-
-		config.setMinIdle(1);
-		config.setTestOnBorrow(true);
-		config.setTestOnReturn(true);
-		config.setTestWhileIdle(true);
-		config.setNumTestsPerEvictionRun(10);
-		config.setTimeBetweenEvictionRunsMillis(60000);
-		pool = new JedisPool(config, serverUri, 6379);
-
-		jedis=pool.getResource();
-
+		jedis=new Jedis(serverUri, 6379);
 
 		new ServiceReplica(id, configHome, this, this, null, null);
-		//Connecting to Redis server on localhost 
-
 
 		//check whether server is running or not 
 		System.out.println("Redis server is running: "+jedis.ping()); 
@@ -107,14 +88,13 @@ public class TreeMapServer extends DefaultRecoverable {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		DataOutputStream dos = new DataOutputStream(out);
 
-		Jedis jedis2=pool.getResource();
+//		Jedis jedis2=pool.getResource();
 
 
 		int reqType;
 		try {
 			reqType = dis.readInt();
 			if (reqType == RequestType.PUTSET) {
-				System.out.println("> RECEIVED PUTSET");
 
 				String id = dis.readUTF();
 
@@ -141,39 +121,22 @@ public class TreeMapServer extends DefaultRecoverable {
 							att.put(key, value);
 					}
 				}catch(Exception e) {
-					System.out.println("Problem");
 				}
 
 				String toWrite = "true";
 				
-				Map<String, String> attributes=null;
 				try{
-					jedis2.hmset(id, att);
-//					attributes = jedis2.hgetAll(key);
+					jedis.hmset(id, att);
+
 				}catch(Exception e) {
 					toWrite = "false";
-					System.out.println("Cast problem");
 				}
-
-
-				//verification if added
-				
-//				if(attributes!=null) {
-//					for (Map.Entry<String, String> e : attributes.entrySet()){
-//						if(!att.get(e.getKey()).equals(e.getValue())){
-//							toWrite="false";
-//							break;
-//						}
-//
-//					}
-//				}
 
 				dos.writeUTF(toWrite);
 
 				return out.toByteArray();
 
 			} else if (reqType == RequestType.REMOVESET) {
-				System.out.println("> RECEIVED REMOVESET");
 
 				String key = dis.readUTF();
 
@@ -196,13 +159,13 @@ public class TreeMapServer extends DefaultRecoverable {
 					dos.writeUTF("false");
 				else {
 					fields.add(key);
-					System.out.println(fields.contains(key));
+
 					dos.writeUTF("true");
 				}
 				return out.toByteArray();
 
 			}else if (reqType == RequestType.GETSET) {
-				System.out.println("> RECEIVED GETSET");
+
 				String key = dis.readUTF();
 
 				Map<String, String> att=null;
@@ -211,7 +174,7 @@ public class TreeMapServer extends DefaultRecoverable {
 					att = jedis.hgetAll(key);
 
 				}catch(Exception e) {
-					e.printStackTrace();
+					
 				}
 
 				if(bizantinemode && att != null) {
@@ -219,7 +182,6 @@ public class TreeMapServer extends DefaultRecoverable {
 					dos.writeUTF(",");
 					dos.writeUTF("bizantinevalue");
 					dos.writeUTF(",");
-					System.out.println("bizantine Sending"+dos.toString());
 				}
 				else if(att!=null) {
 					dos.writeInt(att.entrySet().size());
@@ -235,7 +197,6 @@ public class TreeMapServer extends DefaultRecoverable {
 
 				return out.toByteArray();
 			}else if (reqType == RequestType.SBT) {
-				System.out.println("> RECEIVED SBT");
 
 				int pos = dis.readInt();
 				String val = dis.readUTF();
@@ -245,7 +206,6 @@ public class TreeMapServer extends DefaultRecoverable {
 				Set<String> l = jedis.keys("*");
 				String result = "";
 
-//				long l1 = Long.parseLong((String) HelpSerial.fromString(val));
 				long l1 = (long) HelpSerial.fromString(val);
 				
 				
@@ -261,16 +221,14 @@ public class TreeMapServer extends DefaultRecoverable {
 							result += entryKey+",";
 
 					}
-					System.out.println(result);
+
 					dos.writeUTF(result);
 
 				}catch(Exception e) {
-					e.printStackTrace();
 				}
 				return out.toByteArray();
 
 			}else if (reqType == RequestType.SLT) {
-				System.out.println("> RECEIVED SLT");
 
 				int pos = dis.readInt();
 				String val = dis.readUTF();
@@ -280,7 +238,6 @@ public class TreeMapServer extends DefaultRecoverable {
 				Set<String> l = jedis.keys("*");
 				String result = "";
 
-//				long l1 = Long.parseLong((String) HelpSerial.fromString(val));
 				long l1 = (long) HelpSerial.fromString(val);
 				
 				
@@ -295,23 +252,20 @@ public class TreeMapServer extends DefaultRecoverable {
 							result += entryKey+",";
 
 					}
-					System.out.println(result);
+
 					dos.writeUTF(result);
 
 				}catch(Exception e) {
-					e.printStackTrace();
+
 				}
 				return out.toByteArray();
 
 			
 
 		} else {
-			System.out.println("Unknown request type ordered: " + reqType);
 			return "".getBytes();
 		}
 	} catch (IOException e) {
-		System.out.println("Exception reading data in the replica: " + e.getMessage());
-		e.printStackTrace();
 		return null;
 	}
 
@@ -356,8 +310,6 @@ public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
 
 		}else if (reqType == RequestType.MULT) {
 
-			System.out.println(">RECEIVED MULT");
-
 			if(bizantinemode)
 				return "-1".getBytes();
 
@@ -365,7 +317,7 @@ public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
 			String key2 = dis.readUTF();
 			int pos = dis.readInt();
 
-			System.out.println("Mult "+key1+ " "+key2+" "+pos);
+
 			String field = fields.get(pos);
 
 			String val1 = jedis.hget(key1, field);
@@ -387,7 +339,6 @@ public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
 
 			return out.toByteArray();
 		}else if (reqType == RequestType.SEQ) {
-			System.out.println("> RECEIVED SEQ");
 
 			int pos = dis.readInt();
 			String val = dis.readUTF();
@@ -395,7 +346,7 @@ public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
 			String field = fields.get(pos);
 
 			Set<String> l = jedis.keys("*");
-			Map<String, String> entry = null;
+
 			String result = "";
 
 			try{
@@ -408,29 +359,25 @@ public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
 						result += entryKey+",";
 
 				}
-				System.out.println(result);
+
 				dos.writeUTF(result);
 
 			}catch(Exception e) {
-				e.printStackTrace();
+
 			}
 			return out.toByteArray();
 
 		}else {
-			System.out.println("Unknown request type unordered: " + reqType);
 			return null;
 		}
 	} catch (IOException e) {
-		System.out.println("Exception reading data in the replica: " + e.getMessage());
-		e.printStackTrace();
+
 		return null;
 	} catch (NoSuchAlgorithmException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
+
 		return null;
 	} catch (InvalidKeySpecException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
+
 		return null;
 	}
 }
@@ -460,24 +407,16 @@ public void installSnapshot(byte[] state) {
 		// delete previous map
 		for( String key : l )
 			jedis.del(key);
-		System.out.println("=======INSTALLING SNAPSHOT=======");
-		// write new map
-		if(map.size()>0)
-			System.out.println("=======I HAVE THINGS TO WRITE=======");
 
 		for(String key: map.keySet()) {
 			jedis.hmset(key, map.get(key));
-			System.out.println("=======ELEMENT ADDED=======");
+
 		}
 
 		in.close();
 		bis.close();
 	} catch (ClassNotFoundException e) {
-		//			System.out.print("Coudn't find Map: " + e.getMessage());
-		e.printStackTrace();
 	} catch (IOException e) {
-		System.out.print("Exception installing the application state: " + e.getMessage());
-		e.printStackTrace();
 	}
 }
 
@@ -489,9 +428,8 @@ public byte[] getSnapshot() {
 
 		Set<String> l = jedis.keys("*");
 		Map<String, Map<String,String>> map = new HashMap<String, Map<String,String>>(); 
-		System.out.println("=======GETTING SNAPSHOT=======");
+
 		for( String key : l) {
-			System.out.println("=======GETTING VALUE=======");
 			Map<String,String> val = jedis.hgetAll(key);
 			map.put(key,val);
 		}
@@ -502,9 +440,6 @@ public byte[] getSnapshot() {
 		bos.close();
 		return bos.toByteArray();
 	} catch (IOException e) {
-		System.out.println("Exception when trying to take a + "
-				+ "snapshot of the application state" + e.getMessage());
-		e.printStackTrace();
 		return new byte[0];
 	}
 }

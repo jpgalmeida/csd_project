@@ -2,14 +2,10 @@ package server;
 
 import java.net.InetAddress;
 import java.net.URI;
-import java.security.SecureRandom;
-
 import javax.net.ssl.SSLContext;
 import javax.ws.rs.core.UriBuilder;
 import org.glassfish.jersey.jdkhttp.JdkHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
-
-import server.ServerInterfaceResources;
 
 public class Proxy {
 	private static ProxyResources resources;
@@ -24,7 +20,7 @@ public class Proxy {
 		config.register( resources );
 
 		JdkHttpServerFactory.createHttpServer(baseUri, config,SSLContext.getDefault());
-		System.err.println("REST Server ready @ " + baseUri);
+		System.err.println("REST Proxy ready @ " + baseUri);
 
 	}
 

@@ -2,8 +2,6 @@ package server;
 
 import java.net.InetAddress;
 import java.net.URI;
-import java.security.SecureRandom;
-
 import javax.net.ssl.SSLContext;
 import javax.ws.rs.core.UriBuilder;
 import org.glassfish.jersey.jdkhttp.JdkHttpServerFactory;

@@ -59,7 +59,7 @@ public class ProxyResources {
 	private SecretKey secretKey;
 	private HomoOpeInt ope;
 	private RandomKeyIv keyIv;
-	
+
 	public ProxyResources(String serverUri) {
 		this.serverUri = serverUri;
 
@@ -81,7 +81,6 @@ public class ProxyResources {
 	@Path("/ps")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void putSet( Entry entry) {
-		System.out.println("Received Put Set Request");
 		putSetImplementation(entry.getkey(), entry.getAttributes());
 
 	}
@@ -92,7 +91,6 @@ public class ProxyResources {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public byte[] getSet(@PathParam("id") String id){
-		System.out.println("Received Get Set Request");
 		return getSetImplementation(id);
 	}
 
@@ -101,7 +99,6 @@ public class ProxyResources {
 	@Path("/adde/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response addElement( @PathParam("id") String id) {
-		System.out.println("Received Add Element Request");
 		return addElementImplementation(id);
 	}
 
@@ -110,8 +107,6 @@ public class ProxyResources {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String readElement(@PathParam("id") String id, @PathParam("pos") int pos) {
-		System.out.println("Received Read Element Request");
-
 		String res = readElementImplementation(id,pos);
 
 		return res;
@@ -122,7 +117,6 @@ public class ProxyResources {
 	@Path("/ie/{id}/{element}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String isElement(@PathParam("id") String id, @PathParam("element") String element) {
-		System.out.println("Received Is Element Request");
 		boolean found = isElementImplementation(id,element);
 		if (found)
 			return "true";
@@ -134,7 +128,6 @@ public class ProxyResources {
 	@Path("/{id}/{pos}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response writeElement(@PathParam("id") String id, @PathParam("pos") int pos, String new_element) {
-		System.out.println("Received Write Element Request");
 		return writeElementImplementation(id, pos, new_element);
 	}
 
@@ -142,7 +135,6 @@ public class ProxyResources {
 	@Path("/rs/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response removeSet(@PathParam("id") String id){
-		System.out.println("Received Remove Set Request");
 		return removeSetImplementation(id);
 	}
 
@@ -150,7 +142,6 @@ public class ProxyResources {
 	@Path("/sum/{id1}/{id2}/{pos}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public byte[] sum(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
-		System.out.println("Received Sum Request");
 		return sumImplementation(id1, id2, pos);
 
 	}
@@ -159,7 +150,6 @@ public class ProxyResources {
 	@Path("/mult/{id1}/{id2}/{pos}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public byte[] mult(@PathParam("id1") String id1, @PathParam("id2") String id2, @PathParam("pos") int pos) {
-		System.out.println("Received Mult Request");
 		return multImplementation(id1, id2, pos);
 	}
 
@@ -168,7 +158,6 @@ public class ProxyResources {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String searchEq(@PathParam("pos") int pos, @PathParam("val") String val) {
-		System.out.println("Received Seq Request");
 		return searchEqImplementation(pos, val);
 	}
 
@@ -177,7 +166,6 @@ public class ProxyResources {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String searchBt(@PathParam("pos") int pos, @PathParam("val") String val) {
-		System.out.println("Received Sbt Request");
 		return searchBtImplementation(pos, val);
 	}
 
@@ -186,7 +174,6 @@ public class ProxyResources {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String searchLt(@PathParam("pos") int pos, @PathParam("val") String val) {
-		System.out.println("Received Slt Request");
 		return searchLtImplementation(pos, val);
 	}
 
@@ -203,8 +190,8 @@ public class ProxyResources {
 	}
 
 	public String searchBtImplementation(int pos, String val) {
-		
-		
+
+
 		Response response = target.path("/entries/sbt/"+pos)
 				.request()
 				.post( Entity.entity(HelpSerial.toString(ope.encrypt(Integer.valueOf(val))), MediaType.APPLICATION_JSON));
@@ -249,16 +236,11 @@ public class ProxyResources {
 
 			BigInteger resultDec = homoSumDecryption(result);
 
-			System.out.println(resultDec.intValue());
-
 			dos.writeUTF(resultDec.toString());
 
 		} catch (Exception e) {
-			e.printStackTrace();
 		}
 
-		if(response==null)
-			System.out.println("decription nao deu");
 
 		return out.toByteArray();
 
@@ -284,16 +266,11 @@ public class ProxyResources {
 
 			BigInteger resultDec = homoMultDecryption(result);
 
-			System.out.println(resultDec.intValue());
-
 			dos.writeInt(resultDec.intValue());
 
 		} catch (Exception e) {
-			e.printStackTrace();
 		}
 
-		if(response==null)
-			System.out.println("decription nao deu");
 
 		return out.toByteArray();
 
@@ -307,9 +284,8 @@ public class ProxyResources {
 
 		if(response.getStatus() == 204) {
 			fields.add(id);
-			System.out.println("cheguei aqui");
 		}
-	
+
 
 		return response;
 	}
@@ -328,7 +304,7 @@ public class ProxyResources {
 		int attSize;
 		Map<String, String> hm = new HashMap<String, String>();
 		boolean added = false;
-		
+
 		try {
 			attSize = res.readInt();
 
@@ -340,7 +316,7 @@ public class ProxyResources {
 					String nameEncryted = HomoSearch.encrypt(secretKey , element);
 					hm.put("nome", nameEncryted);
 					added = true;
-					
+
 				}else if(field.equals(keyRead) && field.equals("idade")) {
 
 					String ageEncrypted = homoSumEncryption(element);
@@ -354,13 +330,12 @@ public class ProxyResources {
 					added = true;
 				}
 				else if(field.equals(keyRead) &&  field.equals("golos")) {
-					
+
 					String goalsEncrypted = HelpSerial.toString(ope.encrypt(Integer.valueOf(element)));
 					hm.put("golos", goalsEncrypted);
 					added = true;
 				}
 				else if(field.equals(keyRead)) {
-					System.out.println("FIE1D: " +field);
 					hm.put(keyRead, HomoRand.encrypt(keyIv.getKey(), keyIv.getiV(), element));
 					added = true;
 				}
@@ -368,7 +343,6 @@ public class ProxyResources {
 			}
 
 			if(!added) {
-				System.out.println("FIED: " +field);
 				hm.put(field, HomoRand.encrypt(keyIv.getKey(), keyIv.getiV(), element));
 			}
 			Entry entry = new Entry(key, hm);
@@ -380,7 +354,6 @@ public class ProxyResources {
 			return response2;
 
 		}catch (IOException e) {
-			e.printStackTrace();
 		}
 
 
@@ -389,17 +362,19 @@ public class ProxyResources {
 
 	public boolean isElementImplementation(String key, String element) {
 
-		byte[] response = target.path("/entries/"+key)
-				.request()
-				.accept(MediaType.APPLICATION_JSON)
-				.get(new GenericType<byte[]>() {});
-
-		ByteArrayInputStream in = new ByteArrayInputStream(response);
-		DataInputStream res = new DataInputStream(in);
-
-		int attSize;
-
 		try {
+
+			byte[] response = target.path("/entries/"+key)
+					.request()
+					.accept(MediaType.APPLICATION_JSON)
+					.get(new GenericType<byte[]>() {});
+
+			ByteArrayInputStream in = new ByteArrayInputStream(response);
+			DataInputStream res = new DataInputStream(in);
+
+			int attSize;
+
+
 			attSize = res.readInt();
 
 			for(int i = 0; i < attSize; i++) {
@@ -410,7 +385,12 @@ public class ProxyResources {
 				BigInteger ageBigInt = BigInteger.ZERO;
 				BigInteger salaryBigInt = BigInteger.ZERO;
 
-				if(keyRead.equals("idade")) {
+				if(keyRead.equals("nome")) {
+
+					valueRead = HomoSearch.decrypt(HomoSearch.stringFromKey(secretKey), valueRead);
+
+
+				}else if(keyRead.equals("idade")) {
 
 					ageBigInt = homoSumDecryption(valueRead);
 					valueRead = ageBigInt.toString();
@@ -420,6 +400,12 @@ public class ProxyResources {
 					salaryBigInt = homoMultDecryption(valueRead);
 					valueRead = salaryBigInt.toString();
 
+				}else if(keyRead.equals("golos")) {
+
+					long l1 = (long) HelpSerial.fromString(valueRead);
+					int goalsDec = ope.decrypt(l1);
+
+					valueRead = Integer.toString(goalsDec);
 				}
 
 				if(valueRead.equals(element)) {
@@ -429,7 +415,6 @@ public class ProxyResources {
 			}
 
 		}catch (IOException e) {
-			e.printStackTrace();
 		}
 
 		return false;
@@ -471,18 +456,29 @@ public class ProxyResources {
 				BigInteger ageBigInt = BigInteger.ZERO;
 				BigInteger salaryBigInt = BigInteger.ZERO;
 
+				if(field.equals(keyRead) && field.equals("nome")) {
 
-				if(field.equals(keyRead) && field.equals("idade")) {
+					elementRead = HomoSearch.decrypt(HomoSearch.stringFromKey(secretKey), valueRead);
+
+
+				} else if(field.equals(keyRead) && field.equals("idade")) {
 
 					ageBigInt = homoSumDecryption(valueRead);
 					valueRead = ageBigInt.toString();
 					elementRead = valueRead;
 
-				}else if(field.equals(keyRead) &&  field.equals("salario")) {
+				} else if(field.equals(keyRead) &&  field.equals("salario")) {
 
 					salaryBigInt = homoMultDecryption(valueRead);
 					valueRead = salaryBigInt.toString();
 					elementRead = valueRead;
+
+				} else if(keyRead.equals("golos")) {
+
+					long l1 = (long) HelpSerial.fromString(valueRead);
+					int goalsDec = ope.decrypt(l1);
+
+					elementRead = Integer.toString(goalsDec);
 				}
 				else if(field.equals(keyRead))
 					elementRead = valueRead;
@@ -494,7 +490,6 @@ public class ProxyResources {
 
 
 		}catch (IOException e) {
-			e.printStackTrace();
 		}
 
 		return elementRead;
@@ -553,7 +548,7 @@ public class ProxyResources {
 
 					valueRead = Integer.toString(goalsDec);
 				} else {
-					
+
 					valueRead = HomoRand.decrypt(keyIv.getKey(),  keyIv.getiV(), valueRead);
 				}
 
@@ -562,7 +557,6 @@ public class ProxyResources {
 			}
 
 		} catch (IOException e) {
-			e.printStackTrace();
 		}
 
 		return out.toByteArray();
@@ -580,28 +574,28 @@ public class ProxyResources {
 				String nameEncryted = HomoSearch.encrypt(secretKey , e.getValue());
 				hm.put("nome", nameEncryted);
 				entry.setAttributes(hm);
-			
+
 			} else if(e.getKey().equals("idade")) {
 				String ageEncrypted = homoSumEncryption(e.getValue());
 				hm.put("idade", ageEncrypted);
 				entry.setAttributes(hm);
-			
+
 			}else if(e.getKey().equals("salario")) {
 				String salaryEncryted = homoMultEncryption(e.getValue());
 				hm.put("salario", salaryEncryted);
 				entry.setAttributes(hm);
-	
+
 			} else if(e.getKey().equals("golos")) {
 				String goalsEncrypted = HelpSerial.toString(ope.encrypt(Integer.valueOf(e.getValue())));
 				hm.put("golos", goalsEncrypted);
 				entry.setAttributes(hm);
-				
+
 			} else {
 				String newElEncrypted = HomoRand.encrypt(keyIv.getKey(), keyIv.getiV(), e.getValue());
 				hm.put(e.getKey(), newElEncrypted);
 				entry.setAttributes(hm);
 			}
-			
+
 		}
 
 		Response response = target.path("/entries/ps/")
@@ -627,8 +621,6 @@ public class ProxyResources {
 		try {
 			return HelpSerial.toString(HomoAdd.encrypt(big1, pk));
 		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("> Erro Sum encryption!");
 		}
 		return null;
 
@@ -641,11 +633,8 @@ public class ProxyResources {
 		try {
 			return HomoAdd.decrypt(big1, pk);
 		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("> Erro Sum decryption!");
 		}
 
-		//se for necessario retornar -1 ou assim
 		return new BigInteger("0");
 	}
 
@@ -656,8 +645,6 @@ public class ProxyResources {
 		try {
 			return HelpSerial.toString(HomoMult.encrypt(publicKey,big1));
 		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("> Erro Mult encryption!");
 		}
 		return null;
 
@@ -670,11 +657,8 @@ public class ProxyResources {
 		try {
 			return HomoMult.decrypt(privateKey, big1);
 		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("> Erro Mult decryption!");
 		}
 
-		//se for necessario retornar -1 ou assim
 		return new BigInteger("0");
 	}
 
@@ -701,10 +685,13 @@ public class ProxyResources {
 		secretKey = HomoSearch.keyFromString(secretKeyPlain); 
 
 		ope = new HomoOpeInt(3447202209197703099L);
-		
-		String keyIvSeed = "rO0ABXNyABhobGliLmhqLm1saWIuUmFuZG9tS2V5SXYAAAAAAAAAAQIAAlsAAmlWdAACW0JMAANrZXl0ABhMamF2YXgvY3J5cHRvL1NlY3JldEtleTt4cHVyAAJbQqzzF/gGCFTgAgAAeHAAAAAQk6QJDxSj7qfETVWYkjCoc3NyAB9qYXZheC5jcnlwdG8uc3BlYy5TZWNyZXRLZXlTcGVjW0cLZuIwYU0CAAJMAAlhbGdvcml0aG10ABJMamF2YS9sYW5nL1N0cmluZztbAANrZXlxAH4AAXhwdAADQUVTdXEAfgAEAAAAEFXjGSWHED5GZ5DexQ/VIlQ=";
-		keyIv = HomoRand.keyIvFromString(keyIvSeed);
 
+		String keyIvSeed = "rO0ABXNyABhobGliLmhqLm1saWIuUmFuZG9tS2V5SXYAAAAAAAAAAQIAAlsAAmlWdAACW0JMAANrZXl0ABhMamF2YXgvY3J5cHRvL1NlY3JldEtleTt4cHVyAAJbQqzzF/gGCFTgAgAAeHAAAAAQk6QJDxSj7qfETVWYkjCoc3NyAB9qYXZheC5jcnlwdG8uc3BlYy5TZWNyZXRLZXlTcGVjW0cLZuIwYU0CAAJMAAlhbGdvcml0aG10ABJMamF2YS9sYW5nL1N0cmluZztbAANrZXlxAH4AAXhwdAADQUVTdXEAfgAEAAAAEFXjGSWHED5GZ5DexQ/VIlQ=";
+		try {
+			keyIv = HomoRand.keyIvFromString(keyIvSeed);
+		}catch(Exception e) {
+
+		}
 	}
 
 }
