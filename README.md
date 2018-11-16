@@ -1,5 +1,5 @@
-# My project's README
-
+# Privacy-Enhanced Dependable Searchable Homomorphic Key Value Store
+Academic project developed for the Distributed Systems Reliability course. Development of a storage system that supports search and operation functions over encrypted data using a Homomorphic Encryption Library. The system is also Byzantine-fault and Intrusion tolerant.
 
 ## Running Instructions
 
